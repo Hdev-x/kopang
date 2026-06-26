@@ -1,0 +1,53 @@
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== IDE =====
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+*.sublime-*
+
+# ===== Secrets / 환경설정 (절대 커밋 금지) =====
+.env
+.env.*
+application-local.yml
+application-local.yaml
+application-secret*.yml
+application-secret*.yaml
+*.key
+*.pem
+
+# ===== Java / Spring (backend) =====
+*.class
+build/
+target/
+out/
+bin/
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+*.log
+logs/
+
+# ===== Node (frontend) =====
+node_modules/
+dist/
+.next/
+.nuxt/
+coverage/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ===== Python (ml) =====
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.ipynb_checkpoints/
