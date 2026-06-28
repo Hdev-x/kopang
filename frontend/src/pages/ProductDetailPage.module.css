@@ -1,0 +1,59 @@
+.image {
+  width: 100%;
+  aspect-ratio: 1;
+  background: var(--gray-100);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-4);
+}
+
+.name {
+  font-size: var(--font-xl);
+  font-weight: var(--weight-bold);
+}
+
+.price {
+  font-size: var(--font-xl);
+  font-weight: var(--weight-bold);
+  margin: var(--space-2) 0;
+}
+
+.desc {
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-4);
+}
+
+.cta {
+  width: 100%;
+}
+
+.section {
+  font-size: var(--font-lg);
+  font-weight: var(--weight-bold);
+  margin: var(--space-6) 0 var(--space-3);
+}
+
+.similarRow {
+  display: flex;
+  gap: var(--space-3);
+  overflow-x: auto;
+}
+
+.similarCard {
+  min-width: 120px;
+}
+
+.similarThumb {
+  aspect-ratio: 1;
+  background: var(--gray-100);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-2);
+}
+
+.similarName {
+  font-size: var(--font-sm);
+}
+
+.rating {
+  color: var(--color-warning);
+  margin-bottom: var(--space-1);
+}

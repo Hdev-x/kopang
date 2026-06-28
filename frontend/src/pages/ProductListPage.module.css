@@ -1,0 +1,32 @@
+.title {
+  font-size: var(--font-xl);
+  font-weight: var(--weight-bold);
+  margin-bottom: var(--space-4);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+}
+
+.link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.thumb {
+  aspect-ratio: 1;
+  background: var(--gray-100);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-2);
+}
+
+.name {
+  font-size: var(--font-sm);
+}
+
+.price {
+  font-size: var(--font-md);
+  font-weight: var(--weight-bold);
+}
