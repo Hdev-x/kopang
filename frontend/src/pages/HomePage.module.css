@@ -1,0 +1,108 @@
+/* 히어로 */
+.hero {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background: var(--color-primary);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-5);
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+}
+
+.heroText {
+  padding: var(--space-4);
+  color: #fff;
+}
+
+.heroTitle {
+  font-size: var(--font-xl);
+  font-weight: var(--weight-bold);
+}
+
+.heroSub {
+  font-size: var(--font-sm);
+  opacity: 0.9;
+  margin-top: var(--space-1);
+}
+
+.heroPager {
+  position: absolute;
+  right: var(--space-3);
+  bottom: var(--space-3);
+  background: rgba(0, 0, 0, 0.4);
+  color: #fff;
+  font-size: var(--font-xs);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+}
+
+/* 카테고리 가로 스크롤 */
+.categoryRow {
+  display: flex;
+  gap: var(--space-3);
+  overflow-x: auto;
+  padding-bottom: var(--space-2);
+}
+
+.chip {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  text-decoration: none;
+  color: var(--color-text);
+  width: 56px;
+}
+
+.chipEmoji {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: var(--gray-100);
+  border-radius: var(--radius-full);
+  font-size: 22px;
+}
+
+.chipName {
+  font-size: var(--font-xs);
+  white-space: nowrap;
+}
+
+/* 상품 큐레이션 섹션 */
+.section {
+  margin-top: var(--space-6);
+}
+
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.sectionTitle {
+  font-size: var(--font-lg);
+  font-weight: var(--weight-bold);
+}
+
+.more {
+  font-size: var(--font-sm);
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+/* 한 줄짜리 가로 스크롤 (줄마다 독립) */
+.hrow {
+  display: flex;
+  gap: var(--space-3);
+  overflow-x: auto;
+  padding-bottom: var(--space-3);
+}
+
+.hrow > * {
+  flex: 0 0 140px;
+}
