@@ -1,80 +1,105 @@
 import { http, HttpResponse } from "msw";
+import { categoryTree, mockProducts, collectDescendantIds } from "./categoryData";
+import { ensureRealImages } from "./dummyImages";
+import { qnaPosts } from "./qnaData";
 
 // API 명세 초안 기반 mock. 응답은 { success, data, message } 래퍼로 감쌈.
-const products = [
-  { id: 1, brand: "언탭트", name: "오버핏 피그먼트 반팔 셔츠", price: 34860, discountRate: 30, imageUrl: "" },
-  { id: 2, brand: "트릴리온", name: "오버핏 워크 데님 반팔 셔츠", price: 33990, discountRate: 29, imageUrl: "" },
-  { id: 3, brand: "토마스모어", name: "페이머 반팔 셔츠 (12color)", price: 47760, discountRate: 20, imageUrl: "" },
-  { id: 4, brand: "무드인사이드", name: "썸머 링클 오션 체크셔츠 5color", price: 29900, discountRate: 57, imageUrl: "" },
-  { id: 5, brand: "카케이테이", name: "체크 하프 셔츠 (BLACK)", price: 46900, discountRate: 32, imageUrl: "" },
-  { id: 6, brand: "파브레가", name: "로렌 스트라이프 크롭 하프 셔츠", price: 66600, discountRate: 10, imageUrl: "" },
-  { id: 7, brand: "디스이즈네버댓", name: "아치 로고 반팔 티셔츠", price: 38000, discountRate: 15, imageUrl: "" },
-  { id: 8, brand: "커버낫", name: "베이직 옥스포드 셔츠", price: 41000, discountRate: 25, imageUrl: "" },
-  { id: 9, brand: "아웃스탠딩", name: "워싱 옥스포드 셔츠", price: 39000, discountRate: 18, imageUrl: "" },
-  { id: 10, brand: "드로우핏", name: "세미 오버 셔츠 (3color)", price: 44000, discountRate: 22, imageUrl: "" },
-  { id: 11, brand: "예일", name: "베이직 로고 반팔 티셔츠", price: 32000, discountRate: 40, imageUrl: "" },
-  { id: 12, brand: "내셔널지오", name: "쿨 코튼 피케 셔츠", price: 36000, discountRate: 12, imageUrl: "" },
-];
-
 export const handlers = [
-  // 카테고리 목록 (10개)
+  // 카테고리 트리 (대 > 중 > 소)
   http.get("/api/categories", () =>
-    HttpResponse.json({
-      success: true,
-      data: [
-        { id: 1, name: "식품", emoji: "🥬" },
-        { id: 2, name: "생활용품", emoji: "🧴" },
-        { id: 3, name: "가전·디지털", emoji: "💻" },
-        { id: 4, name: "패션", emoji: "👕" },
-        { id: 5, name: "뷰티", emoji: "💄" },
-        { id: 6, name: "도서", emoji: "📚" },
-        { id: 7, name: "스포츠", emoji: "⚽" },
-        { id: 8, name: "완구·취미", emoji: "🧸" },
-        { id: 9, name: "반려동물", emoji: "🐶" },
-        { id: 10, name: "자동차", emoji: "🚗" },
-      ],
-      message: null,
-    }),
+    HttpResponse.json({ success: true, data: categoryTree, message: null }),
   ),
 
-  // 상품 목록 (?category= 무시하고 mock은 동일 반환)
-  http.get("/api/products", () =>
-    HttpResponse.json({
+  // 상품 목록 — ?cat=<카테고리id> 면 그 카테고리 + 하위 전체
+  http.get("/api/products", async ({ request }) => {
+    await ensureRealImages(mockProducts); // 커버되는 카테고리는 실사진으로 교체(최초 1회)
+    const cat = new URL(request.url).searchParams.get("cat");
+    let list = mockProducts;
+    if (cat) {
+      const ids = collectDescendantIds(Number(cat));
+      list = mockProducts.filter((p) => p.categoryId != null && ids.has(p.categoryId));
+    } else {
+      // 홈 등 전체 호출: 카테고리 전반에서 고르게 샘플링
+      const step = Math.max(1, Math.floor(mockProducts.length / 40));
+      list = mockProducts.filter((_, i) => i % step === 0);
+    }
+    const content = list.slice(0, 40);
+    return HttpResponse.json({
       success: true,
-      data: { content: products, number: 0, totalPages: 1, totalElements: products.length },
+      data: { content, number: 0, totalPages: 1, totalElements: list.length },
       message: null,
-    }),
-  ),
+    });
+  }),
 
   // 상품 상세
-  http.get("/api/products/:id", ({ params }) =>
+  http.get("/api/products/:id", async ({ params }) => {
+    await ensureRealImages(mockProducts);
+    const p = mockProducts.find((x) => x.id === Number(params.id)) ?? mockProducts[0];
+    return HttpResponse.json({
+      success: true,
+      data: { ...p, description: `${p.name} — 데일리로 좋은 ${p.brand} 제품입니다.`, stock: 50 },
+      message: null,
+    });
+  }),
+
+  // 내 장바구니 — 상품 정보는 실제 목 상품에서 끌어와 일관성 유지
+  http.get("/api/cart", async () => {
+    await ensureRealImages(mockProducts);
+    const data = [
+      { itemId: 10, productId: 1, quantity: 2 },
+      { itemId: 11, productId: 8, quantity: 1 },
+    ].map((c) => {
+      const p = mockProducts.find((x) => x.id === c.productId);
+      return {
+        itemId: c.itemId,
+        productId: c.productId,
+        name: p?.name ?? "상품",
+        price: p?.price ?? 0,
+        quantity: c.quantity,
+        imageUrl: p?.imageUrl ?? "",
+      };
+    });
+    return HttpResponse.json({ success: true, data, message: null });
+  }),
+
+  // 1:1 문의 목록 (요약: 본문·답변 제외)
+  http.get("/api/qna", () =>
     HttpResponse.json({
       success: true,
-      data: {
-        id: Number(params.id),
-        brand: "언탭트",
-        name: "오버핏 피그먼트 반팔 셔츠",
-        price: 34860,
-        discountRate: 30,
-        description: "오버핏 실루엣의 피그먼트 가공 반팔 셔츠. 데일리로 좋아요.",
-        stock: 50,
-        imageUrl: "",
-      },
+      data: qnaPosts.map((q) => ({
+        id: q.id,
+        title: q.title,
+        author: q.author,
+        status: q.status,
+        createdAt: q.createdAt,
+      })),
       message: null,
     }),
   ),
 
-  // 내 장바구니
-  http.get("/api/cart", () =>
-    HttpResponse.json({
-      success: true,
-      data: [
-        { itemId: 10, productId: 1, name: "오버핏 피그먼트 반팔 셔츠", price: 34860, quantity: 2, imageUrl: "" },
-        { itemId: 11, productId: 4, name: "썸머 링클 오션 체크셔츠", price: 29900, quantity: 1, imageUrl: "" },
-      ],
-      message: null,
-    }),
-  ),
+  // 1:1 문의 상세
+  http.get("/api/qna/:id", ({ params }) => {
+    const post = qnaPosts.find((q) => q.id === Number(params.id));
+    return HttpResponse.json({
+      success: !!post,
+      data: post ?? null,
+      message: post ? null : "NOT_FOUND",
+    });
+  }),
+
+  // 1:1 문의 작성
+  http.post("/api/qna", async ({ request }) => {
+    const body = (await request.json()) as { title: string; content: string };
+    const created = {
+      id: qnaPosts.length + 1,
+      title: body.title,
+      content: body.content,
+      author: "홍**",
+      status: "답변대기",
+      createdAt: "2026.06.30",
+    };
+    return HttpResponse.json({ success: true, data: created, message: null });
+  }),
 
   // 로그인
   http.post("/api/auth/login", async ({ request }) => {

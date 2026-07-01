@@ -1,0 +1,134 @@
+/* 폰 프레임 — 가운데 480 컬럼. 고정 높이로 클립 → 드로어/오버레이가 이 안에 갇힘 */
+.wrap {
+  position: relative;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--gray-50);
+  box-shadow: 0 0 0 1px var(--color-border);
+}
+
+/* 안쪽만 스크롤 (탑바는 여기 기준 sticky) */
+.scroll {
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* 탑바 — 배경은 전체 폭, 내용은 container(480)로 가운데 정렬 (회원 Layout과 동일) */
+.top {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+  background: var(--gray-900);
+  color: #fff;
+}
+.topInner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: 52px;
+  padding: 0 var(--space-4);
+}
+
+.brand {
+  flex: 1;
+  font-weight: var(--weight-bold);
+}
+
+.iconBtn {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  color: #fff;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* 드로어 */
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: var(--z-modal);
+}
+
+.drawer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 80%;
+  max-width: 280px;
+  background: var(--color-surface);
+  z-index: calc(var(--z-modal) + 1);
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-md);
+}
+
+.drawerHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.drawerTitle {
+  font-weight: var(--weight-bold);
+}
+
+.closeBtn {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  padding: 0;
+  cursor: pointer;
+}
+
+.menu {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-3) 0;
+}
+
+.group {
+  padding: var(--space-2) 0;
+}
+
+.groupTitle {
+  font-size: var(--font-xs);
+  color: var(--color-text-muted);
+  padding: var(--space-1) var(--space-5);
+}
+
+.menuItem {
+  display: block;
+  padding: var(--space-3) var(--space-5);
+  font-size: var(--font-md);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.menuActive {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-weight: var(--weight-medium);
+}
+
+/* 본문 — 회원 화면과 동일한 모바일 폭 */
+.main {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-4);
+}
+
+.title {
+  font-size: var(--font-xl);
+  font-weight: var(--weight-bold);
+  margin-bottom: var(--space-4);
+}

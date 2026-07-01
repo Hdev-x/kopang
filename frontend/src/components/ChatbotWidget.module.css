@@ -1,0 +1,99 @@
+/* 앱 영역(가운데 480px) 우하단에 붙이기 위한 컨테이너 */
+.root {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0 auto;
+  max-width: var(--max-width);
+  z-index: 900;
+  pointer-events: none; /* 컨테이너 자체는 클릭 통과 */
+}
+
+.fab {
+  position: absolute;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  pointer-events: auto;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.panel {
+  position: absolute;
+  right: var(--space-4);
+  bottom: calc(var(--space-4) + 60px);
+  pointer-events: auto;
+  width: min(340px, calc(100vw - 2 * var(--space-4)));
+  height: 440px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.header {
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: var(--weight-bold);
+}
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.msg {
+  max-width: 80%;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--font-sm);
+  line-height: 1.4;
+}
+
+.bot {
+  align-self: flex-start;
+  background: var(--gray-100);
+  color: var(--color-text);
+}
+
+.user {
+  align-self: flex-end;
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.quickBtn {
+  padding: 6px var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-full);
+  color: var(--color-primary);
+  font-size: var(--font-xs);
+  cursor: pointer;
+}

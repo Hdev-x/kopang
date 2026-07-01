@@ -1,0 +1,120 @@
+.title {
+  font-size: var(--font-xl);
+  font-weight: var(--weight-bold);
+  margin-bottom: var(--space-4);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+}
+
+.statLabel {
+  font-size: var(--font-xs);
+  color: var(--color-text-muted);
+}
+
+.statValue {
+  font-size: var(--font-lg);
+  font-weight: var(--weight-bold);
+  margin: var(--space-1) 0;
+}
+
+.delta {
+  font-size: var(--font-xs);
+  color: var(--color-success);
+}
+
+.warn {
+  color: var(--color-sale);
+}
+
+.section {
+  font-size: var(--font-md);
+  font-weight: var(--weight-bold);
+  margin: var(--space-6) 0 var(--space-3);
+}
+
+/* 막대그래프 */
+.chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 160px;
+  gap: var(--space-2);
+}
+
+.bar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  gap: var(--space-1);
+}
+
+.barFill {
+  width: 60%;
+  background: var(--color-primary);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  min-height: 4px;
+}
+
+.barLabel {
+  font-size: var(--font-xs);
+  color: var(--color-text-muted);
+}
+
+.riskCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.riskRow {
+  display: flex;
+  justify-content: space-between;
+}
+
+.orderStatus {
+  color: var(--color-text-muted);
+  font-size: var(--font-sm);
+  margin-left: var(--space-1);
+}
+
+.riskLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+/* 최근 주문 테이블 */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-sm);
+}
+
+.table th {
+  text-align: left;
+  color: var(--color-text-muted);
+  font-weight: var(--weight-medium);
+  font-size: var(--font-xs);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table td {
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+}

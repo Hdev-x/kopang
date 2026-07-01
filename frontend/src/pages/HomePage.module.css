@@ -1,8 +1,75 @@
+/* 이탈방지 — 장바구니 방치 배너 */
+.abandonBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+  background: var(--color-primary-light);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: var(--color-text);
+}
+
+.abandonText {
+  font-size: var(--font-sm);
+}
+
+.abandonText b {
+  color: var(--color-primary);
+}
+
+.abandonClose {
+  display: flex;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+/* 재구매 알림 배너 (방치 배너와 같은 레이아웃, 색만 다름) */
+.rebuyBanner {
+  background: #fff3e0;
+}
+.rebuyBanner b {
+  color: var(--color-warning);
+}
+
+/* 멤버십 전환 유도(업셀) */
+.upsell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+}
+.upsellTitle {
+  font-weight: var(--weight-bold);
+}
+.upsellSub {
+  font-size: var(--font-xs);
+  opacity: 0.9;
+  margin-top: 2px;
+}
+.upsellArrow {
+  font-size: var(--font-lg);
+  flex-shrink: 0;
+}
+
 /* 히어로 */
 .hero {
   position: relative;
   aspect-ratio: 16 / 10;
-  background: var(--color-primary);
+  background:
+    linear-gradient(to top, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.05) 60%),
+    var(--color-primary) url("/hero.jpg") center / cover no-repeat;
   border-radius: var(--radius-md);
   margin-bottom: var(--space-5);
   overflow: hidden;
@@ -93,6 +160,15 @@
   font-size: var(--font-sm);
   color: var(--color-text-muted);
   text-decoration: none;
+}
+
+.recoNote {
+  font-size: var(--font-xs);
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  white-space: nowrap;
 }
 
 /* 한 줄짜리 가로 스크롤 (줄마다 독립) */
