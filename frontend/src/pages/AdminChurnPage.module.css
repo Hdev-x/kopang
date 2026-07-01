@@ -1,0 +1,283 @@
+.caption {
+  font-size: var(--font-xs);
+  color: var(--color-text-muted);
+  margin: calc(var(--space-2) * -1) 0 var(--space-4);
+}
+
+/* ===== KPI ===== */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+}
+
+.kpiCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.kpiTop {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text-muted);
+}
+
+.kpiIcon {
+  color: var(--color-text-muted);
+}
+
+.kpiLabel {
+  font-size: var(--font-xs);
+}
+
+.kpiValue {
+  font-size: var(--font-lg);
+  font-weight: var(--weight-bold);
+}
+
+.kpiDelta {
+  font-size: var(--font-xs);
+}
+.good {
+  color: var(--color-success);
+}
+.warn {
+  color: var(--color-sale);
+}
+
+/* ===== 섹션 제목 ===== */
+.section {
+  font-size: var(--font-md);
+  font-weight: var(--weight-bold);
+  margin: var(--space-6) 0 var(--space-3);
+}
+
+/* ===== ① 위험도 분포: 도넛 ===== */
+.distCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.donutWrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+}
+
+.donut {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.donutHole {
+  position: absolute;
+  inset: 22px;
+  background: var(--color-surface);
+  border-radius: var(--radius-full);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.donutHole strong {
+  font-size: var(--font-lg);
+  font-weight: var(--weight-bold);
+}
+.donutHole span {
+  font-size: var(--font-xs);
+  color: var(--color-text-muted);
+}
+
+.legend {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  flex: 1;
+}
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-sm);
+}
+.legend strong {
+  margin-left: auto;
+  font-weight: var(--weight-bold);
+}
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full);
+}
+
+/* 고객 유형별 */
+.typeSplit {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.typeRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-sm);
+}
+.typeName {
+  font-weight: var(--weight-medium);
+}
+.typeMeta {
+  color: var(--color-text-muted);
+}
+.typeMeta strong {
+  color: var(--color-danger);
+}
+
+/* ===== ② 막대 차트 ===== */
+.chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 160px;
+  gap: var(--space-2);
+}
+.bar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  gap: var(--space-1);
+}
+.barValue {
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+.barFill {
+  width: 60%;
+  background: var(--color-primary);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  min-height: 4px;
+}
+.barLabel {
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+.targetNote {
+  font-size: var(--font-xs);
+  color: var(--color-text-muted);
+  margin-top: var(--space-3);
+}
+
+/* ===== ③ 대응 효과 ===== */
+.effectCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.effRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.effHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.effName {
+  font-weight: var(--weight-bold);
+  font-size: var(--font-sm);
+}
+.effRevenue {
+  font-weight: var(--weight-bold);
+  color: var(--color-primary);
+  font-size: var(--font-sm);
+}
+.dualBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.dualTrack {
+  flex: 1;
+  height: 8px;
+  background: var(--gray-100);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+.treatFill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+}
+.controlFill {
+  height: 100%;
+  background: var(--gray-300);
+  border-radius: var(--radius-full);
+}
+.dualPct {
+  font-size: var(--font-xs);
+  color: var(--color-text-muted);
+  width: 56px;
+  text-align: right;
+}
+.lift {
+  font-size: var(--font-xs);
+  font-weight: var(--weight-bold);
+  color: var(--color-success);
+  align-self: flex-end;
+}
+
+/* ===== ④ 테이블 ===== */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-sm);
+}
+.table th {
+  text-align: left;
+  color: var(--color-text-muted);
+  font-weight: var(--weight-medium);
+  font-size: var(--font-xs);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.table td {
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.tag {
+  font-size: var(--font-xs);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--gray-100);
+  color: var(--color-text-muted);
+}
+.tagMember {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-weight: var(--weight-medium);
+}
+
+/* ===== 푸터 힌트 ===== */
+.footHint {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-6);
+  padding: var(--space-3);
+  background: var(--gray-50);
+  border-radius: var(--radius-md);
+  font-size: var(--font-xs);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
