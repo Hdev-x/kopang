@@ -16,6 +16,10 @@ Thumbs.db
 .env.*
 application-local.yml
 application-local.yaml
+application-local.properties
+application-dev.yml
+application-dev.yaml
+application-dev.properties
 application-secret*.yml
 application-secret*.yaml
 *.key
@@ -51,3 +55,10 @@ venv/
 env/
 *.egg-info/
 .ipynb_checkpoints/
+
+# ===== 자격증명 / 비공개 자료 (커밋 금지) =====
+*credentials*.csv
+docs/kopang-app_credentials.csv
+
+# ===== 회의 자료 (커밋 안 함) =====
+회의/
