@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { X } from "lucide-react";
 import { Layout } from "../components/Layout";
 import { ProductCard } from "../components/ProductCard";
+import { useAuth } from "../hooks/useAuth";
 import { getCategories } from "../api/categories";
 import { getProducts } from "../api/products";
 import type { Category } from "../types/category";
@@ -11,6 +13,9 @@ import styles from "./HomePage.module.css";
 export function HomePage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [bannerOpen, setBannerOpen] = useState(true); // 이탈위험①: 장바구니 방치 리마인더
+  const [rebuyOpen, setRebuyOpen] = useState(true); // 이탈위험⑧: 재구매 주기 알림
+  const user = useAuth();
 
   useEffect(() => {
     getCategories()
@@ -31,6 +36,46 @@ export function HomePage() {
 
   return (
     <Layout>
+      {/* 이탈방지① 장바구니 방치 리마인더 (목업: 항상 노출, 실제론 백엔드가 방치 감지 시) */}
+      {bannerOpen && (
+        <Link to="/cart" className={styles.abandonBanner}>
+          <span className={styles.abandonText}>
+            🛒 장바구니에 담아둔 상품이 기다려요 · 지금 구매 시 <b>5% 추가할인</b>
+          </span>
+          <button
+            type="button"
+            className={styles.abandonClose}
+            aria-label="닫기"
+            onClick={(e) => {
+              e.preventDefault();
+              setBannerOpen(false);
+            }}
+          >
+            <X size={16} />
+          </button>
+        </Link>
+      )}
+
+      {/* 이탈방지⑧ 재구매 주기 알림 (목업: 항상 노출, 실제론 구매주기 도달 감지 시) */}
+      {rebuyOpen && (
+        <Link to="/products/2" className={`${styles.abandonBanner} ${styles.rebuyBanner}`}>
+          <span className={styles.abandonText}>
+            🔁 자주 사시던 <b>제주 삼다수</b> 다시 살 때가 됐어요 · 지금 재주문
+          </span>
+          <button
+            type="button"
+            className={styles.abandonClose}
+            aria-label="닫기"
+            onClick={(e) => {
+              e.preventDefault();
+              setRebuyOpen(false);
+            }}
+          >
+            <X size={16} />
+          </button>
+        </Link>
+      )}
+
       {/* 히어로 배너 (캐러셀 자리) */}
       <section className={styles.hero}>
         <div className={styles.heroText}>
@@ -45,7 +90,7 @@ export function HomePage() {
         {categories.map((c) => (
           <Link
             key={c.id}
-            to={`/products?category=${encodeURIComponent(c.name)}`}
+            to={`/products?cat=${c.id}`}
             className={styles.chip}
           >
             <span className={styles.chipEmoji}>{c.emoji}</span>
@@ -53,6 +98,32 @@ export function HomePage() {
           </Link>
         ))}
       </div>
+
+      {/* 멤버십 전환 유도(업셀) — 일반 고객 대상. 실제론 비회원에게만 노출 */}
+      <Link to="/membership" className={styles.upsell}>
+        <div>
+          <p className={styles.upsellTitle}>⭐ WOW 멤버십 무료배송 + 2% 적립</p>
+          <p className={styles.upsellSub}>첫 달 무료로 혜택 받아보기</p>
+        </div>
+        <span className={styles.upsellArrow}>→</span>
+      </Link>
+
+      {/* 맞춤 추천 (추천 ML: item-CF 결과 자리. 콜드스타트는 인기상품으로 대체) */}
+      {products.length > 0 && (
+        <section className={styles.section}>
+          <div className={styles.sectionHead}>
+            <h2 className={styles.sectionTitle}>🎯 {user ? `${user.name}님` : "회원님"} 맞춤 추천</h2>
+            <span className={styles.recoNote}>최근 본·구매 기반</span>
+          </div>
+          <div className={styles.hrow}>
+            {rotate(products, 2)
+              .slice(0, 6)
+              .map((p) => (
+                <ProductCard key={`reco-${p.id}`} product={p} />
+              ))}
+          </div>
+        </section>
+      )}
 
       {/* 상품 큐레이션 섹션들 (각 2열 그리드) */}
       {sections.map((s) => (

@@ -1,7 +1,151 @@
+.wrap {
+  max-width: 360px;
+  margin: 0 auto;
+  padding: var(--space-8) 0;
+}
+
+.title {
+  font-size: var(--font-2xl);
+  font-weight: var(--weight-bold);
+  text-align: center;
+  margin-bottom: var(--space-6);
+}
+
 .form {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  margin-top: var(--space-4);
+}
+
+.submit {
+  width: 100%;
+  margin-top: var(--space-2);
+}
+
+/* 약관 동의 */
+.terms {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.termAll {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: var(--weight-bold);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+}
+
+.term {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-sm);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.req {
+  color: var(--color-primary);
+}
+
+.opt {
+  color: var(--color-text-muted);
+}
+
+.termRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.detail {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: var(--font-xs);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* 약관 원문 모달 */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+}
+
+.modal {
+  width: 100%;
   max-width: 360px;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+}
+
+.modalTitle {
+  font-size: var(--font-lg);
+  font-weight: var(--weight-bold);
+  margin-bottom: var(--space-3);
+}
+
+.modalBody {
+  flex: 1;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  font-size: var(--font-sm);
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.modalClose {
+  width: 100%;
+  margin-top: var(--space-4);
+}
+
+.switch {
+  text-align: center;
+  margin-top: var(--space-5);
+  font-size: var(--font-sm);
+  color: var(--color-text-muted);
+}
+
+.switch a {
+  color: var(--color-primary);
+  font-weight: var(--weight-bold);
+  text-decoration: none;
+}
+
+/* 관리자 진입 (목업 편의용) */
+.adminEntry {
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+  text-align: center;
+}
+
+.adminLink {
+  display: inline-block;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-sm);
+  color: var(--color-text-muted);
+  text-decoration: none;
 }

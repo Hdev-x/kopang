@@ -1,32 +1,130 @@
+/* 대분류 가로 스크롤 */
+.majorRow {
+  display: flex;
+  gap: var(--space-4);
+  overflow-x: auto;
+  padding-bottom: var(--space-3);
+}
+
+.majorChip {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  width: 52px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+}
+
+.majorEmoji {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: var(--gray-100);
+  border: 2px solid transparent;
+  border-radius: var(--radius-full);
+  font-size: 22px;
+}
+
+.majorName {
+  font-size: var(--font-xs);
+  white-space: nowrap;
+}
+
+.majorActive {
+  color: var(--color-primary);
+  font-weight: var(--weight-bold);
+}
+
+.majorActive .majorEmoji {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+}
+
+/* 대분류 타이틀 */
 .title {
   font-size: var(--font-xl);
   font-weight: var(--weight-bold);
-  margin-bottom: var(--space-4);
+  margin: var(--space-4) 0 var(--space-3);
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-3);
-}
-
-.link {
-  text-decoration: none;
-  color: inherit;
-}
-
-.thumb {
-  aspect-ratio: 1;
-  background: var(--gray-100);
-  border-radius: var(--radius-sm);
+/* 중·소분류 필터 줄 */
+.filterRow {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  padding-bottom: var(--space-2);
   margin-bottom: var(--space-2);
 }
 
-.name {
+.filter {
+  flex: 0 0 auto;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-text);
   font-size: var(--font-sm);
+  white-space: nowrap;
+  cursor: pointer;
 }
 
-.price {
-  font-size: var(--font-md);
+.filterActive {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
   font-weight: var(--weight-bold);
+}
+
+/* 소분류는 한 단계 작고 연하게 */
+.subFilter {
+  font-size: var(--font-xs);
+  padding: 6px var(--space-3);
+}
+
+.subFilter.filterActive {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* 정렬 바 */
+.sortBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--space-2);
+}
+
+.count {
+  font-size: var(--font-sm);
+  color: var(--color-text-muted);
+}
+
+.sortSelect {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 6px var(--space-2);
+  font-size: var(--font-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+/* 상품 그리드 */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4) var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.empty {
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: var(--space-8) 0;
 }

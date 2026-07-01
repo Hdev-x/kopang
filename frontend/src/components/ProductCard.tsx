@@ -9,7 +9,16 @@ export function ProductCard({ product }: Props) {
   return (
     <Link to={`/products/${product.id}`} className={styles.card}>
       <div className={styles.imageWrap}>
-        <div className={styles.thumb} />
+        {product.imageUrl ? (
+          <img
+            src={product.imageUrl}
+            alt={product.name}
+            className={styles.thumb}
+            loading="lazy"
+          />
+        ) : (
+          <div className={styles.thumb} />
+        )}
         <button
           type="button"
           className={styles.heart}
