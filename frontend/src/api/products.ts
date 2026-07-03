@@ -2,10 +2,15 @@ import { client } from "./client";
 import type { ApiResponse, Page } from "../types/api";
 import type { Product } from "../types/product";
 
-// 상품 목록 (GET /api/products?cat=<카테고리id>)
-export async function getProducts(categoryId?: number) {
+// 상품 목록 (GET /api/products?cat=<카테고리id>&keyword=<검색어>)
+export async function getProducts(categoryId?: number, page: number = 0, size: number = 20, keyword?: string) {
   const res = await client.get<ApiResponse<Page<Product>>>("/products", {
-    params: categoryId != null ? { cat: categoryId } : undefined,
+    params: {
+      ...(categoryId != null ? { cat: categoryId } : {}),
+      ...(keyword ? { keyword } : {}),
+      page,
+      size,
+    },
   });
   return res.data.data; // Page<Product>
 }

@@ -6,6 +6,7 @@ import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
 import { AddToCartModal } from "../../components/AddToCartModal";
 import { getProduct } from "../../api/products";
+import { addToCart } from "../../api/cart";
 import type { Product } from "../../types/product";
 import styles from "./ProductDetailPage.module.css";
 
@@ -84,7 +85,19 @@ export function ProductDetailPage() {
         >
           <Heart size={22} strokeWidth={2.2} fill={wished ? "currentColor" : "none"} />
         </button>
-        <Button className={styles.cta} onClick={() => setModalOpen(true)}>
+        <Button
+          className={styles.cta}
+          onClick={() => {
+            if (id) {
+              addToCart(Number(id), 1)
+                .then(() => setModalOpen(true))
+                .catch((err) => {
+                  const errMsg = err.response?.data?.message || "장바구니 담기에 실패했습니다.";
+                  alert(errMsg);
+                });
+            }
+          }}
+        >
           장바구니 담기
         </Button>
       </div>

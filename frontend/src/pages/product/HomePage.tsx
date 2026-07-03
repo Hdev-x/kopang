@@ -6,6 +6,7 @@ import { ProductCard } from "../../components/ProductCard";
 import { useAuth } from "../../hooks/useAuth";
 import { getCategories } from "../../api/categories";
 import { getProducts } from "../../api/products";
+import { CATEGORY_EMOJIS } from "../../types/category";
 import type { Category } from "../../types/category";
 import type { Product } from "../../types/product";
 import styles from "./HomePage.module.css";
@@ -93,7 +94,7 @@ export function HomePage() {
             to={`/products?cat=${c.id}`}
             className={styles.chip}
           >
-            <span className={styles.chipEmoji}>{c.emoji}</span>
+            <span className={styles.chipEmoji}>{CATEGORY_EMOJIS[c.name] ?? "📁"}</span>
             <span className={styles.chipName}>{c.name}</span>
           </Link>
         ))}

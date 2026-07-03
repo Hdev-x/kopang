@@ -30,8 +30,11 @@ export function SearchPage() {
   const [results, setResults] = useState<Product[]>([]);
 
   useEffect(() => {
-    // 목업: 검색어가 있으면 샘플 상품을 결과로
-    if (q) getProducts().then((p) => setResults(p.content)).catch(console.error);
+    if (q) {
+      getProducts(undefined, 0, 40, q)
+        .then((p) => setResults(p.content))
+        .catch(console.error);
+    }
   }, [q]);
 
   // 추천어/최근검색어 클릭 → 검색어 확정 + 최근검색어 저장

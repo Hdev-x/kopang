@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Layout } from "../../components/Layout";
 import { ProductCard } from "../../components/ProductCard";
 import { getCategories } from "../../api/categories";
 import { getProducts } from "../../api/products";
+import { CATEGORY_EMOJIS } from "../../types/category";
 import type { Category } from "../../types/category";
 import type { Product } from "../../types/product";
 import styles from "./ProductListPage.module.css";
@@ -13,6 +14,10 @@ export function ProductListPage() {
   const [tree, setTree] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
+  const observerRef = useRef<HTMLDivElement | null>(null);
 
   // 선택 상태: 대분류는 URL(?cat=), 중/소는 화면 내 상태
   const majorId = Number(params.get("cat")) || null;
@@ -33,11 +38,13 @@ export function ProductListPage() {
     [tree, majorId],
   );
 
-  // 대분류가 바뀌면 중/소 초기화
-  useEffect(() => {
+  // 렌더링 도중 대분류 변경 시 중/소 초기화 (You might not need an effect)
+  const [prevMajorId, setPrevMajorId] = useState<number | null>(null);
+  if (majorId !== prevMajorId) {
+    setPrevMajorId(majorId);
     setMidId(null);
     setSubId(null);
-  }, [major?.id]);
+  }
 
   // 현재 대분류 기준으로 유효한 중/소만 인정 (전환 중 깜빡임 방지)
   const mids = major?.children ?? [];
@@ -49,14 +56,55 @@ export function ProductListPage() {
   // 가장 구체적인 선택 = 소 ?? 중 ?? 대
   const activeId = subValid ?? midValid ?? major?.id ?? null;
 
+  // 렌더링 도중 카테고리 변경 시 페이지 초기화
+  const [prevActiveId, setPrevActiveId] = useState<number | null>(null);
+  if (activeId !== prevActiveId) {
+    setPrevActiveId(activeId);
+    setCurrentPage(0);
+  }
+
   useEffect(() => {
     if (activeId == null) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
-    getProducts(activeId)
-      .then((page) => setProducts(page.content))
+    getProducts(activeId, currentPage, 20)
+      .then((page) => {
+        if (currentPage === 0) {
+          setProducts(page.content);
+        } else {
+          setProducts((prev) => [...prev, ...page.content]);
+        }
+        setTotalPages(page.totalPages);
+        setTotalElements(page.totalElements);
+      })
       .catch((e) => console.error("상품 로드 실패:", e))
       .finally(() => setLoading(false));
-  }, [activeId]);
+  }, [activeId, currentPage]);
+
+  // 무한 스크롤 스크롤 감지
+  useEffect(() => {
+    if (loading || currentPage >= totalPages - 1) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setCurrentPage((prev) => prev + 1);
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    const currentRef = observerRef.current;
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+    };
+  }, [loading, currentPage, totalPages]);
 
   // 정렬 (인기순=기본 순서 유지)
   const sorted = [...products];
@@ -75,7 +123,7 @@ export function ProductListPage() {
             className={`${styles.majorChip} ${c.id === major?.id ? styles.majorActive : ""}`}
             onClick={() => setParams({ cat: String(c.id) })}
           >
-            <span className={styles.majorEmoji}>{c.emoji}</span>
+            <span className={styles.majorEmoji}>{CATEGORY_EMOJIS[c.name] ?? "📁"}</span>
             <span className={styles.majorName}>{c.name}</span>
           </button>
         ))}
@@ -138,7 +186,7 @@ export function ProductListPage() {
 
       {/* 정렬 바 */}
       <div className={styles.sortBar}>
-        <span className={styles.count}>{products.length}개</span>
+        <span className={styles.count}>{totalElements}개</span>
         <select
           className={styles.sortSelect}
           value={sort}
@@ -152,15 +200,22 @@ export function ProductListPage() {
       </div>
 
       {/* 상품 그리드 */}
-      {loading ? (
+      {loading && currentPage === 0 ? (
         <p className={styles.empty}>불러오는 중...</p>
-      ) : sorted.length === 0 ? (
+      ) : !loading && sorted.length === 0 ? (
         <p className={styles.empty}>상품이 없습니다.</p>
       ) : (
         <div className={styles.grid}>
           {sorted.map((p) => (
             <ProductCard key={p.id} product={p} />
           ))}
+        </div>
+      )}
+
+      {/* 무한 스크롤 스크롤 트리거 */}
+      {totalPages > 1 && currentPage < totalPages - 1 && (
+        <div ref={observerRef} style={{ textAlign: "center", padding: "30px 0", color: "var(--color-text-muted)" }}>
+          {loading ? "불러오는 중..." : "스크롤하여 더 보기"}
         </div>
       )}
     </Layout>
