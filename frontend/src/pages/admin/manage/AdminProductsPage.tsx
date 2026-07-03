@@ -1,72 +1,172 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { AdminLayout } from "../../../components/AdminLayout";
 import { Card } from "../../../components/Card";
 import { Button } from "../../../components/Button";
+import { getProducts, deleteProduct } from "../../../api/products";
+import { getCategories } from "../../../api/categories";
+import type { Product } from "../../../types/product";
+import type { Category } from "../../../types/category";
 import sh from "../adminShared.module.css";
 import styles from "./AdminProductsPage.module.css";
 
-// 목업 데이터 (img = 대표이미지)
-const PRODUCTS = [
-  { id: 1, name: "유기농 오이 3입", cat: "식품", price: 1500, stock: 320, status: "판매중", img: "/images/bakery/1.jpg" },
-  { id: 2, name: "제주 삼다수 2L x6", cat: "식품", price: 6900, stock: 12, status: "품절임박", img: "/images/beverage/1.jpg" },
-  { id: 3, name: "무선 마우스", cat: "전자", price: 18900, stock: 0, status: "품절", img: "/images/earphones/2.jpg" },
-  { id: 4, name: "주방세제 리필", cat: "생활", price: 3200, stock: 540, status: "판매중", img: "/images/detergent/1.jpg" },
-  { id: 5, name: "USB-C 충전기 30W", cat: "전자", price: 15900, stock: 88, status: "판매중", img: "/images/earphones/4.jpg" },
-];
-const CATS = ["전체", "식품", "생활", "전자"];
-
-function statusBadge(s: string) {
-  if (s === "판매중") return sh.bOk;
-  if (s === "품절임박") return sh.bWarn;
-  return sh.bDanger;
-}
-
 export function AdminProductsPage() {
-  const [cat, setCat] = useState("전체");
-  const rows = cat === "전체" ? PRODUCTS : PRODUCTS.filter((p) => p.cat === cat);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCatName, setSelectedCatName] = useState("전체");
+  const [tempKeyword, setTempKeyword] = useState("");
+  const [keyword, setKeyword] = useState("");
+
+  // 1. 카테고리 목록 로드
+  useEffect(() => {
+    getCategories()
+      .then(setCategories)
+      .catch((err) => console.error("카테고리 조회 실패:", err));
+  }, []);
+
+  // 2. 선택된 카테고리에 따른 상품 목록 로드
+  useEffect(() => {
+    // 선택된 카테고리 명칭과 매핑되는 categoryId를 탐색
+    const targetCat = categories.find((c) => c.name === selectedCatName);
+    const categoryId = selectedCatName === "전체" ? undefined : targetCat?.id;
+
+    // 백엔드는 페이징을 지원하므로 page=0, size=1000으로 설정하고, 최신순(latest) 정렬을 주어 로딩 속도를 최적화합니다.
+    getProducts(categoryId, 0, 1000, keyword, "latest")
+      .then((data) => {
+        if (data && data.content) {
+          setProducts(data.content);
+        } else {
+          setProducts([]);
+        }
+      })
+      .catch((err) => console.error("상품 목록 조회 실패:", err));
+  }, [selectedCatName, categories, keyword]);
+
+  // 상품 삭제 처리
+  const handleDelete = (id: number) => {
+    if (!window.confirm("정말로 이 상품을 삭제하시겠습니까?")) return;
+
+    deleteProduct(id)
+      .then(() => {
+        alert("상품이 성공적으로 삭제되었습니다.");
+        setProducts((prev) => prev.filter((p) => p.id !== id));
+      })
+      .catch((err) => {
+        const errMsg = err.response?.data?.message || "상품 삭제에 실패했습니다.";
+        alert(errMsg);
+      });
+  };
+
+  // 재고 수에 따라 동적으로 상태 명칭 및 스타일 배지 계산
+  const getProductStatus = (stock?: number) => {
+    const s = stock ?? 0;
+    if (s === 0) return { label: "품절", style: sh.bDanger };
+    if (s <= 20) return { label: "품절임박", style: sh.bWarn };
+    return { label: "판매중", style: sh.bOk };
+  };
+
+  // 탭 필터 메뉴는 "전체" + 1차 depth 루트 카테고리 이름들
+  const filterCategories = ["전체", ...categories.map((c) => c.name)];
 
   return (
     <AdminLayout title="상품 관리">
       <div className={sh.toolbar}>
         <div className={sh.filters}>
-          {CATS.map((c) => (
+          {filterCategories.map((cName) => (
             <button
-              key={c}
-              className={`${sh.chip} ${cat === c ? sh.chipActive : ""}`}
-              onClick={() => setCat(c)}
+              key={cName}
+              className={`${sh.chip} ${selectedCatName === cName ? sh.chipActive : ""}`}
+              onClick={() => setSelectedCatName(cName)}
             >
-              {c}
+              {cName}
             </button>
           ))}
         </div>
+
+        {/* 상품명 검색창 */}
+        <div style={{ display: "flex", gap: "8px", alignItems: "center", minWidth: "240px" }}>
+          <input
+            type="text"
+            className={sh.search}
+            placeholder="상품명 검색..."
+            value={tempKeyword}
+            onChange={(e) => setTempKeyword(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                setKeyword(tempKeyword);
+              }
+            }}
+            style={{ height: "36px", padding: "0 var(--space-3)", flex: 1, minWidth: "0" }}
+          />
+          <Button
+            size="sm"
+            onClick={() => setKeyword(tempKeyword)}
+            style={{ height: "36px", whiteSpace: "nowrap" }}
+          >
+            검색
+          </Button>
+        </div>
+
         <div className={sh.spacer} />
         <Link to="/admin/products/new">
-          <Button size="sm">
+          <Button size="sm" style={{ height: "36px" }}>
             <Plus size={15} /> 상품 등록
           </Button>
         </Link>
       </div>
 
       <div className={sh.list}>
-        {rows.map((p) => (
-          <Card key={p.id} className={styles.card}>
-            <img src={p.img} alt={p.name} className={styles.thumb} />
-            <div className={styles.body}>
-              <div className={styles.line}>
-                <span className={styles.name}>{p.name}</span>
-                <span className={`${sh.badge} ${statusBadge(p.status)}`}>{p.status}</span>
-              </div>
-              <div className={styles.line}>
-                <span className={styles.meta}>
-                  {p.cat} · ₩{p.price.toLocaleString()} · 재고 {p.stock.toLocaleString()}
-                </span>
-                <Button variant="ghost" size="sm">수정</Button>
-              </div>
-            </div>
-          </Card>
-        ))}
+        {products.length === 0 ? (
+          <p className={sh.muted} style={{ textAlign: "center", padding: "40px 0" }}>
+            등록된 상품이 없습니다.
+          </p>
+        ) : (
+          products.map((p) => {
+            const statusInfo = getProductStatus(p.stock);
+            // categoryId와 매핑되는 한글 카테고리명 조회
+            const catObj = categories.find((c) => c.id === p.categoryId);
+            const categoryLabel = catObj ? catObj.name : "미분류";
+
+            return (
+              <Card key={p.id} className={styles.card}>
+                {p.imageUrl ? (
+                  <img src={p.imageUrl} alt={p.name} className={styles.thumb} />
+                ) : (
+                  <div className={styles.thumb} style={{ display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", color: "var(--color-text-muted)" }}>
+                    이미지 없음
+                  </div>
+                )}
+                <div className={styles.body}>
+                  <div className={styles.line}>
+                    <span className={styles.name}>{p.name}</span>
+                    <span className={`${sh.badge} ${statusInfo.style}`}>{statusInfo.label}</span>
+                  </div>
+                  <div className={styles.line}>
+                    <span className={styles.meta}>
+                      {categoryLabel} · ₩{p.price.toLocaleString()} · 재고 {p.stock?.toLocaleString() ?? 0}개
+                    </span>
+                    <div className={styles.btnGroup}>
+                      <Link to={`/admin/products/edit/${p.id}`}>
+                        <Button variant="ghost" size="sm">
+                          수정
+                        </Button>
+                      </Link>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={styles.deleteBtn}
+                        onClick={() => handleDelete(p.id)}
+                      >
+                        삭제
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            );
+          })
+        )}
       </div>
     </AdminLayout>
   );

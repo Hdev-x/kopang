@@ -22,7 +22,7 @@ export function HomePage() {
     getCategories()
       .then(setCategories)
       .catch((err) => console.error("카테고리 불러오기 실패:", err));
-    getProducts()
+    getProducts(undefined, 0, 20, undefined, "latest")
       .then((page) => setProducts(page.content))
       .catch((err) => console.error("상품 불러오기 실패:", err));
   }, []);

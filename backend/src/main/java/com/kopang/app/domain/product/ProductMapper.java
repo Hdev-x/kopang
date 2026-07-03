@@ -10,6 +10,7 @@ public interface ProductMapper {
     List<ProductDTO> findProducts(
         @Param("categoryId") Long categoryId,
         @Param("keyword") String keyword,
+        @Param("sort") String sort,
         @Param("limit") int limit,
         @Param("offset") int offset
     );
@@ -22,4 +23,16 @@ public interface ProductMapper {
     ProductDTO findById(@Param("productId") Long productId);
 
     void updateStock(@Param("productId") Long productId, @Param("stock") int stock);
+
+    void insertProduct(ProductDTO product);
+
+    void updateProduct(ProductDTO product);
+
+    void deleteProduct(@Param("productId") Long productId);
+
+    void insertProductImage(@Param("productId") int productId, @Param("url") String url);
+
+    List<String> findImageUrlsByProductId(@Param("productId") int productId);
+
+    void deleteProductImagesByProductId(@Param("productId") int productId);
 }

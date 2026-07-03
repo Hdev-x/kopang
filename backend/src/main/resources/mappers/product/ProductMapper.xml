@@ -37,7 +37,28 @@
             created_at
         FROM products
         <include refid="productSearchCondition" />
-        ORDER BY product_id DESC
+        ORDER BY
+        <choose>
+            <when test="sort == 'priceAsc'">
+                price ASC, product_id DESC
+            </when>
+            <when test="sort == 'priceDesc'">
+                price DESC, product_id DESC
+            </when>
+            <when test="sort == 'latest'">
+                product_id DESC
+            </when>
+            <otherwise>
+                (
+                    SELECT COALESCE(SUM(oi.quantity), 0)
+                    FROM orders_item oi
+                    INNER JOIN orders o ON oi.order_id = o.order_id
+                    WHERE oi.product_id = products.product_id
+                      AND o.payment_status = 'PAID'
+                      AND (o.order_status IS NULL OR o.order_status != 'CANCELLED')
+                ) DESC, product_id DESC
+            </otherwise>
+        </choose>
         LIMIT #{limit} OFFSET #{offset}
     </select>
 
@@ -68,5 +89,65 @@
         SET stock = #{stock}
         WHERE product_id = #{productId}
     </update>
+
+    <insert id="insertProduct" useGeneratedKeys="true" keyProperty="productId">
+        INSERT INTO products (
+            category_id,
+            name,
+            description,
+            price,
+            discount_price,
+            stock,
+            image_url,
+            status,
+            created_at
+        ) VALUES (
+            #{categoryId},
+            #{name},
+            #{description},
+            #{price},
+            #{discountPrice},
+            #{stock},
+            #{imageUrl},
+            COALESCE(#{status}, 'ACTIVE'),
+            COALESCE(#{createdAt}, CURRENT_TIMESTAMP)
+        )
+    </insert>
+
+    <update id="updateProduct">
+        UPDATE products
+        SET
+            category_id = #{categoryId},
+            name = #{name},
+            description = #{description},
+            price = #{price},
+            discount_price = #{discountPrice},
+            stock = #{stock},
+            image_url = #{imageUrl},
+            status = COALESCE(#{status}, 'ACTIVE')
+        WHERE product_id = #{productId}
+    </update>
+
+    <delete id="deleteProduct">
+        DELETE FROM products
+        WHERE product_id = #{productId}
+    </delete>
+
+    <insert id="insertProductImage">
+        INSERT INTO product_images (product_id, url)
+        VALUES (#{productId}, #{url})
+    </insert>
+
+    <select id="findImageUrlsByProductId" resultType="string">
+        SELECT url
+        FROM product_images
+        WHERE product_id = #{productId}
+        ORDER BY image_id ASC
+    </select>
+
+    <delete id="deleteProductImagesByProductId">
+        DELETE FROM product_images
+        WHERE product_id = #{productId}
+    </delete>
 
 </mapper>

@@ -56,10 +56,12 @@ export function ProductListPage() {
   // 가장 구체적인 선택 = 소 ?? 중 ?? 대
   const activeId = subValid ?? midValid ?? major?.id ?? null;
 
-  // 렌더링 도중 카테고리 변경 시 페이지 초기화
+  // 렌더링 도중 카테고리나 정렬(sort) 변경 시 페이지 초기화
   const [prevActiveId, setPrevActiveId] = useState<number | null>(null);
-  if (activeId !== prevActiveId) {
+  const [prevSort, setPrevSort] = useState<string>("popular");
+  if (activeId !== prevActiveId || sort !== prevSort) {
     setPrevActiveId(activeId);
+    setPrevSort(sort);
     setCurrentPage(0);
   }
 
@@ -67,7 +69,7 @@ export function ProductListPage() {
     if (activeId == null) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
-    getProducts(activeId, currentPage, 20)
+    getProducts(activeId, currentPage, 20, undefined, sort)
       .then((page) => {
         if (currentPage === 0) {
           setProducts(page.content);
@@ -79,7 +81,7 @@ export function ProductListPage() {
       })
       .catch((e) => console.error("상품 로드 실패:", e))
       .finally(() => setLoading(false));
-  }, [activeId, currentPage]);
+  }, [activeId, currentPage, sort]);
 
   // 무한 스크롤 스크롤 감지
   useEffect(() => {
@@ -106,11 +108,8 @@ export function ProductListPage() {
     };
   }, [loading, currentPage, totalPages]);
 
-  // 정렬 (인기순=기본 순서 유지)
-  const sorted = [...products];
-  if (sort === "priceAsc") sorted.sort((a, b) => a.price - b.price);
-  else if (sort === "priceDesc") sorted.sort((a, b) => b.price - a.price);
-  else if (sort === "latest") sorted.sort((a, b) => b.id - a.id);
+  // 정렬 (백엔드 동적 정렬 결과 그대로 반영)
+  const sorted = products;
 
   return (
     <Layout>
