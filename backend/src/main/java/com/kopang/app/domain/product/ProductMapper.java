@@ -20,4 +20,6 @@ public interface ProductMapper {
     );
 
     ProductDTO findById(@Param("productId") Long productId);
+
+    void updateStock(@Param("productId") Long productId, @Param("stock") int stock);
 }

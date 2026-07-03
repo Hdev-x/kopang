@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2 } from "lucide-react";
 import { Layout } from "../../components/Layout";
 import { Button } from "../../components/Button";
@@ -7,8 +6,9 @@ import styles from "./OrderCompletePage.module.css";
 
 export function OrderCompletePage() {
   const navigate = useNavigate();
-  // 목업 주문번호 (한 번만 생성)
-  const [orderNo] = useState(() => `C${Date.now().toString().slice(-10)}`);
+  const [searchParams] = useSearchParams();
+  const orderId = searchParams.get("orderId") ?? "";
+  const orderNo = `ORD-${orderId}`;
 
   return (
     <Layout>
@@ -20,7 +20,7 @@ export function OrderCompletePage() {
           <Button variant="ghost" className={styles.btn} onClick={() => navigate("/")}>
             홈으로
           </Button>
-          <Button className={styles.btn} onClick={() => navigate("/my")}>
+          <Button className={styles.btn} onClick={() => navigate("/my/orders")}>
             주문내역 보기
           </Button>
         </div>

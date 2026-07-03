@@ -30,6 +30,9 @@ import { CheckoutPage } from "../pages/order/CheckoutPage";
 import { OrderCompletePage } from "../pages/order/OrderCompletePage";
 import { OrderHistoryPage } from "../pages/order/OrderHistoryPage";
 import { OrderDetailPage } from "../pages/order/OrderDetailPage";
+import { ResumeCheckoutPage } from "../pages/order/ResumeCheckoutPage";
+import { PaymentSuccessPage } from "../pages/order/PaymentSuccessPage";
+import { PaymentFailPage } from "../pages/order/PaymentFailPage";
 
 // ===== 알림 (notifications) — 담당 C =====
 import { NotificationsPage } from "../pages/notifications/NotificationsPage";
@@ -94,7 +97,10 @@ export function AppRouter() {
       {/* ---------- 장바구니 · 주문/결제 ---------- */}
       <Route path="/cart" element={<CartPage />} />
       <Route path="/checkout" element={<CheckoutPage />} />
+      <Route path="/checkout/resume/:orderId" element={<ResumeCheckoutPage />} />
       <Route path="/order/complete" element={<OrderCompletePage />} />
+      <Route path="/payment/success" element={<PaymentSuccessPage />} />
+      <Route path="/payment/fail" element={<PaymentFailPage />} />
       <Route path="/my/orders" element={<OrderHistoryPage />} />
       <Route path="/my/orders/:no" element={<OrderDetailPage />} />
 

@@ -63,14 +63,16 @@ function scoreColor(s: number) {
 
 export function AdminChurnPage() {
   const distTotal = RISK_DIST.reduce((a, b) => a + b.count, 0);
-  // 도넛(conic-gradient) 구간 계산
-  let acc = 0;
-  const stops = RISK_DIST.map((r) => {
-    const start = (acc / distTotal) * 100;
-    acc += r.count;
-    const end = (acc / distTotal) * 100;
-    return `${r.color} ${start}% ${end}%`;
-  }).join(", ");
+  // 도넛(conic-gradient) 구간 계산 — reduce로 누적합 계산 (let 재할당 없음)
+  const stops = RISK_DIST.reduce<{ parts: string[]; acc: number }>(
+    (state, r) => {
+      const start = (state.acc / distTotal) * 100;
+      const next = state.acc + r.count;
+      const end = (next / distTotal) * 100;
+      return { parts: [...state.parts, `${r.color} ${start}% ${end}%`], acc: next };
+    },
+    { parts: [], acc: 0 }
+  ).parts.join(", ");
 
   const trendMax = Math.max(...CHURN_TREND.map((t) => t.v), CHURN_TARGET) * 1.1;
 
