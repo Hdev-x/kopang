@@ -63,4 +63,10 @@
         WHERE product_id = #{productId}
     </select>
 
+    <update id="updateStock">
+        UPDATE products
+        SET stock = #{stock}
+        WHERE product_id = #{productId}
+    </update>
+
 </mapper>
