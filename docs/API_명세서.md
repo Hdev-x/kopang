@@ -1,7 +1,25 @@
-# Kopang API 명세 초안 (P0 코어)
+# Kopang API 명세서
 
-> ⚠️ **확정 아님 — 프론트·백 "계약서"의 출발점.** 회의에서 같이 다듬는다.
-> 이게 합의되면 → 백엔드 안 끝나도 프론트가 **mock 데이터로 병렬 작업** 가능.
+> ✅ **2026-07-02 회의 확정 — 프론트·백 공통 계약서.**
+> 변경이 필요하면 팀 합의 후 이 문서를 먼저 수정한다 (코드보다 문서가 기준).
+> 확정 내용: 위험 유형 8종 · PG(토스 테스트) 결제 · 만족도 수집 · 찜/주문취소/내쿠폰/포인트 · FastAPI 피처
+
+## 위험 유형 코드 (공통 enum) — 확정 8종
+
+`churn_score.risk_type` · `retention_intervention.risk_type` · `/api/admin/churn/customers?type=` 에서 공용.
+
+| 코드 | 유형 | 감지 기준 |
+| --- | --- | --- |
+| `CART_ABANDON` | ① 장바구니 방치 | 담은 지 3일 경과 + 이후 주문 없음 |
+| `MEMBERSHIP_CANCEL` | ② 멤버십 해지 | 해지 클릭 / status=CANCELLED |
+| `FIRST_ORDER_ONLY` | ③ 첫구매 후 미복귀 | 주문 1건뿐 + 30일 경과 |
+| `WISHLIST_IDLE` | ④ 찜 방치 | 찜 7일 경과 + 해당 상품 미주문 |
+| `COUPON_EXPIRING` | ⑤ 쿠폰 만료 임박 | 미사용 쿠폰 만료 3일 전 |
+| `BAD_EXPERIENCE` | ⑥ 부정경험 | 평점≤2 리뷰 또는 취소/반품 |
+| `LOGIN_INACTIVE` | ⑦ 접속 뜸 | 마지막 로그인 30일 초과 |
+| `SPENDING_DROP` | ⑧ 구매액 감소 | 최근 30일 지출 < 직전 30일의 50% |
+
+> +`ML_HIGH` — 룰이 아닌 ML 등급 기반 대응일 때 사용.
 
 ## 공통 규칙
 - Base URL: `/api`
@@ -52,6 +70,8 @@ POST /api/auth/login
 | GET | `/api/products/{id}` | 상세 | ✕ |
 | GET | `/api/products/{id}/similar` | 비슷상품 추천 (P1) | ✕ |
 
+> ⚠️ 파라미터명 통일: FE 현재 코드는 `?cat=` 사용 중 → **`category`로 통일** (FE 수정 필요).
+
 ```
 GET /api/products?category=식품&page=0&size=20
   res: { "content": [ { "id":1, "name":"오이", "price":1500, "imageUrl":"..." } ],
@@ -80,9 +100,23 @@ POST /api/cart
 
 | Method | Path | 설명 |
 | --- | --- | --- |
-| POST | `/api/orders` | 주문 생성 (장바구니 기반, 결제 mock) |
+| POST | `/api/orders` | 주문 생성 (결제 대기 상태) |
+| POST | `/api/payments/confirm` | **PG 결제 승인** (토스 테스트) → 주문 확정 |
 | GET | `/api/orders` | 내 주문 목록 |
 | GET | `/api/orders/{id}` | 주문 상세 |
+| POST | `/api/orders/{id}/cancel` | 주문 취소 → `order_status=CANCELLED` (⑥부정경험 감지 원천) |
+
+**결제 플로우 (토스페이먼츠 테스트 키 · mock 폴백 유지)**
+```
+1. POST /api/orders            → 주문 생성 (payment_status=PENDING, 금액 확정)
+2. FE 토스 결제위젯 호출        → 테스트 카드 결제 → successUrl로 paymentKey·orderId·amount 수신
+3. POST /api/payments/confirm  → BE가 토스 승인 API 호출(시크릿 키) + 금액 검증
+     req: { "orderId": 100, "paymentKey": "...", "amount": 4500 }
+     res: { "orderId": 100, "status": "PAID" }
+   → orders.payment_key 저장, payment_status=PAID
+※ PG 장애/미연동 환경에서는 mock 결제(즉시 PAID)로 폴백 — 데모 리스크 대비
+※ 시크릿 키는 BE .env 전용 (FE·git 노출 금지). 실결제·정산은 사업자 필요 → 테스트 모드만 사용
+```
 
 ```
 POST /api/orders
@@ -106,6 +140,23 @@ POST /api/products/1/reviews   (multipart/form-data)
 ---
 
 ---
+
+## 5-1. 찜 (Wishlist) — 🔒 인증
+> ④찜방치 감지의 데이터 원천. FE `/my/wishlist` 화면 대응.
+
+| Method | Path | 설명 |
+| --- | --- | --- |
+| GET | `/api/wishlist` | 내 찜 목록 |
+| POST | `/api/wishlist` | 찜 등록 `{ "productId": 1 }` |
+| DELETE | `/api/wishlist/{productId}` | 찜 해제 |
+
+## 5-2. 쿠폰 / 포인트 — 🔒 인증
+> ⑤쿠폰만료임박 표시 + FE `/my/coupons` · `/my/points` 화면 대응.
+
+| Method | Path | 설명 |
+| --- | --- | --- |
+| GET | `/api/coupons/me` | 내 쿠폰함 (`used`, `expiresAt` 포함 → 만료임박 표시) |
+| GET | `/api/points` | 내 포인트 내역 |
 
 ## 6. 추천 (Recommendations)
 
@@ -132,8 +183,26 @@ GET /api/notifications
   res: { "items": [ { "id":1, "type":"ABANDON", "message":"...", "read":false, "createdAt":"..." } ] }
 ```
 
+> `type` 값 (유형 8종 대응 반영): `ABANDON`(①리마인더) / `REBUY`(⑧재구매) / `WISHLIST`(④찜 할인) /
+> `COUPON_EXPIRE`(⑤만료임박) / `WELCOME_BACK`(③웰컴백) / `APOLOGY`(⑥사과쿠폰) / `COMEBACK`(⑦복귀) / `RECOMMEND` / `NOTICE`
+
+## 7-1. 만족도 평가 (Satisfaction) — 🔒 인증
+> 서비스(페이지) 만족도 별점. 주문완료 페이지 등에서 수집 → `satisfaction_survey` 저장 → ML 피처(`satisfaction_score`) 원천.
+> 프론트 위젯은 추후 작업(주문완료 페이지 예정). 응답률 낮음 전제 — 미응답은 결측 처리.
+
+| Method | Path | 설명 |
+| --- | --- | --- |
+| POST | `/api/satisfaction` | 만족도 제출 |
+
+```
+POST /api/satisfaction
+  req: { "score": 4, "context": "ORDER" }   // score 1~5, context: ORDER / CANCEL / CS
+  res: { "id": 10 }
+```
+
 ## 8. 문의 (Inquiries) — 🔒 인증
 > 상품문의(상세페이지) + 1:1 일반문의(고객센터)를 한 테이블로. 공지사항과는 별도.
+> ⚠️ 경로 통일: FE 목업이 현재 `/api/qna` 사용 중 → **`/api/inquiries`로 통일** (FE 수정 필요).
 
 | Method | Path | 설명 |
 | --- | --- | --- |
@@ -171,11 +240,25 @@ POST /api/inquiries
 **이탈 (churn)**
 | Method | Path | 설명 |
 | --- | --- | --- |
-| GET | `/api/admin/churn/summary` | 대시보드 집계(위험도 분포·이탈율·효과) |
-| GET | `/api/admin/churn/customers?type=&level=` | 위험 고객 목록(일반/멤버십·등급) |
+| GET | `/api/admin/churn/summary` | 대시보드 집계(위험도 분포 · **유형별 분포** · 이탈율 · 효과) |
+| GET | `/api/admin/churn/customers?type=&level=` | 위험 고객 목록. `type`=위험 유형 8종 enum · `level`=`HIGH/MID/LOW` |
 | GET | `/api/admin/churn/report?from=&to=` | 대응 효과 리포트(처치군 vs 대조군 순효과) |
-| GET | `/api/admin/interventions?type=` | 대응 이력(자동 발송 로그) |
+| GET | `/api/admin/interventions?type=` | 대응 이력(자동 발송 로그). `type`=위험 유형 enum |
 | GET | `/api/admin/membership` | 멤버십 현황(해지위험·유지율·전환) |
+
+```
+GET /api/admin/churn/customers?type=CART_ABANDON&level=HIGH
+  res: { "content": [ { "userId":1, "name":"김민수", "isMember":false,
+         "score":0.87, "riskLevel":"HIGH", "riskType":"CART_ABANDON",
+         "detectedAt":"2026-07-01T09:00:00", "suggestedAction":"COUPON" } ], ... }
+
+GET /api/admin/churn/summary
+  res: { "levelCounts": { "HIGH":143, "MID":312, "LOW":1945 },
+         "typeCounts": { "CART_ABANDON":80, "MEMBERSHIP_CANCEL":21, "FIRST_ORDER_ONLY":45,
+                          "WISHLIST_IDLE":60, "COUPON_EXPIRING":95, "BAD_EXPERIENCE":18,
+                          "LOGIN_INACTIVE":110, "SPENDING_DROP":33 },
+         "weeklyChurnRate": [ ... ], "effect": { ... } }
+```
 
 **운영**
 | Method | Path | 설명 |
@@ -193,7 +276,24 @@ POST /api/inquiries
 | Method | Path | 설명 |
 | --- | --- | --- |
 | POST | `(FastAPI) /predict/churn` | 이탈 확률 예측(로지스틱) |
-| POST | `(FastAPI) /recommend` | 맞춤 추천(item-CF) |
+| POST | `(FastAPI) /recommend` | 맞춤 추천 |
+
+```
+POST /predict/churn        // 입력 피처 = 유형 8종을 수치화한 것 (학습 SQL과 동일 계산)
+  req: { "users": [ { "userId":1,
+          "cartAbandonCount":2,      // ①
+          "membershipCancelled":0,   // ②
+          "orderCount":1,            // ③
+          "wishlistIdleCount":3,     // ④
+          "couponUnusedCount":1,     // ⑤
+          "badReviewCount":0,        // ⑥ (취소·반품 수 cancelCount 별도)
+          "cancelCount":0,
+          "recencyDays":35,          // ⑦
+          "spendingDropRatio":0.4,   // ⑧
+          "satisfactionScore":4,     // 만족도(미응답 시 null → 중립 대체)
+          "tenureDays":120, "totalSpend":250000 } ] }
+  res: { "results": [ { "userId":1, "score":0.83, "riskLevel":"HIGH", "modelVersion":"v1" } ] }
+```
 
 > 대응(쿠폰/알림/추천) **자동 발송**은 스케줄러 배치 로직 → 외부 API 아님. 관리자는 결과만 조회.
 
