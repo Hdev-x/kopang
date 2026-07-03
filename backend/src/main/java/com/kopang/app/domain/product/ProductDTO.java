@@ -1,6 +1,7 @@
 package com.kopang.app.domain.product;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -19,6 +20,5 @@ public class ProductDTO {
     private String imageUrl;
     private String status;
     private LocalDateTime createdAt;
-
-    
+    private List<String> imageUrls;
 }

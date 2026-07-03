@@ -46,3 +46,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.btnGroup {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.deleteBtn {
+  color: var(--color-danger) !important;
+}
+

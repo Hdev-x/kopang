@@ -34,12 +34,22 @@ export function ProductCard({ product }: Props) {
 
       {product.brand && <p className={styles.brand}>{product.brand}</p>}
       <p className={styles.name}>{product.name}</p>
-      <p className={styles.priceRow}>
-        {product.discountRate ? (
-          <span className={styles.discount}>{product.discountRate}%</span>
-        ) : null}
-        <span className={styles.price}>{product.price.toLocaleString()}원</span>
-      </p>
+      
+      {product.discountRate && product.discountRate > 0 ? (
+        <div className={styles.priceRow}>
+          <div className={styles.discountArea}>
+            <span className={styles.discount}>{product.discountRate}%</span>
+            <span className={styles.originalPrice}>{product.price.toLocaleString()}원</span>
+          </div>
+          <span className={styles.price}>
+            {Math.round((product.price * (100 - product.discountRate)) / 100).toLocaleString()}원
+          </span>
+        </div>
+      ) : (
+        <div className={styles.priceRow}>
+          <span className={styles.price}>{product.price.toLocaleString()}원</span>
+        </div>
+      )}
     </Link>
   );
 }

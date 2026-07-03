@@ -52,15 +52,32 @@
 
 .priceRow {
   display: flex;
-  align-items: baseline;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+.discountArea {
+  display: flex;
+  align-items: center;
   gap: var(--space-1);
 }
 
 .discount {
   color: var(--color-sale);
   font-weight: var(--weight-bold);
+  font-size: var(--font-md);
+}
+
+.originalPrice {
+  text-decoration: line-through;
+  color: var(--gray-400);
+  font-size: var(--font-xs);
 }
 
 .price {
-  font-weight: var(--weight-bold);
+  font-weight: var(--weight-extrabold);
+  font-size: var(--font-md);
+  color: var(--color-text);
 }
+

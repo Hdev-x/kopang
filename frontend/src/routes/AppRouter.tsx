@@ -130,6 +130,7 @@ export function AppRouter() {
       {/* 관리자 · 운영 */}
       <Route path="/admin/products" element={<AdminRoute><AdminProductsPage /></AdminRoute>} />
       <Route path="/admin/products/new" element={<AdminRoute><AdminProductFormPage /></AdminRoute>} />
+      <Route path="/admin/products/edit/:id" element={<AdminRoute><AdminProductFormPage /></AdminRoute>} />
       <Route path="/admin/orders" element={<AdminRoute><AdminOrdersPage /></AdminRoute>} />
       <Route path="/admin/members" element={<AdminRoute><AdminMembersPage /></AdminRoute>} />
       <Route path="/admin/membership" element={<AdminRoute><AdminMembershipPage /></AdminRoute>} />

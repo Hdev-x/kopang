@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -21,6 +23,7 @@ public class ProductResponseDTO {
     private String description;
     private Integer stock;
     private Long categoryId;
+    private List<String> imageUrls;
 
     public static ProductResponseDTO from(ProductDTO dto) {
         int rate = 0;
@@ -32,11 +35,12 @@ public class ProductResponseDTO {
                 .name(dto.getName())
                 .price(dto.getPrice())
                 .imageUrl(dto.getImageUrl())
-                .brand(null) // DB에 브랜드가 없으므로 null로 반환하거나 생략
+                .brand(null)
                 .discountRate(rate)
                 .description(dto.getDescription())
                 .stock(dto.getStock())
                 .categoryId((long) dto.getCategoryId())
+                .imageUrls(dto.getImageUrls())
                 .build();
     }
 }
