@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper 
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kopang.app.domain.churn.ChurnMapper">
+
+    <!-- 1. 30일 넘게 미로그인 회원의 user_id 목록 -->
+    <select id="findLoginInactiveUsers" resultType="long">
+        SELECT user_id
+        FROM users
+        WHERE last_login_at &lt; NOW() - INTERVAL '30 days'
+            AND status = 'ACTIVE'
+            AND role = 'ROLE_USER'
+    </select>
+
+    <!-- 2. 이탈 판정 결과 1건을 churn_score에 저장 -->
+    <insert id="insertChurnScore">
+        INSERT INTO churn_score (user_id, score, risk_level, risk_type, source)
+        VALUES (#{userId}, #{score}, #{riskLevel}, #{riskType}, #{source})
+    </insert>
+
+
+</mapper>
