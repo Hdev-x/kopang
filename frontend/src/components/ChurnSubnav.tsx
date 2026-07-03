@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import sh from "../pages/adminShared.module.css";
+import sh from "../pages/admin/adminShared.module.css";
 
 // 이탈 관련 관리자 페이지 사이의 서브 탭
 const TABS = [
