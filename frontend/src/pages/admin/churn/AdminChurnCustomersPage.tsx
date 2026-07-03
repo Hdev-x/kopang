@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { AdminLayout } from "../components/AdminLayout";
-import { ChurnSubnav } from "../components/ChurnSubnav";
-import { Card } from "../components/Card";
-import sh from "./adminShared.module.css";
+import { AdminLayout } from "../../../components/AdminLayout";
+import { ChurnSubnav } from "../../../components/ChurnSubnav";
+import { Card } from "../../../components/Card";
+import sh from "../adminShared.module.css";
 
 // 목업 — churn_score + retention_intervention 조인. 대응은 시스템이 자동 발송 → 상태만 표시.
 const CUSTOMERS = [

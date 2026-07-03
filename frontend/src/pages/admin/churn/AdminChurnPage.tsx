@@ -1,6 +1,6 @@
-import { AdminLayout } from "../components/AdminLayout";
-import { ChurnSubnav } from "../components/ChurnSubnav";
-import { Card } from "../components/Card";
+import { AdminLayout } from "../../../components/AdminLayout";
+import { ChurnSubnav } from "../../../components/ChurnSubnav";
+import { Card } from "../../../components/Card";
 import {
   Users,
   TrendingDown,
@@ -8,7 +8,7 @@ import {
   Coins,
   AlertTriangle,
 } from "lucide-react";
-import sh from "./adminShared.module.css";
+import sh from "../adminShared.module.css";
 import styles from "./AdminChurnPage.module.css";
 
 // ⚠️ 전부 목업 데이터 (실제론 churn_score / intervention_outcome / churn_daily_metric 집계)

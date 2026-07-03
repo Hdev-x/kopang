@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { AdminLayout } from "../components/AdminLayout";
-import { Card } from "../components/Card";
-import { Button } from "../components/Button";
-import sh from "./adminShared.module.css";
+import { AdminLayout } from "../../../components/AdminLayout";
+import { Card } from "../../../components/Card";
+import { Button } from "../../../components/Button";
+import sh from "../adminShared.module.css";
 
 const ORDERS = [
   { no: "K00231", user: "홍길동", amt: 34860, paid: "결제완료", ship: "배송준비" },

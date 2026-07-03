@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Layout } from "../components/Layout";
-import { PageHeader } from "../components/PageHeader";
-import { INQUIRIES } from "../mocks/inquiryData";
-import s from "./Qna.module.css";
+import { Layout } from "../../components/Layout";
+import { PageHeader } from "../../components/PageHeader";
+import { INQUIRIES } from "../../mocks/inquiryData";
+import s from "../../styles/Qna.module.css";
 
 export function MyInquiriesPage() {
   const [params] = useSearchParams();

@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Layout } from "../components/Layout";
-import { PageHeader } from "../components/PageHeader";
-import { Button } from "../components/Button";
-import { getQnaList } from "../api/qna";
-import type { QnaSummary } from "../types/qna";
-import s from "./Qna.module.css";
+import { Layout } from "../../components/Layout";
+import { PageHeader } from "../../components/PageHeader";
+import { Button } from "../../components/Button";
+import { getQnaList } from "../../api/qna";
+import type { QnaSummary } from "../../types/qna";
+import s from "../../styles/Qna.module.css";
 
 export function QnaListPage() {
   const [items, setItems] = useState<QnaSummary[]>([]);

@@ -1,10 +1,10 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Layout } from "../components/Layout";
-import { PageHeader } from "../components/PageHeader";
-import { Input } from "../components/Input";
-import { Button } from "../components/Button";
-import s from "./AccountPages.module.css";
+import { Layout } from "../../components/Layout";
+import { PageHeader } from "../../components/PageHeader";
+import { Input } from "../../components/Input";
+import { Button } from "../../components/Button";
+import s from "../../styles/AccountPages.module.css";
 
 export function SupportInquiryPage() {
   const navigate = useNavigate();

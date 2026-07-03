@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { Layout } from "../components/Layout";
-import { PageHeader } from "../components/PageHeader";
-import { ProductCard } from "../components/ProductCard";
-import { getProducts } from "../api/products";
-import type { Product } from "../types/product";
-import s from "./AccountPages.module.css";
+import { Layout } from "../../components/Layout";
+import { PageHeader } from "../../components/PageHeader";
+import { ProductCard } from "../../components/ProductCard";
+import { getProducts } from "../../api/products";
+import type { Product } from "../../types/product";
+import s from "../../styles/AccountPages.module.css";
 
 export function WishlistPage() {
   const [items, setItems] = useState<Product[]>([]);

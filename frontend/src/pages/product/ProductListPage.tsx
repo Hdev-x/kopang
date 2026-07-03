@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Layout } from "../components/Layout";
-import { ProductCard } from "../components/ProductCard";
-import { getCategories } from "../api/categories";
-import { getProducts } from "../api/products";
-import type { Category } from "../types/category";
-import type { Product } from "../types/product";
+import { Layout } from "../../components/Layout";
+import { ProductCard } from "../../components/ProductCard";
+import { getCategories } from "../../api/categories";
+import { getProducts } from "../../api/products";
+import type { Category } from "../../types/category";
+import type { Product } from "../../types/product";
 import styles from "./ProductListPage.module.css";
 
 export function ProductListPage() {

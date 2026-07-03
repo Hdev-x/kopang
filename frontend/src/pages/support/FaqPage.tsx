@@ -1,8 +1,8 @@
-import { Layout } from "../components/Layout";
-import { PageHeader } from "../components/PageHeader";
-import { Card } from "../components/Card";
-import { FAQS } from "../mocks/supportData";
-import s from "./AccountPages.module.css";
+import { Layout } from "../../components/Layout";
+import { PageHeader } from "../../components/PageHeader";
+import { Card } from "../../components/Card";
+import { FAQS } from "../../mocks/supportData";
+import s from "../../styles/AccountPages.module.css";
 
 export function FaqPage() {
   return (

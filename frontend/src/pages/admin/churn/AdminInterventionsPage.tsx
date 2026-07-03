@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { AdminLayout } from "../components/AdminLayout";
-import { ChurnSubnav } from "../components/ChurnSubnav";
-import { Card } from "../components/Card";
-import sh from "./adminShared.module.css";
+import { AdminLayout } from "../../../components/AdminLayout";
+import { ChurnSubnav } from "../../../components/ChurnSubnav";
+import { Card } from "../../../components/Card";
+import sh from "../adminShared.module.css";
 
 // 목업 — retention_intervention + intervention_outcome 로그
 const LOG = [

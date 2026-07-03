@@ -1,10 +1,10 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Layout } from "../components/Layout";
-import { PageHeader } from "../components/PageHeader";
-import { Card } from "../components/Card";
-import { Button } from "../components/Button";
-import { NOTICES, FAQS } from "../mocks/supportData";
-import s from "./AccountPages.module.css";
+import { Layout } from "../../components/Layout";
+import { PageHeader } from "../../components/PageHeader";
+import { Card } from "../../components/Card";
+import { Button } from "../../components/Button";
+import { NOTICES, FAQS } from "../../mocks/supportData";
+import s from "../../styles/AccountPages.module.css";
 
 export function SupportPage() {
   const navigate = useNavigate();

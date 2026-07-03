@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Clock } from "lucide-react";
-import { Layout } from "../components/Layout";
-import { ProductCard } from "../components/ProductCard";
-import { getProducts } from "../api/products";
-import type { Product } from "../types/product";
+import { Layout } from "../../components/Layout";
+import { ProductCard } from "../../components/ProductCard";
+import { getProducts } from "../../api/products";
+import type { Product } from "../../types/product";
 import styles from "./SearchPage.module.css";
 
 // 자동완성용 인기 키워드 (목업)

@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Layout } from "../components/Layout";
-import { PageHeader } from "../components/PageHeader";
-import { Button } from "../components/Button";
-import { Card } from "../components/Card";
-import { getCart } from "../api/cart";
-import type { CartItem } from "../types/cart";
+import { Layout } from "../../components/Layout";
+import { PageHeader } from "../../components/PageHeader";
+import { Button } from "../../components/Button";
+import { Card } from "../../components/Card";
+import { getCart } from "../../api/cart";
+import type { CartItem } from "../../types/cart";
 import styles from "./CartPage.module.css";
 
 export function CartPage() {

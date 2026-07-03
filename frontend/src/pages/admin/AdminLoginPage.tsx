@@ -1,9 +1,9 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
-import { Input } from "../components/Input";
-import { Button } from "../components/Button";
-import { login as authLogin } from "../lib/auth";
+import { Input } from "../../components/Input";
+import { Button } from "../../components/Button";
+import { login as authLogin } from "../../lib/auth";
 import styles from "./AdminLoginPage.module.css";
 
 export function AdminLoginPage() {

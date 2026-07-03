@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Layout } from "../components/Layout";
-import { PageHeader } from "../components/PageHeader";
-import { Button } from "../components/Button";
-import { Card } from "../components/Card";
-import { getCart } from "../api/cart";
-import type { CartItem } from "../types/cart";
+import { Layout } from "../../components/Layout";
+import { PageHeader } from "../../components/PageHeader";
+import { Button } from "../../components/Button";
+import { Card } from "../../components/Card";
+import { getCart } from "../../api/cart";
+import type { CartItem } from "../../types/cart";
 import styles from "./CheckoutPage.module.css";
 
 const PAY_METHODS = ["코팡페이 간편결제", "신용/체크카드", "무통장입금"];

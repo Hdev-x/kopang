@@ -1,9 +1,9 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { AdminLayout } from "../components/AdminLayout";
-import { Input } from "../components/Input";
-import { Button } from "../components/Button";
-import sh from "./adminShared.module.css";
+import { AdminLayout } from "../../../components/AdminLayout";
+import { Input } from "../../../components/Input";
+import { Button } from "../../../components/Button";
+import sh from "../adminShared.module.css";
 import styles from "./AdminProductFormPage.module.css";
 
 // 필드 = 상세페이지(ProductDetailPage)에 노출되는 내용 그대로.

@@ -1,8 +1,8 @@
 import { Plus } from "lucide-react";
-import { AdminLayout } from "../components/AdminLayout";
-import { Card } from "../components/Card";
-import { Button } from "../components/Button";
-import sh from "./adminShared.module.css";
+import { AdminLayout } from "../../../components/AdminLayout";
+import { Card } from "../../../components/Card";
+import { Button } from "../../../components/Button";
+import sh from "../adminShared.module.css";
 
 const COUPONS = [
   { name: "이탈방지 5천원", type: "정액", value: "₩5,000", period: "~07-31", issued: 412, used: 128, target: "위험고객" },

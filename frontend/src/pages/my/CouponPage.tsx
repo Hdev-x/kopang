@@ -1,7 +1,7 @@
-import { Layout } from "../components/Layout";
-import { PageHeader } from "../components/PageHeader";
-import { Card } from "../components/Card";
-import s from "./AccountPages.module.css";
+import { Layout } from "../../components/Layout";
+import { PageHeader } from "../../components/PageHeader";
+import { Card } from "../../components/Card";
+import s from "../../styles/AccountPages.module.css";
 
 const COUPONS = [
   { name: "신규가입 5,000원 할인", cond: "3만원 이상 구매 시", exp: "~2026.07.31" },

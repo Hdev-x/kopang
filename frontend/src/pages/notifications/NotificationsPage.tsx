@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
-import { Layout } from "../components/Layout";
-import { PageHeader } from "../components/PageHeader";
-import { NOTIFICATIONS, type NotiType } from "../mocks/notificationData";
+import { Layout } from "../../components/Layout";
+import { PageHeader } from "../../components/PageHeader";
+import { NOTIFICATIONS, type NotiType } from "../../mocks/notificationData";
 import s from "./NotificationsPage.module.css";
 
 const EMOJI: Record<NotiType, string> = {

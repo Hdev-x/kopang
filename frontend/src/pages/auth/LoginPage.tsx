@@ -1,12 +1,12 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Layout } from "../components/Layout";
-import { PageHeader } from "../components/PageHeader";
-import { Input } from "../components/Input";
-import { Button } from "../components/Button";
-import { login as apiLogin } from "../api/auth";
-import { login as authLogin } from "../lib/auth";
-import styles from "./LoginPage.module.css";
+import { Layout } from "../../components/Layout";
+import { PageHeader } from "../../components/PageHeader";
+import { Input } from "../../components/Input";
+import { Button } from "../../components/Button";
+import { login as apiLogin } from "../../api/auth";
+import { login as authLogin } from "../../lib/auth";
+import styles from "../../styles/LoginPage.module.css";
 
 export function LoginPage() {
   const [email, setEmail] = useState("");

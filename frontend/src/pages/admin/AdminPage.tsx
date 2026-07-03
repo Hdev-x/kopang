@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
-import { AdminLayout } from "../components/AdminLayout";
-import { Card } from "../components/Card";
+import { AdminLayout } from "../../components/AdminLayout";
+import { Card } from "../../components/Card";
 import styles from "./AdminPage.module.css";
 
 // 전부 목업 통계 (실제론 집계 쿼리)

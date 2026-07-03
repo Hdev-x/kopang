@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Heart } from "lucide-react";
-import { Layout } from "../components/Layout";
-import { Button } from "../components/Button";
-import { Card } from "../components/Card";
-import { AddToCartModal } from "../components/AddToCartModal";
-import { getProduct } from "../api/products";
-import type { Product } from "../types/product";
+import { Layout } from "../../components/Layout";
+import { Button } from "../../components/Button";
+import { Card } from "../../components/Card";
+import { AddToCartModal } from "../../components/AddToCartModal";
+import { getProduct } from "../../api/products";
+import type { Product } from "../../types/product";
 import styles from "./ProductDetailPage.module.css";
 
 // 목업 리뷰

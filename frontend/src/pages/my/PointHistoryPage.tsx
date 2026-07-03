@@ -1,7 +1,7 @@
-import { Layout } from "../components/Layout";
-import { PageHeader } from "../components/PageHeader";
-import { Card } from "../components/Card";
-import s from "./AccountPages.module.css";
+import { Layout } from "../../components/Layout";
+import { PageHeader } from "../../components/PageHeader";
+import { Card } from "../../components/Card";
+import s from "../../styles/AccountPages.module.css";
 
 const POINTS = [
   { date: "2026.06.28", desc: "구매 적립", amt: 697 },

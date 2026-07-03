@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Check } from "lucide-react";
-import { Layout } from "../components/Layout";
-import { PageHeader } from "../components/PageHeader";
-import { Button } from "../components/Button";
-import { Card } from "../components/Card";
+import { Layout } from "../../components/Layout";
+import { PageHeader } from "../../components/PageHeader";
+import { Button } from "../../components/Button";
+import { Card } from "../../components/Card";
 import styles from "./MembershipPage.module.css";
 
 const BENEFITS = ["무료배송 무제한", "구매액 2% 적립", "회원 단독 특가·쿠폰", "무료 반품"];

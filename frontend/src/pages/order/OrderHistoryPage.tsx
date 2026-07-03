@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
-import { Layout } from "../components/Layout";
-import { PageHeader } from "../components/PageHeader";
-import { Card } from "../components/Card";
-import { ORDERS, orderTotal, productOf } from "../mocks/orderData";
-import s from "./AccountPages.module.css";
+import { Layout } from "../../components/Layout";
+import { PageHeader } from "../../components/PageHeader";
+import { Card } from "../../components/Card";
+import { ORDERS, orderTotal, productOf } from "../../mocks/orderData";
+import s from "../../styles/AccountPages.module.css";
 
 export function OrderHistoryPage() {
   return (

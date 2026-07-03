@@ -1,6 +1,6 @@
-import { AdminLayout } from "../components/AdminLayout";
-import { Card } from "../components/Card";
-import sh from "./adminShared.module.css";
+import { AdminLayout } from "../../../components/AdminLayout";
+import { Card } from "../../../components/Card";
+import sh from "../adminShared.module.css";
 
 // 목업 — recommendation_history 점검 (item-CF 결과 확인)
 const KPIS = [

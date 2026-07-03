@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { X } from "lucide-react";
-import { Layout } from "../components/Layout";
-import { ProductCard } from "../components/ProductCard";
-import { useAuth } from "../hooks/useAuth";
-import { getCategories } from "../api/categories";
-import { getProducts } from "../api/products";
-import type { Category } from "../types/category";
-import type { Product } from "../types/product";
+import { Layout } from "../../components/Layout";
+import { ProductCard } from "../../components/ProductCard";
+import { useAuth } from "../../hooks/useAuth";
+import { getCategories } from "../../api/categories";
+import { getProducts } from "../../api/products";
+import type { Category } from "../../types/category";
+import type { Product } from "../../types/product";
 import styles from "./HomePage.module.css";
 
 export function HomePage() {

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CheckCircle2 } from "lucide-react";
-import { Layout } from "../components/Layout";
-import { Button } from "../components/Button";
+import { Layout } from "../../components/Layout";
+import { Button } from "../../components/Button";
 import styles from "./OrderCompletePage.module.css";
 
 export function OrderCompletePage() {

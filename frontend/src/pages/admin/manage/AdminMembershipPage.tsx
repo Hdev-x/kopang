@@ -1,6 +1,6 @@
-import { AdminLayout } from "../components/AdminLayout";
-import { Card } from "../components/Card";
-import sh from "./adminShared.module.css";
+import { AdminLayout } from "../../../components/AdminLayout";
+import { Card } from "../../../components/Card";
+import sh from "../adminShared.module.css";
 
 // 멤버십 = 이탈 방지의 간판 시나리오(해지 방어 + 일반→멤버십 전환)
 const KPIS = [

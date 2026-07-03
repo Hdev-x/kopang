@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Search } from "lucide-react";
-import { AdminLayout } from "../components/AdminLayout";
-import { Card } from "../components/Card";
-import sh from "./adminShared.module.css";
+import { AdminLayout } from "../../../components/AdminLayout";
+import { Card } from "../../../components/Card";
+import sh from "../adminShared.module.css";
 
 const MEMBERS = [
   { id: 1, name: "홍길동", email: "hong@a.com", type: "일반", joined: "2026-01-12", risk: "저위험" },

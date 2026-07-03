@@ -1,7 +1,7 @@
-import { AdminLayout } from "../components/AdminLayout";
-import { ChurnSubnav } from "../components/ChurnSubnav";
-import { Card } from "../components/Card";
-import sh from "./adminShared.module.css";
+import { AdminLayout } from "../../../components/AdminLayout";
+import { ChurnSubnav } from "../../../components/ChurnSubnav";
+import { Card } from "../../../components/Card";
+import sh from "../adminShared.module.css";
 
 // 목업 — intervention_outcome 집계 (처치군 vs 대조군 = 순효과)
 const KPIS = [

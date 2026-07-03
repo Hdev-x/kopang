@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus } from "lucide-react";
-import { AdminLayout } from "../components/AdminLayout";
-import { Card } from "../components/Card";
-import { Button } from "../components/Button";
-import sh from "./adminShared.module.css";
+import { AdminLayout } from "../../../components/AdminLayout";
+import { Card } from "../../../components/Card";
+import { Button } from "../../../components/Button";
+import sh from "../adminShared.module.css";
 import styles from "./AdminProductsPage.module.css";
 
 // 목업 데이터 (img = 대표이미지)

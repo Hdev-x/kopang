@@ -1,9 +1,9 @@
 import { Link, useParams } from "react-router-dom";
-import { Layout } from "../components/Layout";
-import { PageHeader } from "../components/PageHeader";
-import { Card } from "../components/Card";
-import { findOrder, orderTotal, productOf } from "../mocks/orderData";
-import s from "./AccountPages.module.css";
+import { Layout } from "../../components/Layout";
+import { PageHeader } from "../../components/PageHeader";
+import { Card } from "../../components/Card";
+import { findOrder, orderTotal, productOf } from "../../mocks/orderData";
+import s from "../../styles/AccountPages.module.css";
 
 export function OrderDetailPage() {
   const { no } = useParams();

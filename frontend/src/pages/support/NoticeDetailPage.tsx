@@ -1,9 +1,9 @@
 import { useParams } from "react-router-dom";
-import { Layout } from "../components/Layout";
-import { PageHeader } from "../components/PageHeader";
-import { Card } from "../components/Card";
-import { NOTICES } from "../mocks/supportData";
-import s from "./Qna.module.css";
+import { Layout } from "../../components/Layout";
+import { PageHeader } from "../../components/PageHeader";
+import { Card } from "../../components/Card";
+import { NOTICES } from "../../mocks/supportData";
+import s from "../../styles/Qna.module.css";
 
 export function NoticeDetailPage() {
   const { id } = useParams();

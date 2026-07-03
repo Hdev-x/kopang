@@ -1,9 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
-import { Layout } from "../components/Layout";
-import { Button } from "../components/Button";
-import { useAuth } from "../hooks/useAuth";
-import { logout } from "../lib/auth";
+import { Layout } from "../../components/Layout";
+import { Button } from "../../components/Button";
+import { useAuth } from "../../hooks/useAuth";
+import { logout } from "../../lib/auth";
 import styles from "./MyPage.module.css";
 
 // 목업 메뉴 — to가 있으면 이동, 없으면 항목만 노출

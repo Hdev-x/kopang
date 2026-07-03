@@ -1,6 +1,6 @@
-import { AdminLayout } from "../components/AdminLayout";
-import { Card } from "../components/Card";
-import sh from "./adminShared.module.css";
+import { AdminLayout } from "../../../components/AdminLayout";
+import { Card } from "../../../components/Card";
+import sh from "../adminShared.module.css";
 import styles from "./AdminStatsPage.module.css";
 
 const KPIS = [

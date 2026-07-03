@@ -1,10 +1,10 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Layout } from "../components/Layout";
-import { PageHeader } from "../components/PageHeader";
-import { Button } from "../components/Button";
-import { createQna } from "../api/qna";
-import s from "./Qna.module.css";
+import { Layout } from "../../components/Layout";
+import { PageHeader } from "../../components/PageHeader";
+import { Button } from "../../components/Button";
+import { createQna } from "../../api/qna";
+import s from "../../styles/Qna.module.css";
 
 export function QnaWritePage() {
   const [title, setTitle] = useState("");
