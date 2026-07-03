@@ -62,3 +62,9 @@ docs/kopang-app_credentials.csv
 
 # ===== 회의 자료 (커밋 안 함) =====
 회의/
+
+# 시드 자동생성물 (재생성: ml/seed_db.py)
+seed_events.sql
+
+# 아카이브 폴더 (로컬 보관용, 커밋 제외)
+_/
