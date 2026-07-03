@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kopang.app.domain.category.CategoryMapper">
+
+    <select id="findAll" resultType="com.kopang.app.domain.category.CategoryDTO">
+        SELECT 
+            category_id AS id,
+            parent_id AS parentId,
+            depth,
+            name
+        FROM categories
+        ORDER BY depth ASC, category_id ASC
+    </select>
+
+</mapper>

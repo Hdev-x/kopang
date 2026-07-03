@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kopang.app.domain.product.ProductMapper">
+
+    <sql id="productSearchCondition">
+        <where>
+            <if test="categoryId != null">
+                AND category_id IN (
+                    WITH RECURSIVE subcategories AS (
+                        SELECT category_id FROM categories WHERE category_id = #{categoryId}
+                        UNION ALL
+                        SELECT c.category_id FROM categories c
+                        INNER JOIN subcategories s ON c.parent_id = s.category_id
+                    )
+                    SELECT category_id FROM subcategories
+                )
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND name LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+    </sql>
+
+    <select id="findProducts" resultType="com.kopang.app.domain.product.ProductDTO">
+        SELECT 
+            product_id,
+            category_id,
+            name,
+            description,
+            price,
+            discount_price,
+            stock,
+            image_url,
+            status,
+            created_at
+        FROM products
+        <include refid="productSearchCondition" />
+        ORDER BY product_id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countProducts" resultType="long">
+        SELECT COUNT(*)
+        FROM products
+        <include refid="productSearchCondition" />
+    </select>
+
+    <select id="findById" resultType="com.kopang.app.domain.product.ProductDTO">
+        SELECT 
+            product_id,
+            category_id,
+            name,
+            description,
+            price,
+            discount_price,
+            stock,
+            image_url,
+            status,
+            created_at
+        FROM products
+        WHERE product_id = #{productId}
+    </select>
+
+</mapper>

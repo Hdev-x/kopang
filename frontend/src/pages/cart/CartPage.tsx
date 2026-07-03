@@ -4,7 +4,7 @@ import { Layout } from "../../components/Layout";
 import { PageHeader } from "../../components/PageHeader";
 import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
-import { getCart } from "../../api/cart";
+import { getCart, updateCartItem, deleteCartItem } from "../../api/cart";
 import type { CartItem } from "../../types/cart";
 import styles from "./CartPage.module.css";
 
@@ -18,6 +18,31 @@ export function CartPage() {
       .catch((err) => console.error("장바구니 불러오기 실패:", err));
   }, []);
 
+  const handleQtyChange = (itemId: number, newQty: number) => {
+    if (newQty < 1) return;
+    updateCartItem(itemId, newQty)
+      .then(() => {
+        setItems((prev) =>
+          prev.map((it) => (it.itemId === itemId ? { ...it, quantity: newQty } : it))
+        );
+      })
+      .catch((err) => {
+        const errMsg = err.response?.data?.message || "수량 수정에 실패했습니다.";
+        alert(errMsg);
+      });
+  };
+
+  const handleDelete = (itemId: number) => {
+    deleteCartItem(itemId)
+      .then(() => {
+        setItems((prev) => prev.filter((it) => it.itemId !== itemId));
+      })
+      .catch((err) => {
+        const errMsg = err.response?.data?.message || "장바구니 삭제에 실패했습니다.";
+        alert(errMsg);
+      });
+  };
+
   const total = items.reduce((sum, it) => sum + it.price * it.quantity, 0);
 
   return (
@@ -29,12 +54,8 @@ export function CartPage() {
         <>
           <div className={styles.list}>
             {items.map((it) => (
-              <Link
-                key={it.itemId}
-                to={`/products/${it.productId}`}
-                className={styles.itemLink}
-              >
-                <Card className={styles.item}>
+              <Card key={it.itemId} className={styles.item}>
+                <Link to={`/products/${it.productId}`} className={styles.itemMain}>
                   {it.imageUrl ? (
                     <img src={it.imageUrl} alt={it.name} className={styles.thumb} />
                   ) : (
@@ -43,10 +64,36 @@ export function CartPage() {
                   <div className={styles.info}>
                     <p className={styles.name}>{it.name}</p>
                     <p className={styles.price}>{it.price.toLocaleString()}원</p>
-                    <p className={styles.qty}>수량 {it.quantity}</p>
                   </div>
-                </Card>
-              </Link>
+                </Link>
+                <div className={styles.actions}>
+                  <div className={styles.quantityControl}>
+                    <button
+                      type="button"
+                      onClick={() => handleQtyChange(it.itemId, it.quantity - 1)}
+                      className={styles.qtyBtn}
+                      disabled={it.quantity <= 1}
+                    >
+                      -
+                    </button>
+                    <span className={styles.quantity}>{it.quantity}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleQtyChange(it.itemId, it.quantity + 1)}
+                      className={styles.qtyBtn}
+                    >
+                      +
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(it.itemId)}
+                    className={styles.deleteBtn}
+                  >
+                    삭제
+                  </button>
+                </div>
+              </Card>
             ))}
           </div>
           <div className={styles.summary}>
