@@ -21,12 +21,21 @@ export function isAdmin(): boolean {
   return getAuth()?.role === "ADMIN";
 }
 
-export function login(user: AuthUser = { name: "홍길동" }): void {
+export function login(user: AuthUser, accessToken?: string, refreshToken?: string): void {
   localStorage.setItem(KEY, JSON.stringify(user));
-  window.dispatchEvent(new Event("auth-change")); // 같은 탭 내 헤더 갱신용
+  if (accessToken) {
+    sessionStorage.setItem("accessToken", accessToken);
+  }
+  if (refreshToken) {
+    sessionStorage.setItem("refreshToken", refreshToken);
+  }
+  window.dispatchEvent(new Event("auth-change"));
 }
+
 
 export function logout(): void {
   localStorage.removeItem(KEY);
+  sessionStorage.removeItem("accessToken");
+  sessionStorage.removeItem("refreshToken");
   window.dispatchEvent(new Event("auth-change"));
 }

@@ -8,4 +8,5 @@ export type Product = {
   description?: string;
   stock?: number;
   categoryId?: number; // 속한 카테고리(중분류 또는 소분류) id
+  imageUrls?: string[];
 };

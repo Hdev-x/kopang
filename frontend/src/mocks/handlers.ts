@@ -76,17 +76,18 @@ export const handlers = [
     return HttpResponse.json({ success: true, data: created, message: null });
   }),
 
-  // 로그인
-  http.post("/api/auth/login", async ({ request }) => {
-    (await request.json()) as { email: string; password: string };
-    return HttpResponse.json({
-      success: true,
-      data: {
-        accessToken: "fake-access-token",
-        refreshToken: "fake-refresh-token",
-        user: { id: 1, name: "홍길동" },
-      },
-      message: null,
-    });
-  }),
+  // // 로그인
+  // http.post("/api/auth/login", async ({ request }) => {
+  //   (await request.json()) as { email: string; password: string };
+  //   return HttpResponse.json({
+  //     success: true,
+  //     data: {
+  //       accessToken: "fake-access-token",
+  //       refreshToken: "fake-refresh-token",
+  //       user: { id: 1, name: "홍길동" },
+  //     },
+  //     message: null,
+  //   });
+  // }),
+
 ];
