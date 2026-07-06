@@ -15,14 +15,18 @@ export function LoginPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    // 목업: MSW 가짜 로그인 시도 → 성공/실패 무관하게 로그인 상태로 처리하고 홈 이동
     try {
       const data = await apiLogin(email, password);
-      authLogin({ name: data.user.name });
-    } catch {
-      authLogin({ name: "홍길동" });
+      // 실제 로그인 정보 저장 (이름, 권한, 토큰)
+      authLogin(
+        { name: data.user.name, role: data.user.role },
+        data.accessToken,
+        data.refreshToken
+      );
+      navigate("/");
+    } catch (err: any) {
+      alert("로그인에 실패했습니다. 이메일 또는 비밀번호를 확인해 주세요.");
     }
-    navigate("/");
   };
 
   return (

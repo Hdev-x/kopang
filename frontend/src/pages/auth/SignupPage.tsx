@@ -4,7 +4,7 @@ import { Layout } from "../../components/Layout";
 import { PageHeader } from "../../components/PageHeader";
 import { Input } from "../../components/Input";
 import { Button } from "../../components/Button";
-import { login as authLogin } from "../../lib/auth";
+import { signup as apiSignup, checkEmail as apiCheckEmail } from "../../api/auth";
 import styles from "../../styles/LoginPage.module.css";
 
 // 약관 원문 (목업 예시 문안)
@@ -62,12 +62,25 @@ export function SignupPage() {
     setAgreeMkt(v);
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!requiredOk) return;
-    // 목업: 가입 즉시 로그인 상태로 처리하고 홈 이동
-    authLogin({ name: name || "홍길동" });
-    navigate("/");
+
+    try {
+      // 1. 이메일 중복 확인 (FR-USER-03)
+      const checkRes = await apiCheckEmail(email);
+      if (checkRes.exists) {
+        alert("이미 사용 중인 이메일입니다.");
+        return;
+      }
+
+      // 2. 회원 등록 (FR-USER-01)
+      await apiSignup({ email, password, name });
+      alert("회원가입이 성공적으로 완료되었습니다! 로그인해 주세요.");
+      navigate("/login");
+    } catch (err: any) {
+      alert("회원가입에 실패했습니다. 입력값을 확인해 주세요.");
+    }
   };
 
   return (

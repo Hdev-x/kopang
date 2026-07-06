@@ -34,14 +34,19 @@ client.interceptors.response.use(
         // refresh 요청은 client 말고 순수 axios로 (인터셉터 재귀 방지)
         const res = await axios.post("/api/auth/refresh", { refreshToken });
         const newAccessToken = res.data.data.accessToken;
+        const newRefreshToken = res.data.data.refreshToken;
 
         sessionStorage.setItem("accessToken", newAccessToken);
+        if (newRefreshToken) {
+          sessionStorage.setItem("refreshToken", newRefreshToken);
+        }
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-        return client(originalRequest); // 원래 요청 재시도
+        return client(originalRequest);
       } catch (refreshError) {
-        // refresh 실패 → 로그아웃
+        localStorage.removeItem("kopang_auth");
         sessionStorage.removeItem("accessToken");
         sessionStorage.removeItem("refreshToken");
+        window.dispatchEvent(new Event("auth-change"));
         window.location.href = "/login";
         return Promise.reject(refreshError);
       }
