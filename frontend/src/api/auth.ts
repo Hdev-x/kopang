@@ -79,3 +79,19 @@ export async function withdraw() {
   const res = await client.delete<ApiResponse<{ message: string }>>("/users/me");
   return res.data.data;
 }
+
+// 비밀번호 찾기 - 인증번호 발송 (POST /api/auth/find-password/send-code)
+export async function sendVerificationCode(email: string) {
+  const res = await client.post<ApiResponse<{ message: string }>>("/auth/find-password/send-code", { email });
+  return res.data.data;
+}
+
+// 비밀번호 찾기 - 비밀번호 재설정 (POST /api/auth/find-password/reset)
+export async function resetPassword(params: {
+  email: string;
+  code: string;
+  newPassword?: string;
+}) {
+  const res = await client.post<ApiResponse<{ message: string }>>("/auth/find-password/reset", params);
+  return res.data.data;
+}
