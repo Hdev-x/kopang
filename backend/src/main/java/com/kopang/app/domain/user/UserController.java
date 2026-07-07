@@ -148,4 +148,40 @@ public class UserController {
             return ResponseEntity.badRequest().body(ApiResponse.fail(e.getMessage()));
         }
     }
+
+    // 8. 비밀번호 찾기 - 인증코드 발송 (POST /api/auth/find-password/send-code)
+    @PostMapping("/auth/find-password/send-code")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> sendVerificationCode(
+            @RequestBody Map<String, String> body) {
+        try {
+            String email = body.get("email");
+            userService.sendVerificationCode(email);
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("message", "인증번호가 발송되었습니다. (테스트용 인증번호: 123456)");
+
+            return ResponseEntity.ok(ApiResponse.success(data));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.fail(e.getMessage()));
+        }
+    }
+
+    // 9. 비밀번호 찾기 - 비밀번호 재설정 (POST /api/auth/find-password/reset)
+    @PostMapping("/auth/find-password/reset")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> resetPassword(@RequestBody Map<String, String> body) {
+        try {
+            String email = body.get("email");
+            String code = body.get("code");
+            String newPassword = body.get("newPassword");
+
+            userService.resetPassword(email, code, newPassword);
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("message", "비밀번호가 성공적으로 재설정되었습니다");
+
+            return ResponseEntity.ok(ApiResponse.success(data));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.fail(e.getMessage()));
+        }
+    }
 }

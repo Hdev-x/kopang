@@ -3,6 +3,9 @@ import { Routes, Route } from "react-router-dom";
 // ===== 인증 (auth) — 담당 A =====
 import { LoginPage } from "../pages/auth/LoginPage";
 import { SignupPage } from "../pages/auth/SignupPage";
+import { FindPasswordPage } from "../pages/auth/FindPasswordPage";
+import { OAuth2CallbackPage } from "../pages/auth/OAuth2CallbackPage";
+
 
 // ===== 마이페이지 (my) — 담당 A =====
 import { MyPage } from "../pages/my/MyPage";
@@ -75,6 +78,8 @@ export function AppRouter() {
       {/* ---------- 인증 ---------- */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
+      <Route path="/find-password" element={<FindPasswordPage />} />
+      <Route path="/oauth2/callback" element={<OAuth2CallbackPage />} />
 
       {/* ---------- 마이페이지 ---------- */}
       <Route path="/my" element={<MyPage />} />
