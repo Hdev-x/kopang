@@ -9,6 +9,22 @@
     <!-- 조회 : 룰별 이탈 위험 대상 회원                      -->
     <!-- ============================================= -->
 
+    <!-- 룰1) 장바구니 방치 회원의 user_id 목록 -->
+    <select id="findCartAbandonUsers" resultType="long">
+        SELECT DISTINCT c.user_id
+        FROM cart c
+        INNER JOIN cart_item ci
+            ON c.cart_id = ci.cart_id
+        WHERE ci.added_at &lt; NOW() - INTERVAL '3 days'
+            AND NOT EXISTS
+            (
+                SELECT 1
+                FROM orders o
+                WHERE o.user_id = c.user_id
+                    AND o.ordered_at &gt; ci.added_at
+            )
+    </select>
+
     <!-- 룰2) 멤버십 해지한 회원의 user_id 목록 -->
     <select id="findMembershipCancelUsers" resultType="long">
         SELECT user_id
@@ -26,6 +42,24 @@
             AND MAX(ordered_at) &lt; NOW() - INTERVAL '30 days'
     </select>
 
+    <!-- 룰4) 찜 7일 경화 + 해당 상품 미주문 회원의 user_id 목록 -->
+    <select id="findWishlistIdleUsers" resultType="long">
+        SELECT DISTINCT w.user_id
+        FROM wishlist w
+        WHERE w.created_at &lt; NOW() - INTERVAL '7 days'
+            AND NOT EXISTS
+            (
+                SELECT 1
+                FROM orders o
+                INNER JOIN orders_item oi
+                    ON o.order_id = oi.order_id
+                WHERE o.ordered_at &gt; w.created_at
+                    AND w.product_id = oi.product_id
+                    AND o.user_id = w.user_id
+            )
+        
+    </select>
+
     <!-- 룰5) 미사용 쿠폰이 3일 내 만료되는 회원의 user_id 목록 -->
     <select id="findCouponExpiringUsers" resultType="long">
         SELECT user_id
@@ -36,6 +70,8 @@
         GROUP BY user_id
     </select>
 
+    <!-- 룰6)  -->
+
     <!-- 룰7) 30일 넘게 미로그인 회원의 user_id 목록 -->
     <select id="findLoginInactiveUsers" resultType="long">
         SELECT user_id
@@ -43,6 +79,32 @@
         WHERE last_login_at &lt; NOW() - INTERVAL '30 days'
             AND status = 'ACTIVE'
             AND role = 'ROLE_USER'
+    </select>
+
+    <!-- 룰8) 최근 30일 지출 < 직전 30일의 50% 회원의 user_id 목록 -->
+    <select id="findSpendingDropUsers" resultType="long">
+        SELECT user_id
+        FROM orders
+        WHERE order_status NOT IN ('CANCELLED', 'RETURNED')
+        GROUP BY user_id
+        HAVING
+            SUM(
+                CASE
+                    WHEN ordered_at &gt; NOW() - INTERVAL '30 days'
+                    THEN total_price
+                    ELSE 0
+                END
+            )  -- 창A (최근 30일)
+            &lt;
+            SUM(
+                CASE
+                    WHEN ordered_at &lt; NOW() - INTERVAL '30 days'
+                        AND ordered_at &gt; NOW() - INTERVAL '60 days'
+                    THEN total_price
+                    ELSE 0 
+                END
+            ) * 0.5  -- 창B (직전 30일) × 0.5
+
     </select>
 
 

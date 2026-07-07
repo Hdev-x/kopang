@@ -16,10 +16,13 @@ public class ChurnController {
     // [임시] 이탈 판정 배치 수동 실행 — 추후 스케줄러(CHURN-06)로 대체
     @PostMapping("/api/admin/churn/run")
     public void run() {
+        churnScoreService.detectWishlistIdle();
+        churnScoreService.detectCartAbandon();
         churnScoreService.detectLoginInactive();
         churnScoreService.detectFirstOrderOnly();
         churnScoreService.detectMembershipCancel();
         churnScoreService.detectCouponExpiring();
+        churnScoreService.detectSpendingDrop();
     }
 
 }
