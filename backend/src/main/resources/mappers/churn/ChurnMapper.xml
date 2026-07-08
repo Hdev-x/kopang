@@ -70,7 +70,16 @@
         GROUP BY user_id
     </select>
 
-    <!-- 룰6)  -->
+    <!-- 룰6) 평점 2점 미만 리뷰 또는 취소/반품 경험이 있는 회원의 user_id 목록 -->
+    <select id="findBadExperienceUsers" resultType="long">
+        SELECT user_id
+        FROM reviews
+        WHERE rating &lt; 2
+        UNION
+        SELECT user_id
+        FROM orders
+        WHERE order_status IN ('CANCELLED', 'RETURNED')
+    </select>
 
     <!-- 룰7) 30일 넘게 미로그인 회원의 user_id 목록 -->
     <select id="findLoginInactiveUsers" resultType="long">

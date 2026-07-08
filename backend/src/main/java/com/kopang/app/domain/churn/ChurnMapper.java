@@ -23,6 +23,9 @@ public interface ChurnMapper {
     // 룰5) 쿠폰 만료 임박 회원 목록
     List<Long> findCouponExpiringUsers();
 
+    // 룰6) 부정경험 회원 목록
+    List<Long> findBadExperienceUsers();
+
     // 룰7) 30일 미로그인 회원 목록
     List<Long> findLoginInactiveUsers();
 

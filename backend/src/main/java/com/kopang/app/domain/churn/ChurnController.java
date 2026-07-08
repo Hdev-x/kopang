@@ -23,6 +23,7 @@ public class ChurnController {
         churnScoreService.detectMembershipCancel();
         churnScoreService.detectCouponExpiring();
         churnScoreService.detectSpendingDrop();
+        churnScoreService.detectBadExperience();
     }
 
 }

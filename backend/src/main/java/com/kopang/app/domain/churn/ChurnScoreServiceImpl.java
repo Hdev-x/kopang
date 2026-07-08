@@ -83,6 +83,18 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
     }
 
 
+    // 룰6) 부정경험 (0.7/HIGH)
+    @Override
+    public void detectBadExperience() {
+        save(
+            churnMapper.findBadExperienceUsers(), 
+            0.7, 
+            "HIGH", 
+            "BAD_EXPERIENCE"
+        );
+    }
+
+
     // 룰7) 30일 미로그인 (0.6/MID)
     @Override
     public void detectLoginInactive() {

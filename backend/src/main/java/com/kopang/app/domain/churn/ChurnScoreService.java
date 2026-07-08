@@ -19,6 +19,9 @@ public interface ChurnScoreService {
     // 룰5) 쿠폰 만료 임박
     void detectCouponExpiring();
 
+    // 룰6) 부정경험(낮은평점 및 취소/반품 경험)
+    void detectBadExperience();
+
     // 룰7) 30일 미로그인
     void detectLoginInactive();
 
