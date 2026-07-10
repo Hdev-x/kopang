@@ -101,12 +101,7 @@ export function LoginPage() {
           >
             Naver 계정으로 로그인
           </a>
-        </div>
 
-        <div className={styles.adminEntry}>
-          <Link to="/admin/login" className={styles.adminLink}>
-            관리자 로그인
-          </Link>
         </div>
       </div>
     </Layout>
