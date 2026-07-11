@@ -23,7 +23,7 @@
             ordered_at AS createdAt
         FROM orders
         WHERE user_id = #{userId}
-        ORDER BY order_id DESC
+        ORDER BY ordered_at DESC, order_id DESC
     </select>
 
     <select id="findOrderById" resultType="com.kopang.app.domain.order.OrderDTO">

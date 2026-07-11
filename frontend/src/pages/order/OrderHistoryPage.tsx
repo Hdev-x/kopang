@@ -13,7 +13,17 @@ export function OrderHistoryPage() {
 
   useEffect(() => {
     getOrders()
-      .then(setOrders)
+      .then((data) => {
+        const sortedOrders = [...data].sort((a, b) => {
+          const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          if (timeB !== timeA) {
+            return timeB - timeA;
+          }
+          return b.orderId - a.orderId;
+        });
+        setOrders(sortedOrders);
+      })
       .catch((err) => console.error("주문 목록 불러오기 실패:", err));
   }, []);
 
