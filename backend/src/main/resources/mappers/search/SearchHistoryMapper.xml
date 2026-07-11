@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kopang.app.domain.search.SearchHistoryMapper">
+
+    <insert id="insert">
+        INSERT INTO search_history (user_id, keyword, searched_at)
+        VALUES (#{userId}, #{keyword}, NOW())
+    </insert>
+
+    <select id="findByUserId" resultType="com.kopang.app.domain.search.SearchHistoryDTO">
+        SELECT 
+            search_id AS searchId,
+            user_id AS userId,
+            keyword,
+            searched_at AS searchedAt
+        FROM search_history
+        WHERE user_id = #{userId}
+        ORDER BY searched_at DESC, search_id DESC
+        LIMIT 10
+    </select>
+
+    <delete id="deleteById">
+        DELETE FROM search_history
+        WHERE search_id = #{searchId} AND user_id = #{userId}
+    </delete>
+
+    <delete id="clearAllByUserId">
+        DELETE FROM search_history
+        WHERE user_id = #{userId}
+    </delete>
+
+</mapper>

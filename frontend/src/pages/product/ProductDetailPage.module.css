@@ -178,3 +178,19 @@
   background: #fff3e0;
   color: var(--color-warning);
 }
+
+.reviewImg {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  margin-top: var(--space-2);
+  display: block;
+}
+
+.emptyReview {
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: var(--space-6) 0;
+  font-size: var(--font-sm);
+}

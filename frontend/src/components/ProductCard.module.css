@@ -34,6 +34,10 @@
   cursor: pointer;
 }
 
+.heartOn {
+  color: var(--color-sale, #e52528) !important;
+}
+
 .brand {
   font-size: var(--font-xs);
   font-weight: var(--weight-bold);

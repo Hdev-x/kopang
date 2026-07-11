@@ -2,17 +2,42 @@ import { useEffect, useState } from "react";
 import { Layout } from "../../components/Layout";
 import { PageHeader } from "../../components/PageHeader";
 import { ProductCard } from "../../components/ProductCard";
-import { getProducts } from "../../api/products";
+import { getWishlist } from "../../api/wishlist";
 import type { Product } from "../../types/product";
 import s from "../../styles/AccountPages.module.css";
 
 export function WishlistPage() {
   const [items, setItems] = useState<Product[]>([]);
 
+  const fetchWishlist = () => {
+    getWishlist()
+      .then((data) => {
+        const mapped = data.map((w) => {
+          const discountRate = w.price > 0 && w.discountPrice 
+            ? Math.round(((w.price - w.discountPrice) / w.price) * 100) 
+            : undefined;
+          return {
+            id: w.productId,
+            name: w.name,
+            price: w.price,
+            imageUrl: w.imageUrl || "",
+            discountRate,
+          };
+        });
+        setItems(mapped);
+      })
+      .catch(console.error);
+  };
+
   useEffect(() => {
-    // 목업: 샘플 상품을 찜 목록으로
-    getProducts().then((p) => setItems(p.content.slice(0, 6))).catch(console.error);
+    fetchWishlist();
   }, []);
+
+  const handleWishChange = (productId: number, isWished: boolean) => {
+    if (!isWished) {
+      setItems((prev) => prev.filter((p) => p.id !== productId));
+    }
+  };
 
   return (
     <Layout>
@@ -22,7 +47,7 @@ export function WishlistPage() {
       ) : (
         <div className={s.grid}>
           {items.map((p) => (
-            <ProductCard key={p.id} product={p} />
+            <ProductCard key={p.id} product={p} onWishChange={handleWishChange} />
           ))}
         </div>
       )}

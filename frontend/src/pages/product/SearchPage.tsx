@@ -3,7 +3,8 @@ import { useSearchParams } from "react-router-dom";
 import { Clock } from "lucide-react";
 import { Layout } from "../../components/Layout";
 import { ProductCard } from "../../components/ProductCard";
-import { getProducts } from "../../api/products";
+import { getProducts, getSearchHistory, addSearchHistory, deleteSearchHistory, clearSearchHistory } from "../../api/products";
+import { useAuth } from "../../hooks/useAuth";
 import type { Product } from "../../types/product";
 import styles from "./SearchPage.module.css";
 
@@ -14,45 +15,94 @@ const KEYWORDS = [
 ];
 const RECENT_KEY = "kopang_recent";
 
-function loadRecent(): string[] {
+interface RecentItem {
+  id: string | number;
+  keyword: string;
+}
+
+function loadRecent(): RecentItem[] {
   try {
-    return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
+    const list: string[] = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
+    return list.map((k) => ({ id: k, keyword: k }));
   } catch {
     return [];
   }
 }
 
 export function SearchPage() {
-  // 검색어는 헤더 검색바와 공유되는 URL ?q= 가 단일 소스
+  const user = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const q = (searchParams.get("q") ?? "").trim();
-  const [recent, setRecent] = useState<string[]>(loadRecent);
+  const [recent, setRecent] = useState<RecentItem[]>([]);
   const [results, setResults] = useState<Product[]>([]);
+
+  const fetchRecent = () => {
+    if (user) {
+      getSearchHistory()
+        .then((data) => {
+          setRecent(data.map((h) => ({ id: h.searchId, keyword: h.keyword })));
+        })
+        .catch(console.error);
+    } else {
+      setRecent(loadRecent());
+    }
+  };
+
+  useEffect(() => {
+    fetchRecent();
+  }, [user]);
 
   useEffect(() => {
     if (q) {
       getProducts(undefined, 0, 40, q)
         .then((p) => setResults(p.content))
         .catch(console.error);
-    }
-  }, [q]);
 
-  // 추천어/최근검색어 클릭 → 검색어 확정 + 최근검색어 저장
+      if (user) {
+        addSearchHistory(q)
+          .then(() => fetchRecent())
+          .catch(console.error);
+      } else {
+        const localList = loadRecent().map((r) => r.keyword);
+        const next = [q, ...localList.filter((r) => r !== q)].slice(0, 8);
+        localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+        setRecent(next.map((k) => ({ id: k, keyword: k })));
+      }
+    }
+  }, [q, user]);
+
   const pick = (k: string) => {
-    const next = [k, ...recent.filter((r) => r !== k)].slice(0, 8);
-    setRecent(next);
-    localStorage.setItem(RECENT_KEY, JSON.stringify(next));
     setSearchParams({ q: k }, { replace: true });
   };
 
+  const deleteItem = (e: React.MouseEvent, item: RecentItem) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (user) {
+      deleteSearchHistory(Number(item.id))
+        .then(() => fetchRecent())
+        .catch(console.error);
+    } else {
+      const localList = loadRecent().map((r) => r.keyword);
+      const next = localList.filter((k) => k !== item.keyword);
+      localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+      setRecent(next.map((k) => ({ id: k, keyword: k })));
+    }
+  };
+
   const clearRecent = () => {
-    setRecent([]);
-    localStorage.removeItem(RECENT_KEY);
+    if (user) {
+      clearSearchHistory()
+        .then(() => setRecent([]))
+        .catch(console.error);
+    } else {
+      setRecent([]);
+      localStorage.removeItem(RECENT_KEY);
+    }
   };
 
   const suggestions = q ? KEYWORDS.filter((kw) => kw.includes(q) && kw !== q).slice(0, 6) : [];
 
-  // 검색어 없음 → 최근 검색어
   if (!q) {
     return (
       <Layout>
@@ -69,9 +119,14 @@ export function SearchPage() {
         ) : (
           <div className={styles.chips}>
             {recent.map((r) => (
-              <button key={r} type="button" className={styles.chip} onClick={() => pick(r)}>
-                <Clock size={14} /> {r}
-              </button>
+              <div key={r.id} className={styles.chip}>
+                <button type="button" className={styles.chipText} onClick={() => pick(r.keyword)}>
+                  <Clock size={14} /> {r.keyword}
+                </button>
+                <button type="button" className={styles.chipDelete} onClick={(e) => deleteItem(e, r)} aria-label="삭제">
+                  &times;
+                </button>
+              </div>
             ))}
           </div>
         )}

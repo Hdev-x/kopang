@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kopang.app.domain.review.ReviewMapper">
+
+    <insert id="insert">
+        INSERT INTO reviews (user_id, product_id, rating, content, image, created_at)
+        VALUES (#{userId}, #{productId}, #{rating}, #{content}, #{image}, NOW())
+    </insert>
+
+    <select id="findByProductId" resultType="com.kopang.app.domain.review.ReviewDTO">
+        SELECT 
+            r.review_id AS reviewId,
+            r.user_id AS userId,
+            u.name AS userName,
+            r.product_id AS productId,
+            r.rating,
+            r.content,
+            r.image,
+            r.created_at AS createdAt
+        FROM reviews r
+        INNER JOIN users u ON r.user_id = u.user_id
+        WHERE r.product_id = #{productId}
+        ORDER BY r.created_at DESC, r.review_id DESC
+    </select>
+
+</mapper>
