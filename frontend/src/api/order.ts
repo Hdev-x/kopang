@@ -91,3 +91,9 @@ export async function updateOrderShipStatus(orderId: number, status: string) {
   return res.data;
 }
 
+// 8. 주문 환불 신청 (POST /api/orders/:id/refund)
+export async function refundOrder(orderId: number) {
+  const res = await client.post<ApiResponse<void>>(`/orders/${orderId}/refund`);
+  return res.data;
+}
+

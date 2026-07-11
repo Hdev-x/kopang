@@ -8,4 +8,8 @@ import java.util.List;
 public interface ReviewMapper {
     void insert(ReviewDTO dto);
     List<ReviewDTO> findByProductId(@Param("productId") Long productId);
+    ReviewDTO findById(@Param("reviewId") Long reviewId);
+    List<ReviewDTO> findByUserId(@Param("userId") Long userId);
+    void update(ReviewDTO dto);
+    void delete(@Param("reviewId") Long reviewId);
 }

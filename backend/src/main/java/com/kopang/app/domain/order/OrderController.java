@@ -125,4 +125,27 @@ public class OrderController {
         orderService.deleteOrder(orderId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
+
+    @PostMapping("/{id}/refund")
+    public ResponseEntity<ApiResponse<Void>> refundOrder(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable("id") Long orderId) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.fail("인증되지 않은 사용자입니다"));
+        }
+        
+        OrderDTO order = orderService.getOrderDetails(orderId);
+        if (order == null) {
+            throw new IllegalArgumentException("주문건이 존재하지 않습니다. ID: " + orderId);
+        }
+        Long userId = userService.detailByEmail(userDetails.getEmail()).getUserId();
+        if (!order.getUserId().equals(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.fail("해당 주문에 대한 환불 신청 권한이 없습니다."));
+        }
+        
+        orderService.refundOrder(orderId);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
 }

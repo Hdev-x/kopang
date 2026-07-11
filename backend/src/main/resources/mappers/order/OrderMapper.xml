@@ -110,6 +110,7 @@
             user_id AS userId,
             total_price AS totalPrice,
             payment_status AS paymentStatus,
+            order_status AS orderStatus,
             ordered_at AS createdAt
         FROM orders
         WHERE order_id = #{orderId}

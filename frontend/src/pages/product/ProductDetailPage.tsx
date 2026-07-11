@@ -168,12 +168,16 @@ export function ProductDetailPage() {
         ) : (
           reviews.map((r) => (
             <Card key={r.reviewId} className={styles.review}>
-              <p className={styles.rating}>
-                {"★".repeat(Math.round(r.rating))}
-                {"☆".repeat(5 - Math.round(r.rating))} <span className={styles.reviewer}>{r.userName || "익명"}</span>
-              </p>
-              <p>{r.content}</p>
-              {r.image && <img src={r.image} alt="리뷰 이미지" className={styles.reviewImg} />}
+              <div className={r.image ? styles.reviewWithImg : styles.reviewPlain}>
+                {r.image && <img src={r.image} alt="리뷰 이미지" className={styles.reviewThumb} />}
+                <div className={styles.reviewContent}>
+                  <p className={styles.rating}>
+                    {"★".repeat(Math.round(r.rating))}
+                    {"☆".repeat(5 - Math.round(r.rating))} <span className={styles.reviewer}>{r.userName || "익명"}</span>
+                  </p>
+                  <p>{r.content}</p>
+                </div>
+              </div>
             </Card>
           ))
         )
