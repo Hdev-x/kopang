@@ -25,8 +25,10 @@ export interface OrderItem {
 export interface Order {
   orderId: number;
   userId: number;
+  userName?: string;
   totalPrice: number;
   paymentStatus: string;
+  orderStatus: string;
   createdAt: string;
   items: OrderItem[];
 }
@@ -73,6 +75,19 @@ export function formatOrderStatus(status: string): string {
 // 5. 주문 내역 삭제 (DELETE /api/orders/:id)
 export async function deleteOrder(orderId: number) {
   const res = await client.delete<ApiResponse<void>>(`/orders/${orderId}`);
+  return res.data;
+}
+
+// 6. 관리자 전체 주문 조회 (GET /api/admin/orders?ship=)
+export async function getAdminOrders(ship?: string) {
+  const params = ship && ship !== "전체" ? { ship } : {};
+  const res = await client.get<ApiResponse<Order[]>>("/admin/orders", { params });
+  return res.data.data;
+}
+
+// 7. 관리자 배송 처리 (PATCH /api/admin/orders/:id/ship)
+export async function updateOrderShipStatus(orderId: number, status: string) {
+  const res = await client.patch<ApiResponse<void>>(`/admin/orders/${orderId}/ship`, { status });
   return res.data;
 }
 
