@@ -142,4 +142,12 @@
     </insert>
 
 
+    <!-- 재실행 대비 멱등성 확보 -->
+    <delete id="deleteTodayRuleScores">
+        DELETE FROM churn_score
+        WHERE source = 'RULE'
+            AND scored_at::date = CURRENT_DATE
+    </delete>
+
+
 </mapper>

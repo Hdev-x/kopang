@@ -3,6 +3,7 @@ package com.kopang.app.domain.churn;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 
@@ -120,8 +121,10 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
 
 
     // 룰 8종 전체 실행 — 수동(/run)과 스케줄러(CHURN-06)가 공유
+    @Transactional
     @Override
     public void runAllRules() {
+        churnMapper.deleteTodayRuleScores();
         detectWishlistIdle();
         detectCartAbandon();
         detectLoginInactive();
