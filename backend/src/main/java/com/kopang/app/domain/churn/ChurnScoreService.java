@@ -27,6 +27,9 @@ public interface ChurnScoreService {
 
     // 룰8) 최근 30일 지출 < 직전 30일의 50%
     void detectSpendingDrop();
+
+    // 룰 8종 전체 실행 — 수동(/run)과 스케줄러(CHURN-06)가 공유
+    void runAllRules();
     
 
 }
