@@ -60,3 +60,11 @@
   color: var(--color-text-muted);
   text-decoration: none;
 }
+
+.error {
+  margin-top: var(--space-4);
+  font-size: var(--font-sm);
+  color: var(--color-danger);
+  text-align: center;
+  font-weight: var(--weight-medium);
+}

@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -12,7 +13,6 @@ import com.kopang.app.global.security.JwtAuthenticationFilter;
 import com.kopang.app.global.security.JwtUtil;
 import com.kopang.app.global.security.OAuth2AuthenticationSuccessHandler;
 
-// SecurityConfig.java 수정안 예시
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -35,6 +35,7 @@ public class SecurityConfig {
 		security
 				.cors(cors -> cors.disable())
 				.csrf(csrf -> csrf.disable())
+				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
 				.addFilterBefore(new JwtAuthenticationFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class)
 

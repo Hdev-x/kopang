@@ -76,3 +76,34 @@ export async function uploadProductImage(file: File) {
   return res.data.data; // 업로드된 S3 URL 문자열 반환
 }
 
+// 검색 기록 DTO 타입 정의
+export interface SearchHistory {
+  searchId: number;
+  userId: number;
+  keyword: string;
+  searchedAt: string;
+}
+
+// 검색어 추가
+export async function addSearchHistory(keyword: string) {
+  const res = await client.post<ApiResponse<void>>("/products/search-history", { keyword });
+  return res.data;
+}
+
+// 최근 검색어 목록 조회
+export async function getSearchHistory() {
+  const res = await client.get<ApiResponse<SearchHistory[]>>("/products/search-history");
+  return res.data.data;
+}
+
+// 검색 기록 단건 삭제
+export async function deleteSearchHistory(searchId: number) {
+  const res = await client.delete<ApiResponse<void>>(`/products/search-history/${searchId}`);
+  return res.data;
+}
+
+// 검색 기록 전체 삭제
+export async function clearSearchHistory() {
+  const res = await client.delete<ApiResponse<void>>("/products/search-history");
+  return res.data;
+}

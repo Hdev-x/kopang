@@ -1,17 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminLayout } from "../../../components/AdminLayout";
 import { Card } from "../../../components/Card";
 import { Button } from "../../../components/Button";
+import { getAdminOrders, updateOrderShipStatus } from "../../../api/order";
+import type { Order } from "../../../api/order";
 import sh from "../adminShared.module.css";
 
-const ORDERS = [
-  { no: "K00231", user: "홍길동", amt: 34860, paid: "결제완료", ship: "배송준비" },
-  { no: "K00232", user: "김철수", amt: 129000, paid: "결제완료", ship: "배송중" },
-  { no: "K00233", user: "이영희", amt: 12500, paid: "결제완료", ship: "배송완료" },
-  { no: "K00234", user: "박민수", amt: 8900, paid: "결제대기", ship: "-" },
-  { no: "K00235", user: "최유나", amt: 45200, paid: "취소", ship: "취소" },
-];
 const TABS = ["전체", "배송준비", "배송중", "배송완료", "취소"];
+
+function getShipLabel(status: string) {
+  if (status === "PAID") return "배송준비";
+  if (status === "SHIPPING") return "배송중";
+  if (status === "DELIVERED") return "배송완료";
+  if (status === "CANCELLED") return "취소";
+  return "-";
+}
 
 function shipBadge(s: string) {
   if (s === "배송완료") return sh.bOk;
@@ -23,7 +26,35 @@ function shipBadge(s: string) {
 
 export function AdminOrdersPage() {
   const [tab, setTab] = useState("전체");
-  const rows = tab === "전체" ? ORDERS : ORDERS.filter((o) => o.ship === tab);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchOrders = async () => {
+    setLoading(true);
+    try {
+      const data = await getAdminOrders(tab);
+      setOrders(data || []);
+    } catch (e) {
+      console.error("주문 목록 조회 실패:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+  }, [tab]);
+
+  const handleShipUpdate = async (orderId: number, currentShip: string) => {
+    const nextStatus = currentShip === "배송준비" ? "SHIPPING" : "DELIVERED";
+    try {
+      await updateOrderShipStatus(orderId, nextStatus);
+      fetchOrders();
+    } catch (e) {
+      alert("배송 상태 업데이트에 실패했습니다.");
+      console.error(e);
+    }
+  };
 
   return (
     <AdminLayout title="주문 · 배송 관리">
@@ -38,24 +69,34 @@ export function AdminOrdersPage() {
       </div>
 
       <div className={sh.list}>
-        {rows.map((o) => (
-          <Card key={o.no}>
-            <div className={sh.itemHead}>
-              <span className={sh.itemTitle}>{o.no}</span>
-              <span className={`${sh.badge} ${shipBadge(o.ship)}`}>{o.ship}</span>
-            </div>
-            <div className={sh.itemBottom}>
-              <span className={sh.itemMetaInline}>
-                {o.user} · ₩{o.amt.toLocaleString()} · {o.paid}
-              </span>
-              {(o.ship === "배송준비" || o.ship === "배송중") && (
-                <Button variant="ghost" size="sm">
-                  {o.ship === "배송준비" ? "발송 처리" : "배송완료"}
-                </Button>
-              )}
-            </div>
-          </Card>
-        ))}
+        {loading ? (
+          <div>로딩 중...</div>
+        ) : orders.length === 0 ? (
+          <div>주문 내역이 없습니다.</div>
+        ) : (
+          orders.map((o) => {
+            const shipLabel = getShipLabel(o.orderStatus);
+            const paidLabel = o.paymentStatus === "PAID" ? "결제완료" : o.paymentStatus === "PENDING" ? "결제대기" : "취소";
+            return (
+              <Card key={o.orderId}>
+                <div className={sh.itemHead}>
+                  <span className={sh.itemTitle}>ORD-{o.orderId}</span>
+                  <span className={`${sh.badge} ${shipBadge(shipLabel)}`}>{shipLabel}</span>
+                </div>
+                <div className={sh.itemBottom}>
+                  <span className={sh.itemMetaInline}>
+                    {o.userName || "이름없음"} · ₩{o.totalPrice.toLocaleString()} · {paidLabel}
+                  </span>
+                  {(shipLabel === "배송준비" || shipLabel === "배송중") && (
+                    <Button variant="ghost" size="sm" onClick={() => handleShipUpdate(o.orderId, shipLabel)}>
+                      {shipLabel === "배송준비" ? "발송 처리" : "배송완료"}
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            );
+          })
+        )}
       </div>
     </AdminLayout>
   );

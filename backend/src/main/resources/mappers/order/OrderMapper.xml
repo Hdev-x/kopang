@@ -14,16 +14,94 @@
         VALUES (#{orderId}, #{productId}, #{quantity}, #{price})
     </insert>
 
-    <select id="findOrdersByUserId" resultType="com.kopang.app.domain.order.OrderDTO">
+    <resultMap id="OrderWithItemsMap" type="com.kopang.app.domain.order.OrderDTO">
+        <id property="orderId" column="orderId"/>
+        <result property="userId" column="userId"/>
+        <result property="userName" column="userName"/>
+        <result property="totalPrice" column="totalPrice"/>
+        <result property="paymentStatus" column="paymentStatus"/>
+        <result property="orderStatus" column="orderStatus"/>
+        <result property="createdAt" column="createdAt"/>
+        <collection property="items" ofType="com.kopang.app.domain.order.OrderItemDTO">
+            <id property="orderItemId" column="orderItemId"/>
+            <result property="orderId" column="orderId"/>
+            <result property="productId" column="productId"/>
+            <result property="quantity" column="quantity"/>
+            <result property="price" column="price"/>
+            <result property="name" column="itemName"/>
+            <result property="imageUrl" column="imageUrl"/>
+        </collection>
+    </resultMap>
+
+    <select id="findOrdersByUserId" resultMap="OrderWithItemsMap">
         SELECT 
-            order_id AS orderId,
-            user_id AS userId,
-            total_price AS totalPrice,
-            payment_status AS paymentStatus,
-            ordered_at AS createdAt
-        FROM orders
-        WHERE user_id = #{userId}
-        ORDER BY order_id DESC
+            o.order_id AS orderId,
+            o.user_id AS userId,
+            o.total_price AS totalPrice,
+            o.payment_status AS paymentStatus,
+            o.order_status AS orderStatus,
+            o.ordered_at AS createdAt,
+            u.name AS userName,
+            oi.order_item_id AS orderItemId,
+            oi.product_id AS productId,
+            oi.quantity AS quantity,
+            oi.price AS price,
+            p.name AS itemName,
+            p.image_url AS imageUrl
+        FROM (
+            SELECT * FROM orders
+            WHERE user_id = #{userId}
+            ORDER BY ordered_at DESC, order_id DESC
+            LIMIT 50
+        ) o
+        LEFT JOIN users u ON o.user_id = u.user_id
+        LEFT JOIN orders_item oi ON o.order_id = oi.order_id
+        LEFT JOIN products p ON oi.product_id = p.product_id
+        ORDER BY o.ordered_at DESC, o.order_id DESC, oi.order_item_id ASC
+    </select>
+
+    <select id="findAllOrders" resultMap="OrderWithItemsMap">
+        SELECT 
+            o.order_id AS orderId,
+            o.user_id AS userId,
+            o.total_price AS totalPrice,
+            o.payment_status AS paymentStatus,
+            o.order_status AS orderStatus,
+            o.ordered_at AS createdAt,
+            u.name AS userName,
+            oi.order_item_id AS orderItemId,
+            oi.product_id AS productId,
+            oi.quantity AS quantity,
+            oi.price AS price,
+            p.name AS itemName,
+            p.image_url AS imageUrl
+        FROM (
+            SELECT * FROM orders
+            <where>
+                <if test="ship != null and ship != ''">
+                    <choose>
+                        <when test="ship == '배송준비'">
+                            order_status = 'PAID'
+                        </when>
+                        <when test="ship == '배송중'">
+                            order_status = 'SHIPPING'
+                        </when>
+                        <when test="ship == '배송완료'">
+                            order_status = 'DELIVERED'
+                        </when>
+                        <when test="ship == '취소'">
+                            order_status = 'CANCELLED'
+                        </when>
+                    </choose>
+                </if>
+            </where>
+            ORDER BY ordered_at DESC, order_id DESC
+            LIMIT 100
+        ) o
+        LEFT JOIN users u ON o.user_id = u.user_id
+        LEFT JOIN orders_item oi ON o.order_id = oi.order_id
+        LEFT JOIN products p ON oi.product_id = p.product_id
+        ORDER BY o.ordered_at DESC, o.order_id DESC, oi.order_item_id ASC
     </select>
 
     <select id="findOrderById" resultType="com.kopang.app.domain.order.OrderDTO">
@@ -32,6 +110,7 @@
             user_id AS userId,
             total_price AS totalPrice,
             payment_status AS paymentStatus,
+            order_status AS orderStatus,
             ordered_at AS createdAt
         FROM orders
         WHERE order_id = #{orderId}

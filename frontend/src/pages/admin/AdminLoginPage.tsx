@@ -3,20 +3,35 @@ import { Link, useNavigate } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
 import { Input } from "../../components/Input";
 import { Button } from "../../components/Button";
+import { login as apiLogin } from "../../api/auth";
 import { login as authLogin } from "../../lib/auth";
 import styles from "./AdminLoginPage.module.css";
 
 export function AdminLoginPage() {
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // 목업: 입력값 무관하게 관리자(role=ADMIN)로 로그인 처리 후 대시보드 이동.
-  // 백엔드 붙이면 이 자리에 실제 관리자 인증이 들어감.
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    authLogin({ name: "관리자", role: "ADMIN" });
-    navigate("/admin");
+    setError("");
+    try {
+      const res = await apiLogin(id, password);
+      if (res.user.role !== "ADMIN") {
+        setError("관리자 권한이 없는 계정입니다.");
+        return;
+      }
+      authLogin(
+        { name: res.user.name, role: res.user.role },
+        res.accessToken,
+        res.refreshToken
+      );
+      navigate("/admin");
+    } catch (err: any) {
+      setError(err.response?.data?.message || "로그인에 실패했습니다.");
+      console.error(err);
+    }
   };
 
   return (
@@ -47,7 +62,8 @@ export function AdminLoginPage() {
           </Button>
         </form>
 
-        <p className={styles.demo}>⚠️ 목업 — 아무 값이나 입력해도 관리자로 진입합니다</p>
+        {error && <p className={styles.error}>{error}</p>}
+        <p className={styles.demo}>⚠️ 실제 관리자 계정으로 로그인해야 데이터를 불러올 수 있습니다.</p>
         <Link to="/" className={styles.back}>← 회원 사이트로</Link>
       </div>
     </div>
