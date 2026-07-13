@@ -38,4 +38,7 @@ public interface ChurnMapper {
     // 이탈 점수 저장 (모든 룰 공통)
     void insertChurnScore(ChurnScoreDTO score);
 
+    // 재실행 대비 멱등성 확보
+    void deleteTodayRuleScores();
+
 }
