@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kopang.app.domain.point.PointMapper">
+
+    <select id="getPointBalance" resultType="java.lang.Integer"> SELECT COALESCE(SUM(amount), 0)
+        FROM point_history WHERE user_id = #{userId} </select>
+
+    <select id="findPointHistoryByUserId" resultType="com.kopang.app.domain.point.PointHistoryDTO">
+        SELECT point_id AS pointId, user_id AS userId, amount AS amount, type AS type, description
+        AS description, created_at AS createdAt FROM point_history WHERE user_id = #{userId} ORDER
+        BY point_id DESC </select>
+
+    <insert id="insertPointHistory" useGeneratedKeys="true" keyProperty="pointId"> INSERT INTO
+        point_history (user_id, amount, type, description) VALUES (#{userId}, #{amount}, #{type},
+        #{description}) </insert>
+
+</mapper>
