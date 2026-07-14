@@ -9,11 +9,8 @@ export const qnaPosts: QnaPost[] = [
     author: "김**",
     status: "답변완료",
     createdAt: "2026.06.28",
-    answer: {
-      content:
-        "안녕하세요 고객님, 해당 주문은 6/29 출고되어 금일 도착 예정입니다. 불편을 드려 죄송합니다.",
-      createdAt: "2026.06.29",
-    },
+    answerContent:
+      "안녕하세요 고객님, 해당 주문은 6/29 출고되어 금일 도착 예정입니다. 불편을 드려 죄송합니다.",
   },
   {
     id: 2,
@@ -22,10 +19,7 @@ export const qnaPosts: QnaPost[] = [
     author: "이**",
     status: "답변완료",
     createdAt: "2026.06.27",
-    answer: {
-      content: "리뷰 적립은 영업일 기준 1~2일 소요됩니다. 확인 결과 6/28 적립 완료되었습니다.",
-      createdAt: "2026.06.28",
-    },
+    answerContent: "리뷰 적립은 영업일 기준 1~2일 소요됩니다. 확인 결과 6/28 적립 완료되었습니다.",
   },
   {
     id: 3,
