@@ -15,6 +15,13 @@ export function LoginPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+
+    // 일반 회원은 이메일 형식(@ 포함)을 필수로 제한하되, 'admin' 관리자 아이디만 예외 허용
+    if (email !== "admin" && !email.includes("@")) {
+      alert("올바른 이메일 형식(@ 포함)을 입력해 주세요.");
+      return;
+    }
+
     try {
       const data = await apiLogin(email, password);
       // 실제 로그인 정보 저장 (이름, 권한, 토큰)
@@ -37,7 +44,7 @@ export function LoginPage() {
         <form className={styles.form} onSubmit={handleSubmit}>
           <Input
             label="이메일"
-            type="email"
+            type="text"
             placeholder="email@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -101,7 +108,12 @@ export function LoginPage() {
           >
             Naver 계정으로 로그인
           </a>
+        </div>
 
+        <div className={styles.adminEntry}>
+          <Link to="/admin/login" className={styles.adminLink}>
+            관리자 로그인
+          </Link>
         </div>
       </div>
     </Layout>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kopang.app.domain.admin.AdminMapper">
+
+    <select id="findAllMembers" resultType="com.kopang.app.domain.admin.AdminMemberDTO"> SELECT
+        u.user_id AS userId, u.name AS name, u.email AS email, u.role AS role, u.created_at AS
+        createdAt, CASE WHEN um.status = 'ACTIVE' OR um.status = 'CANCELLED' THEN '멤버십' ELSE '일반'
+        END AS membershipType, COALESCE( CASE WHEN cs.risk_level = 'HIGH' THEN '고위험' WHEN
+        cs.risk_level = 'MID' THEN '중위험' ELSE '저위험' END, '저위험' ) AS riskLevel, COALESCE(cs.score,
+        0.0) AS churnProbability FROM users u LEFT JOIN ( SELECT DISTINCT ON (user_id) user_id,
+        status FROM user_membership ORDER BY user_id, user_membership_id DESC ) um ON u.user_id =
+        um.user_id LEFT JOIN ( SELECT DISTINCT ON (user_id) user_id, risk_level, score FROM
+        churn_score ORDER BY user_id, churn_score_id DESC ) cs ON u.user_id = cs.user_id ORDER BY
+        u.user_id DESC </select>
+
+    <select id="countMemberships" resultType="int"> SELECT COUNT(DISTINCT user_id) FROM
+        user_membership WHERE status IN ('ACTIVE', 'CANCELLED') </select>
+
+    <select id="countNewMembershipsThisMonth" resultType="int"> SELECT COUNT(DISTINCT user_id) FROM
+        user_membership WHERE status IN ('ACTIVE', 'CANCELLED') AND start_date >=
+        DATE_TRUNC('month', CURRENT_DATE) </select>
+
+    <select id="countAtRiskMemberships" resultType="int"> SELECT COUNT(DISTINCT um.user_id) FROM
+        user_membership um INNER JOIN churn_score cs ON um.user_id = cs.user_id WHERE um.status IN
+        ('ACTIVE', 'CANCELLED') AND cs.risk_level = 'HIGH' </select>
+
+    <select id="findAtRiskMembers"
+        resultType="com.kopang.app.domain.admin.AdminMembershipStatsDTO$AtRiskMemberDTO"> SELECT
+        u.name AS name, um.end_date AS ends, COALESCE(cs.score, 0.0) AS score,
+        COALESCE(cs.risk_type, '혜택 미사용 30일') AS reason, COALESCE(ri.risk_type, '만류 쿠폰') AS action,
+        CASE WHEN ri.status = 'SENT' THEN '발송됨' ELSE '예정' END AS status FROM user_membership um
+        INNER JOIN users u ON um.user_id = u.user_id LEFT JOIN ( SELECT DISTINCT ON (user_id)
+        user_id, score, risk_type FROM churn_score ORDER BY user_id, churn_score_id DESC ) cs ON
+        um.user_id = cs.user_id LEFT JOIN ( SELECT DISTINCT ON (user_id) user_id, risk_type, status
+        FROM retention_intervention ORDER BY user_id, intervention_id DESC ) ri ON um.user_id =
+        ri.user_id WHERE um.status IN ('ACTIVE', 'CANCELLED') AND cs.score >= 0.4 ORDER BY cs.score
+        DESC </select>
+
+    <select id="findCouponStats" resultType="com.kopang.app.domain.admin.AdminCouponStatsDTO">
+        SELECT c.coupon_id AS couponId, c.name AS name, c.discount_type AS discountType,
+        c.discount_value AS discountValue, c.end_date AS endDate, c.quantity AS quantity,
+        COALESCE(uc.issued_count, 0) AS issuedCount, COALESCE(uc.used_count, 0) AS usedCount, CASE
+        WHEN c.name LIKE '%이탈%' OR c.name LIKE '%만류%' THEN '위험고객' WHEN c.name LIKE '%유지%' OR c.name
+        LIKE '%재구매%' THEN '멤버십 해지위험' WHEN c.name LIKE '%웰컴%' OR c.name LIKE '%가입%' THEN '신규' ELSE
+        '일반' END AS targetGroup FROM coupons c LEFT JOIN ( SELECT coupon_id, COUNT(*) AS
+        issued_count, SUM(CASE WHEN used = true THEN 1 ELSE 0 END) AS used_count FROM user_coupons
+        GROUP BY coupon_id ) uc ON c.coupon_id = uc.coupon_id ORDER BY c.coupon_id DESC </select>
+
+    <insert id="insertCouponPolicy" useGeneratedKeys="true" keyProperty="couponId"> INSERT INTO
+        coupons (name, discount_type, discount_value, start_date, end_date, quantity) VALUES (
+        #{name}, #{discountType}, #{discountValue}, CAST(#{startDate} AS DATE), CAST(#{endDate} AS
+        DATE), #{quantity} ) </insert>
+
+</mapper>
