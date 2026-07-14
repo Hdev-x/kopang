@@ -107,3 +107,11 @@ export async function clearSearchHistory() {
   const res = await client.delete<ApiResponse<void>>("/products/search-history");
   return res.data;
 }
+
+// AI 상품 검색 (GET /api/products/ai-search?q=)
+export async function searchProductsAI(query: string, page: number = 0, size: number = 20) {
+  const res = await client.get<ApiResponse<Page<Product>>>("/products/ai-search", {
+    params: { q: query, page, size },
+  });
+  return res.data.data;
+}
