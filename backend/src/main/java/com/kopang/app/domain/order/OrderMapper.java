@@ -14,6 +14,9 @@ public interface OrderMapper {
     
     // 3. 유저의 주문 목록 조회
     List<OrderDTO> findOrdersByUserId(@Param("userId") Long userId);
+
+    // 3-1. 관리자용 전체 주문 목록 조회 (배송 필터 적용)
+    List<OrderDTO> findAllOrders(@Param("ship") String ship);
     
     // 4. 주문 단건 조회
     OrderDTO findOrderById(@Param("orderId") Long orderId);

@@ -25,8 +25,10 @@ export interface OrderItem {
 export interface Order {
   orderId: number;
   userId: number;
+  userName?: string;
   totalPrice: number;
   paymentStatus: string;
+  orderStatus: string;
   createdAt: string;
   items: OrderItem[];
 }
@@ -62,6 +64,7 @@ const STATUS_LABEL: Record<string, string> = {
   ORDERED:   "주문완료",
   SHIPPING:  "배송중",
   DELIVERED: "배송완료",
+  CONFIRMED: "구매확정",
   CANCELLED: "주문취소",
   RETURNED:  "반품",
 };
@@ -73,6 +76,31 @@ export function formatOrderStatus(status: string): string {
 // 5. 주문 내역 삭제 (DELETE /api/orders/:id)
 export async function deleteOrder(orderId: number) {
   const res = await client.delete<ApiResponse<void>>(`/orders/${orderId}`);
+  return res.data;
+}
+
+// 6. 관리자 전체 주문 조회 (GET /api/admin/orders?ship=)
+export async function getAdminOrders(ship?: string) {
+  const params = ship && ship !== "전체" ? { ship } : {};
+  const res = await client.get<ApiResponse<Order[]>>("/admin/orders", { params });
+  return res.data.data;
+}
+
+// 7. 관리자 배송 처리 (PATCH /api/admin/orders/:id/ship)
+export async function updateOrderShipStatus(orderId: number, status: string) {
+  const res = await client.patch<ApiResponse<void>>(`/admin/orders/${orderId}/ship`, { status });
+  return res.data;
+}
+
+// 8. 주문 환불 신청 (POST /api/orders/:id/refund)
+export async function refundOrder(orderId: number) {
+  const res = await client.post<ApiResponse<void>>(`/orders/${orderId}/refund`);
+  return res.data;
+}
+
+// 9. 주문 구매 확정 (POST /api/orders/:id/confirm-purchase)
+export async function confirmPurchase(orderId: number) {
+  const res = await client.post<ApiResponse<void>>(`/orders/${orderId}/confirm-purchase`);
   return res.data;
 }
 

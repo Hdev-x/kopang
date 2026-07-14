@@ -3,6 +3,9 @@ import { Routes, Route } from "react-router-dom";
 // ===== 인증 (auth) — 담당 A =====
 import { LoginPage } from "../pages/auth/LoginPage";
 import { SignupPage } from "../pages/auth/SignupPage";
+import { FindPasswordPage } from "../pages/auth/FindPasswordPage";
+import { OAuth2CallbackPage } from "../pages/auth/OAuth2CallbackPage";
+
 
 // ===== 마이페이지 (my) — 담당 A =====
 import { MyPage } from "../pages/my/MyPage";
@@ -12,6 +15,7 @@ import { PointHistoryPage } from "../pages/my/PointHistoryPage";
 import { CouponPage } from "../pages/my/CouponPage";
 import { MyInquiriesPage } from "../pages/my/MyInquiriesPage";
 import { MyInquiryDetailPage } from "../pages/my/MyInquiryDetailPage";
+import { AddressManagementPage } from "../pages/my/AddressManagementPage";
 
 // ===== 멤버십 (membership) — 담당 A =====
 import { MembershipPage } from "../pages/membership/MembershipPage";
@@ -75,10 +79,13 @@ export function AppRouter() {
       {/* ---------- 인증 ---------- */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
+      <Route path="/find-password" element={<FindPasswordPage />} />
+      <Route path="/oauth2/callback" element={<OAuth2CallbackPage />} />
 
       {/* ---------- 마이페이지 ---------- */}
       <Route path="/my" element={<MyPage />} />
       <Route path="/my/profile" element={<EditProfilePage />} />
+      <Route path="/my/addresses" element={<AddressManagementPage />} />
       <Route path="/my/wishlist" element={<WishlistPage />} />
       <Route path="/my/points" element={<PointHistoryPage />} />
       <Route path="/my/coupons" element={<CouponPage />} />

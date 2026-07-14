@@ -1,7 +1,35 @@
 package com.kopang.app.domain.churn;
 
 public interface ChurnScoreService {
-    // "미로그인 회원 감지+판정+저장" 전체 = 요리 한 접시
+
+    // 각 룰: 대상 감지 → 판정 → churn_score 저장
+
+    // 룰1) 장바구니 방치
+    void detectCartAbandon();
+
+    // 룰2) 멤버십 해지
+    void detectMembershipCancel();
+
+    // 룰3) 첫구매 후 미복귀
+    void detectFirstOrderOnly();
+
+    // 룰4) 찜 7일 경과 + 해당 상품 미주문
+    void detectWishlistIdle();
+
+    // 룰5) 쿠폰 만료 임박
+    void detectCouponExpiring();
+
+    // 룰6) 부정경험(낮은평점 및 취소/반품 경험)
+    void detectBadExperience();
+
+    // 룰7) 30일 미로그인
     void detectLoginInactive();
+
+    // 룰8) 최근 30일 지출 < 직전 30일의 50%
+    void detectSpendingDrop();
+
+    // 룰 8종 전체 실행 — 수동(/run)과 스케줄러(CHURN-06)가 공유
+    void runAllRules();
+    
 
 }

@@ -178,3 +178,41 @@
   background: #fff3e0;
   color: var(--color-warning);
 }
+
+.reviewImg {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  margin-top: var(--space-2);
+  display: block;
+}
+
+.emptyReview {
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: var(--space-6) 0;
+  font-size: var(--font-sm);
+}
+
+.reviewWithImg {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+.reviewPlain {
+  display: block;
+}
+
+.reviewThumb {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.reviewContent {
+  flex: 1;
+}

@@ -57,10 +57,14 @@ public class CartService {
     }
 
     @Transactional
-    public void updateQuantity(Long cartItemId, int quantity) {
+    public void updateQuantity(Long userId, Long cartItemId, int quantity) {
         CartItemDTO item = cartMapper.findCartItemById(cartItemId);
         if (item == null) {
             throw new IllegalArgumentException("장바구니 항목이 존재하지 않습니다.");
+        }
+        Long cartId = cartMapper.findCartIdByUserId(userId);
+        if (item.getCartId() == null || !item.getCartId().equals(cartId)) {
+            throw new IllegalArgumentException("해당 장바구니 항목에 대한 권한이 없습니다.");
         }
         ProductDTO product = productMapper.findById(item.getProductId());
         if (product.getStock() < quantity) {
@@ -70,7 +74,15 @@ public class CartService {
     }
 
     @Transactional
-    public void deleteCartItem(Long cartItemId) {
+    public void deleteCartItem(Long userId, Long cartItemId) {
+        CartItemDTO item = cartMapper.findCartItemById(cartItemId);
+        if (item == null) {
+            throw new IllegalArgumentException("장바구니 항목이 존재하지 않습니다.");
+        }
+        Long cartId = cartMapper.findCartIdByUserId(userId);
+        if (item.getCartId() == null || !item.getCartId().equals(cartId)) {
+            throw new IllegalArgumentException("해당 장바구니 항목에 대한 권한이 없습니다.");
+        }
         cartMapper.deleteCartItem(cartItemId);
     }
 }

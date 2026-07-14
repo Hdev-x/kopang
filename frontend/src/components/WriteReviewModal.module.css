@@ -1,0 +1,149 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.modal {
+  background: var(--color-surface, #fff);
+  width: 100%;
+  max-width: 480px;
+  border-radius: var(--radius-lg, 12px);
+  padding: var(--space-5, 20px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  position: relative;
+}
+
+.title {
+  font-size: var(--font-lg, 18px);
+  font-weight: var(--weight-bold, 700);
+  margin-bottom: var(--space-4, 16px);
+  text-align: center;
+}
+
+.formGroup {
+  margin-bottom: var(--space-4, 16px);
+}
+
+.label {
+  display: block;
+  font-size: var(--font-sm, 14px);
+  font-weight: var(--weight-medium, 500);
+  margin-bottom: var(--space-2, 8px);
+  color: var(--color-text, #333);
+}
+
+.stars {
+  display: flex;
+  gap: var(--space-2, 8px);
+  justify-content: center;
+  margin: var(--space-3, 12px) 0;
+}
+
+.starBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: var(--gray-300, #ccc);
+  transition: color 0.2s;
+}
+
+.starBtnActive {
+  color: var(--color-warning, #f5a623);
+}
+
+.textarea {
+  width: 100%;
+  height: 120px;
+  padding: var(--space-3, 12px);
+  border: 1px solid var(--color-border, #ddd);
+  border-radius: var(--radius-md, 8px);
+  resize: none;
+  outline: none;
+  font-size: var(--font-sm, 14px);
+}
+
+.textarea:focus {
+  border-color: var(--color-primary, #2563eb);
+}
+
+.fileInput {
+  display: none;
+}
+
+.uploadTrigger {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--color-border, #ddd);
+  border-radius: var(--radius-md, 8px);
+  padding: var(--space-4, 16px);
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.uploadTrigger:hover {
+  border-color: var(--color-primary, #2563eb);
+}
+
+.uploadText {
+  font-size: var(--font-xs, 12px);
+  color: var(--color-text-muted, #666);
+  margin-top: var(--space-1, 4px);
+}
+
+.previewWrap {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: var(--radius-md, 8px);
+  overflow: hidden;
+  margin-top: var(--space-2, 8px);
+}
+
+.previewImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.removeImgBtn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-3, 12px);
+  margin-top: var(--space-5, 20px);
+}
+
+.cancelBtn {
+  flex: 1;
+}
+
+.submitBtn {
+  flex: 1;
+}

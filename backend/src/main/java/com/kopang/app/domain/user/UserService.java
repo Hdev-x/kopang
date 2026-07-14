@@ -22,4 +22,10 @@ public interface UserService {
 
     // 이메일 중복 체크
     boolean checkEmailDuplicate(String email);
+
+    // 비밀번호 찾기 - 인증번호 발송 (이메일 확인)
+    void sendVerificationCode(String email);
+
+    // 비밀번호 찾기 - 비밀번호 재설정
+    void resetPassword(String email, String code, String newPassword);
 }

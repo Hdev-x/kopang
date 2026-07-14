@@ -1,7 +1,12 @@
 package com.kopang.app.domain.order;
 
+import com.kopang.app.domain.user.UserService;
 import com.kopang.app.global.common.ApiResponse;
+import com.kopang.app.global.security.JwtAuthenticationFilter.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -12,44 +17,158 @@ import java.util.List;
 public class OrderController {
 
     private final OrderService orderService;
-    private static final Long DEFAULT_USER_ID = 1L; // 임시 홍길동 계정
+    private final UserService userService;
 
     @PostMapping
-    public ApiResponse<Long> createOrder(@RequestBody OrderRequestDTO request) {
-        Long orderId = orderService.createOrder(DEFAULT_USER_ID, request);
-        return ApiResponse.success(orderId);
+    public ResponseEntity<ApiResponse<Long>> createOrder(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody OrderRequestDTO request) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.fail("인증되지 않은 사용자입니다"));
+        }
+        Long userId = userService.detailByEmail(userDetails.getEmail()).getUserId();
+        Long orderId = orderService.createOrder(userId, request);
+        return ResponseEntity.ok(ApiResponse.success(orderId));
     }
 
     @GetMapping
-    public ApiResponse<List<OrderDTO>> getOrders() {
-        List<OrderDTO> orders = orderService.getOrders(DEFAULT_USER_ID);
-        return ApiResponse.success(orders);
+    public ResponseEntity<ApiResponse<List<OrderDTO>>> getOrders(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.fail("인증되지 않은 사용자입니다"));
+        }
+        Long userId = userService.detailByEmail(userDetails.getEmail()).getUserId();
+        List<OrderDTO> orders = orderService.getOrders(userId);
+        return ResponseEntity.ok(ApiResponse.success(orders));
     }
 
     @GetMapping("/{id}")
-    public ApiResponse<OrderDTO> getOrderDetails(@PathVariable("id") Long orderId) {
+    public ResponseEntity<ApiResponse<OrderDTO>> getOrderDetails(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable("id") Long orderId) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.fail("인증되지 않은 사용자입니다"));
+        }
+        
         OrderDTO order = orderService.getOrderDetails(orderId);
         if (order == null) {
             throw new IllegalArgumentException("주문 내역이 존재하지 않습니다. ID: " + orderId);
         }
-        return ApiResponse.success(order);
+        
+        Long userId = userService.detailByEmail(userDetails.getEmail()).getUserId();
+        if (!order.getUserId().equals(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.fail("해당 주문에 대한 접근 권한이 없습니다."));
+        }
+        
+        return ResponseEntity.ok(ApiResponse.success(order));
     }
 
     @PostMapping("/confirm")
-    public ApiResponse<Void> confirmOrder(@RequestBody ConfirmRequestDTO request) {
-        orderService.confirmOrder(DEFAULT_USER_ID, request.getPaymentKey(), request.getOrderId(), request.getAmount());
-        return ApiResponse.success(null);
+    public ResponseEntity<ApiResponse<Void>> confirmOrder(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody ConfirmRequestDTO request) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.fail("인증되지 않은 사용자입니다"));
+        }
+        Long userId = userService.detailByEmail(userDetails.getEmail()).getUserId();
+        orderService.confirmOrder(userId, request.getPaymentKey(), request.getOrderId(), request.getAmount());
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @PostMapping("/{id}/cancel")
-    public ApiResponse<Void> cancelOrder(@PathVariable("id") Long orderId) {
+    public ResponseEntity<ApiResponse<Void>> cancelOrder(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable("id") Long orderId) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.fail("인증되지 않은 사용자입니다"));
+        }
+        
+        OrderDTO order = orderService.getOrderDetails(orderId);
+        if (order == null) {
+            throw new IllegalArgumentException("주문건이 존재하지 않습니다. ID: " + orderId);
+        }
+        Long userId = userService.detailByEmail(userDetails.getEmail()).getUserId();
+        if (!order.getUserId().equals(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.fail("해당 주문을 취소할 권한이 없습니다."));
+        }
+        
         orderService.cancelOrder(orderId);
-        return ApiResponse.success(null);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @DeleteMapping("/{id}")
-    public ApiResponse<Void> deleteOrder(@PathVariable("id") Long orderId) {
+    public ResponseEntity<ApiResponse<Void>> deleteOrder(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable("id") Long orderId) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.fail("인증되지 않은 사용자입니다"));
+        }
+        
+        OrderDTO order = orderService.getOrderDetails(orderId);
+        if (order == null) {
+            throw new IllegalArgumentException("주문건이 존재하지 않습니다. ID: " + orderId);
+        }
+        Long userId = userService.detailByEmail(userDetails.getEmail()).getUserId();
+        if (!order.getUserId().equals(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.fail("해당 주문을 삭제할 권한이 없습니다."));
+        }
+        
         orderService.deleteOrder(orderId);
-        return ApiResponse.success(null);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @PostMapping("/{id}/refund")
+    public ResponseEntity<ApiResponse<Void>> refundOrder(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable("id") Long orderId) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.fail("인증되지 않은 사용자입니다"));
+        }
+        
+        OrderDTO order = orderService.getOrderDetails(orderId);
+        if (order == null) {
+            throw new IllegalArgumentException("주문건이 존재하지 않습니다. ID: " + orderId);
+        }
+        Long userId = userService.detailByEmail(userDetails.getEmail()).getUserId();
+        if (!order.getUserId().equals(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.fail("해당 주문에 대한 환불 신청 권한이 없습니다."));
+        }
+        
+        orderService.refundOrder(orderId);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @PostMapping("/{id}/confirm-purchase")
+    public ResponseEntity<ApiResponse<Void>> confirmPurchase(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable("id") Long orderId) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.fail("인증되지 않은 사용자입니다"));
+        }
+        
+        OrderDTO order = orderService.getOrderDetails(orderId);
+        if (order == null) {
+            throw new IllegalArgumentException("주문건이 존재하지 않습니다. ID: " + orderId);
+        }
+        Long userId = userService.detailByEmail(userDetails.getEmail()).getUserId();
+        if (!order.getUserId().equals(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.fail("해당 주문에 대한 구매확정 권한이 없습니다."));
+        }
+        
+        orderService.confirmPurchase(orderId);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 }

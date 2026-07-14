@@ -5,6 +5,7 @@ import com.kopang.app.global.common.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
@@ -13,6 +14,16 @@ public class ProductController {
 
     private final ProductService productService;
     private final S3Service s3Service;
+    private final AISearchService aiSearchService;
+
+    @GetMapping("/ai-search")
+    public ApiResponse<PageResponse<ProductResponseDTO>> aiSearch(
+            @RequestParam("q") String query,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "40") int size) {
+        PageResponse<ProductResponseDTO> results = aiSearchService.search(query, page, size);
+        return ApiResponse.success(results);
+    }
 
     @GetMapping
     public ApiResponse<PageResponse<ProductResponseDTO>> getProducts(

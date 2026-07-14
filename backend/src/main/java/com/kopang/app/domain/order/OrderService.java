@@ -128,6 +128,9 @@ public class OrderService {
         if (order == null) {
             throw new IllegalArgumentException("주문건이 존재하지 않습니다. ID: " + orderId);
         }
+        if ("SHIPPING".equals(order.getOrderStatus()) || "DELIVERED".equals(order.getOrderStatus())) {
+            throw new IllegalStateException("이미 배송 중이거나 완료된 주문은 취소할 수 없습니다.");
+        }
         if ("CANCELLED".equals(order.getPaymentStatus())) {
             return;
         }
@@ -169,11 +172,7 @@ public class OrderService {
     }
     
     public List<OrderDTO> getOrders(Long userId) {
-        List<OrderDTO> orders = orderMapper.findOrdersByUserId(userId);
-        for (OrderDTO order : orders) {
-            order.setItems(orderMapper.findOrderItemsByOrderId(order.getOrderId()));
-        }
-        return orders;
+        return orderMapper.findOrdersByUserId(userId);
     }
     
     public OrderDTO getOrderDetails(Long orderId) {
@@ -195,5 +194,42 @@ public class OrderService {
         }
         orderMapper.deleteOrderItems(orderId);
         orderMapper.deleteOrder(orderId);
+    }
+
+    public List<OrderDTO> getAllOrders(String ship) {
+        return orderMapper.findAllOrders(ship);
+    }
+
+    @Transactional
+    public void updateOrderStatus(Long orderId, String status) {
+        OrderDTO order = orderMapper.findOrderById(orderId);
+        if (order == null) {
+            throw new IllegalArgumentException("주문건이 존재하지 않습니다. ID: " + orderId);
+        }
+        orderMapper.updateOrderStatus(orderId, status);
+    }
+
+    @Transactional
+    public void refundOrder(Long orderId) {
+        OrderDTO order = orderMapper.findOrderById(orderId);
+        if (order == null) {
+            throw new IllegalArgumentException("주문건이 존재하지 않습니다. ID: " + orderId);
+        }
+        if (!"DELIVERED".equals(order.getOrderStatus())) {
+            throw new IllegalStateException("배송이 완료된 주문만 환불 신청이 가능합니다.");
+        }
+        orderMapper.updateOrderStatus(orderId, "RETURNED");
+    }
+
+    @Transactional
+    public void confirmPurchase(Long orderId) {
+        OrderDTO order = orderMapper.findOrderById(orderId);
+        if (order == null) {
+            throw new IllegalArgumentException("주문건이 존재하지 않습니다. ID: " + orderId);
+        }
+        if (!"DELIVERED".equals(order.getOrderStatus())) {
+            throw new IllegalStateException("배송이 완료된 주문만 구매확정이 가능합니다.");
+        }
+        orderMapper.updateOrderStatus(orderId, "CONFIRMED");
     }
 }

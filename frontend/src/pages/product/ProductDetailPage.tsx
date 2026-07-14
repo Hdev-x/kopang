@@ -7,14 +7,13 @@ import { Card } from "../../components/Card";
 import { AddToCartModal } from "../../components/AddToCartModal";
 import { getProduct } from "../../api/products";
 import { addToCart } from "../../api/cart";
+import { checkWishlist, addWishlist, deleteWishlist } from "../../api/wishlist";
+import { getProductReviews } from "../../api/review";
+import { useAuth } from "../../hooks/useAuth";
 import type { Product } from "../../types/product";
+import type { Review } from "../../api/review";
 import styles from "./ProductDetailPage.module.css";
 
-// 목업 리뷰
-const REVIEWS = [
-  { name: "김**", rating: 5, text: "믿고 먹는 코팡! 신선하고 배송도 빨라요." },
-  { name: "이**", rating: 4, text: "가성비 좋네요. 재구매 의사 있습니다." },
-];
 // 목업 상품문의
 const PRODUCT_QNA = [
   { q: "재고 언제 다시 들어오나요?", a: "이번 주 내 입고 예정입니다.", status: "답변완료" },
@@ -24,14 +23,26 @@ const PRODUCT_QNA = [
 export function ProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const user = useAuth();
   const [product, setProduct] = useState<Product | null>(null);
   const [wished, setWished] = useState(false);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [tab, setTab] = useState<"review" | "qna">("review");
 
   useEffect(() => {
-    if (id) getProduct(Number(id)).then(setProduct).catch(console.error);
-  }, [id]);
+    if (id) {
+      const prodId = Number(id);
+      getProduct(prodId).then(setProduct).catch(console.error);
+      getProductReviews(prodId).then(setReviews).catch(console.error);
+      
+      if (user) {
+        checkWishlist(prodId).then(setWished).catch(console.error);
+      } else {
+        setWished(false);
+      }
+    }
+  }, [id, user]);
 
   if (!product) {
     return (
@@ -40,6 +51,28 @@ export function ProductDetailPage() {
       </Layout>
     );
   }
+
+  const handleWishToggle = () => {
+    if (!user) {
+      if (window.confirm("로그인이 필요한 기능입니다. 로그인 페이지로 이동할까요?")) {
+        navigate("/login");
+      }
+      return;
+    }
+
+    if (id) {
+      const prodId = Number(id);
+      if (wished) {
+        deleteWishlist(prodId)
+          .then(() => setWished(false))
+          .catch(console.error);
+      } else {
+        addWishlist(prodId)
+          .then(() => setWished(true))
+          .catch(console.error);
+      }
+    }
+  };
 
   const discounted = product.discountRate
     ? Math.round((product.price * (100 - product.discountRate)) / 100)
@@ -80,7 +113,7 @@ export function ProductDetailPage() {
         <button
           type="button"
           className={`${styles.wish} ${wished ? styles.wishOn : ""}`}
-          onClick={() => setWished((v) => !v)}
+          onClick={handleWishToggle}
           aria-label="찜"
         >
           <Heart size={22} strokeWidth={2.2} fill={wished ? "currentColor" : "none"} />
@@ -119,7 +152,7 @@ export function ProductDetailPage() {
           className={`${styles.tab} ${tab === "review" ? styles.tabActive : ""}`}
           onClick={() => setTab("review")}
         >
-          리뷰 {REVIEWS.length}
+          리뷰 {reviews.length}
         </button>
         <button
           className={`${styles.tab} ${tab === "qna" ? styles.tabActive : ""}`}
@@ -130,15 +163,24 @@ export function ProductDetailPage() {
       </div>
 
       {tab === "review" ? (
-        REVIEWS.map((r, i) => (
-          <Card key={i} className={styles.review}>
-            <p className={styles.rating}>
-              {"★".repeat(r.rating)}
-              {"☆".repeat(5 - r.rating)} <span className={styles.reviewer}>{r.name}</span>
-            </p>
-            <p>{r.text}</p>
-          </Card>
-        ))
+        reviews.length === 0 ? (
+          <p className={styles.emptyReview}>아직 작성된 리뷰가 없습니다.</p>
+        ) : (
+          reviews.map((r) => (
+            <Card key={r.reviewId} className={styles.review}>
+              <div className={r.image ? styles.reviewWithImg : styles.reviewPlain}>
+                {r.image && <img src={r.image} alt="리뷰 이미지" className={styles.reviewThumb} />}
+                <div className={styles.reviewContent}>
+                  <p className={styles.rating}>
+                    {"★".repeat(Math.round(r.rating))}
+                    {"☆".repeat(5 - Math.round(r.rating))} <span className={styles.reviewer}>{r.userName || "익명"}</span>
+                  </p>
+                  <p>{r.content}</p>
+                </div>
+              </div>
+            </Card>
+          ))
+        )
       ) : (
         <>
           <Button variant="ghost" className={styles.askBtn} onClick={() => navigate("/qna/write")}>

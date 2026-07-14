@@ -1,11 +1,59 @@
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Heart } from "lucide-react";
+import { useAuth } from "../hooks/useAuth";
+import { checkWishlist, addWishlist, deleteWishlist } from "../api/wishlist";
 import type { Product } from "../types/product";
 import styles from "./ProductCard.module.css";
 
-type Props = { product: Product };
+type Props = { 
+  product: Product;
+  onWishChange?: (productId: number, isWished: boolean) => void;
+};
 
-export function ProductCard({ product }: Props) {
+export function ProductCard({ product, onWishChange }: Props) {
+  const user = useAuth();
+  const navigate = useNavigate();
+  const [wished, setWished] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      checkWishlist(product.id)
+        .then(setWished)
+        .catch(console.error);
+    } else {
+      setWished(false);
+    }
+  }, [product.id, user]);
+
+  const handleWishToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) {
+      if (window.confirm("로그인이 필요한 기능입니다. 로그인 페이지로 이동할까요?")) {
+        navigate("/login");
+      }
+      return;
+    }
+
+    if (wished) {
+      deleteWishlist(product.id)
+        .then(() => {
+          setWished(false);
+          if (onWishChange) onWishChange(product.id, false);
+        })
+        .catch(console.error);
+    } else {
+      addWishlist(product.id)
+        .then(() => {
+          setWished(true);
+          if (onWishChange) onWishChange(product.id, true);
+        })
+        .catch(console.error);
+    }
+  };
+
   return (
     <Link to={`/products/${product.id}`} className={styles.card}>
       <div className={styles.imageWrap}>
@@ -21,14 +69,11 @@ export function ProductCard({ product }: Props) {
         )}
         <button
           type="button"
-          className={styles.heart}
+          className={`${styles.heart} ${wished ? styles.heartOn : ""}`}
           aria-label="찜"
-          onClick={(e) => {
-            e.preventDefault(); // 카드 이동 막고 찜만
-            // TODO: 찜 토글
-          }}
+          onClick={handleWishToggle}
         >
-          <Heart size={18} strokeWidth={2.2} />
+          <Heart size={18} strokeWidth={2.2} fill={wished ? "currentColor" : "none"} />
         </button>
       </div>
 

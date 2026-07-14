@@ -8,6 +8,7 @@ import java.util.List;
 public class OrderDTO {
     private Long orderId;
     private Long userId;
+    private String userName;
     private int totalPrice;
     private String paymentStatus;
     private String paymentKey;
