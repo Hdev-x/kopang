@@ -52,6 +52,38 @@ export const handlers = [
     }),
   ),
 
+  // 1:1 문의 목록 - API 명세서 주소
+  http.get("/api/inquiries", ({ request }) => {
+    const url = new URL(request.url);
+    const type = url.searchParams.get("type");
+
+    const filteredPosts = type
+      ? qnaPosts.filter((q) => q.type === type)
+      : qnaPosts;
+
+    return HttpResponse.json({
+      success: true,
+      data: filteredPosts.map((q) => ({
+        id: q.id,
+        title: q.title,
+        author: q.author,
+        status: q.status,
+        createdAt: q.createdAt,
+      })),
+      message: null,
+    });
+  }),
+
+  // 1:1 문의 상세 - API 명세서 주소
+  http.get("/api/inquiries/:id", ({ params }) => {
+    const post = qnaPosts.find((q) => q.id === Number(params.id));
+    return HttpResponse.json({
+      success: !!post,
+      data: post ?? null,
+      message: post ? null : "NOT_FOUND",
+    });
+  }),
+
   // 1:1 문의 상세
   http.get("/api/qna/:id", ({ params }) => {
     const post = qnaPosts.find((q) => q.id === Number(params.id));
@@ -70,11 +102,32 @@ export const handlers = [
       title: body.title,
       content: body.content,
       author: "홍**",
-      status: "답변대기",
+      status: "답변대기" as const,
       createdAt: "2026.06.30",
     };
+
+    qnaPosts.unshift(created);
+
     return HttpResponse.json({ success: true, data: created, message: null });
   }),
+
+  // 1:1 문의 작성 - API 명세서 주소
+  http.post("/api/inquiries", async ({ request }) => {
+    const body = (await request.json()) as { title: string; content: string };
+    const created = {
+      id: qnaPosts.length + 1,
+      title: body.title,
+      content: body.content,
+      author: "홍**",
+      status: "답변대기" as const,
+      createdAt: "2026.06.30",
+    };
+
+    qnaPosts.unshift(created);
+
+    return HttpResponse.json({ success: true, data: created, message: null });
+  }),
+
 
   // // 로그인
   // http.post("/api/auth/login", async ({ request }) => {
@@ -90,4 +143,41 @@ export const handlers = [
   //   });
   // }),
 
+  // 1:1 문의 답변 등록
+  http.post("/api/qna/:id/answer", async ({ params, request }) => {
+    const body = (await request.json()) as { answerContent: string };
+    const post = qnaPosts.find((q) => q.id === Number(params.id));
+
+    if (!post) {
+      return HttpResponse.json(
+        { success: false, data: null, message: "NOT_FOUND" },
+        { status: 404 },
+      );
+    }
+
+    post.answerContent = body.answerContent;
+    post.status = "답변완료";
+
+    return HttpResponse.json({ success: true, data: null, message: null });
+  }),
+
+  // 1:1 문의 답변 등록 - API 명세서 주소
+  http.post("/api/inquiries/:id/answer", async ({ params, request }) => {
+    const body = (await request.json()) as { answerContent: string };
+    const post = qnaPosts.find((q) => q.id === Number(params.id));
+
+    if (!post) {
+      return HttpResponse.json(
+        { success: false, data: null, message: "NOT_FOUND" },
+        { status: 404 },
+      );
+    }
+
+    post.answerContent = body.answerContent;
+    post.status = "답변완료";
+
+    return HttpResponse.json({ success: true, data: null, message: null });
+
+  }),
 ];
+

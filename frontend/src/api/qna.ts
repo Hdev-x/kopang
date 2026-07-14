@@ -2,20 +2,28 @@ import { client } from "./client";
 import type { ApiResponse } from "../types/api";
 import type { QnaPost, QnaSummary } from "../types/qna";
 
-// 문의 목록 (GET /api/qna)
-export async function getQnaList() {
-  const res = await client.get<ApiResponse<QnaSummary[]>>("/qna");
+// 문의 목록 (GET /api/inquiries)
+export async function getQnaList(type?: "PRODUCT" | "GENERAL") {
+  const res = await client.get<ApiResponse<QnaSummary[]>>("/inquiries", {
+    params: type ? { type } : undefined,
+  });
   return res.data.data;
 }
 
-// 문의 상세 (GET /api/qna/:id)
+// 문의 상세 (GET /api/inquiries/:id)
 export async function getQna(id: number) {
-  const res = await client.get<ApiResponse<QnaPost>>(`/qna/${id}`);
+  const res = await client.get<ApiResponse<QnaPost>>(`/inquiries/${id}`);
   return res.data.data;
 }
 
-// 문의 작성 (POST /api/qna)
+// 문의 작성 (POST /api/inquiries)
 export async function createQna(title: string, content: string) {
-  const res = await client.post<ApiResponse<QnaPost>>("/qna", { title, content });
+  const res = await client.post<ApiResponse<QnaPost>>("/inquiries", { title, content });
   return res.data.data;
+}
+export async function answerQna(id: number, answerContent: string) {
+  await client.post<ApiResponse<null>>(`/inquiries/${id}/answer`, {
+    answerContent,
+  });
+
 }

@@ -13,6 +13,7 @@ function getShipLabel(status: string) {
   if (status === "SHIPPING") return "배송중";
   if (status === "DELIVERED") return "배송완료";
   if (status === "CANCELLED") return "취소";
+  if (status === "CONFIRMED") return "구매확정";
   return "-";
 }
 

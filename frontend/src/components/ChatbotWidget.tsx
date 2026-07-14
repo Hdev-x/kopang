@@ -1,16 +1,15 @@
 import { useState } from "react";
 import { MessageCircle, X } from "lucide-react";
 import styles from "./ChatbotWidget.module.css";
+import { getChatbotReply, INITIAL_QUESTIONS } from "../api/chatbotRules";
 
-type Msg = { role: "bot" | "user"; text: string };
 
-// 목업 — 정해진 질문/답변 (실제론 GPT API)
-const QUICK = [
-  { q: "배송은 얼마나 걸려요?", a: "주문 후 보통 1~2일 내 도착해요. WOW 멤버십은 무료배송이에요!" },
-  { q: "반품하고 싶어요", a: "마이페이지 > 주문내역에서 반품 신청이 가능해요. 멤버십은 무료 반품!" },
-  { q: "포인트는 어떻게 쌓여요?", a: "구매 시 2%, 리뷰 작성 시 추가로 적립돼요." },
-  { q: "추천 상품 알려줘", a: "최근 보신 상품을 바탕으로 홈에서 맞춤 추천을 보여드리고 있어요 🙂" },
-];
+type Msg = {
+  role: "bot" | "user";
+  text: string;
+  suggestions?: string[];
+};
+
 
 export function ChatbotWidget() {
   const [open, setOpen] = useState(false);
@@ -18,8 +17,34 @@ export function ChatbotWidget() {
     { role: "bot", text: "안녕하세요! 코팡 AI 상담봇이에요. 무엇을 도와드릴까요?" },
   ]);
 
-  const ask = (q: string, a: string) => {
-    setMsgs((m) => [...m, { role: "user", text: q }, { role: "bot", text: a }]);
+  const [input, setInput] = useState("");
+
+  const ask = (question: string) => {
+    const reply = getChatbotReply(question);
+
+    setMsgs((m) => [
+      ...m,
+      { role: "user", text: question },
+      { role: "bot", text: reply.answer, suggestions: reply.suggestions },
+
+    ]);
+  };
+
+  const sendInput = () => {
+    const question = input.trim();
+
+    if (!question) {
+      return;
+    }
+
+    const reply = getChatbotReply(question);
+
+    setMsgs((m) => [
+      ...m,
+      { role: "user", text: question },
+      { role: "bot", text: reply.answer, suggestions: reply.suggestions },
+    ]);
+    setInput("");
   };
 
   return (
@@ -38,25 +63,55 @@ export function ChatbotWidget() {
           <div className={styles.header}>코팡 AI 상담봇</div>
           <div className={styles.body}>
             {msgs.map((m, i) => (
-              <div
-                key={i}
-                className={`${styles.msg} ${m.role === "user" ? styles.user : styles.bot}`}
-              >
-                {m.text}
+              <div key={i}>
+                <div className={`${styles.msg} ${m.role === "user" ? styles.user : styles.bot}`}>
+                  {m.text}
+                </div>
+
+                {m.suggestions && (
+                  <div className={styles.suggestions}>
+                    {m.suggestions.slice(0,1).map((suggestion) => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        className={styles.suggestionBtn}
+                        onClick={() => ask(suggestion)}
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
           <div className={styles.quick}>
-            {QUICK.map((q) => (
+            {INITIAL_QUESTIONS.map((question) => (
               <button
-                key={q.q}
+                key={question}
                 type="button"
                 className={styles.quickBtn}
-                onClick={() => ask(q.q, q.a)}
+                onClick={() => ask(question)}
               >
-                {q.q}
+                {question}
               </button>
             ))}
+          </div>
+          <div className={styles.inputRow}>
+            <input
+              className={styles.input}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  sendInput();
+                }
+              }}
+              placeholder="궁금한 내용을 입력하세요"
+            />
+            <button type="button" className={styles.sendBtn} onClick={sendInput}>
+              보내기
+            </button>
           </div>
         </div>
       )}

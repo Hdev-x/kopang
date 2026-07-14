@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Clock } from "lucide-react";
 import { Layout } from "../../components/Layout";
 import { ProductCard } from "../../components/ProductCard";
-import { getProducts, getSearchHistory, addSearchHistory, deleteSearchHistory, clearSearchHistory } from "../../api/products";
+import { getSearchHistory, addSearchHistory, deleteSearchHistory, clearSearchHistory, searchProductsAI } from "../../api/products";
 import { useAuth } from "../../hooks/useAuth";
 import type { Product } from "../../types/product";
 import styles from "./SearchPage.module.css";
@@ -35,6 +35,18 @@ export function SearchPage() {
   const q = (searchParams.get("q") ?? "").trim();
   const [recent, setRecent] = useState<RecentItem[]>([]);
   const [results, setResults] = useState<Product[]>([]);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const observerRef = useRef<HTMLDivElement>(null);
+
+  const [prevQ, setPrevQ] = useState("");
+  if (q !== prevQ) {
+    setPrevQ(q);
+    setCurrentPage(0);
+    setResults([]);
+    setTotalPages(1);
+  }
 
   const fetchRecent = () => {
     if (user) {
@@ -54,22 +66,57 @@ export function SearchPage() {
 
   useEffect(() => {
     if (q) {
-      getProducts(undefined, 0, 40, q)
-        .then((p) => setResults(p.content))
-        .catch(console.error);
+      setLoading(true);
+      searchProductsAI(q, currentPage, 20)
+        .then((page) => {
+          if (currentPage === 0) {
+            setResults(page.content || []);
+          } else {
+            setResults((prev) => [...prev, ...(page.content || [])]);
+          }
+          setTotalPages(page.totalPages || 1);
+        })
+        .catch(console.error)
+        .finally(() => setLoading(false));
 
-      if (user) {
-        addSearchHistory(q)
-          .then(() => fetchRecent())
-          .catch(console.error);
-      } else {
-        const localList = loadRecent().map((r) => r.keyword);
-        const next = [q, ...localList.filter((r) => r !== q)].slice(0, 8);
-        localStorage.setItem(RECENT_KEY, JSON.stringify(next));
-        setRecent(next.map((k) => ({ id: k, keyword: k })));
+      if (currentPage === 0) {
+        if (user) {
+          addSearchHistory(q)
+            .then(() => fetchRecent())
+            .catch(console.error);
+        } else {
+          const localList = loadRecent().map((r) => r.keyword);
+          const next = [q, ...localList.filter((r) => r !== q)].slice(0, 8);
+          localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+          setRecent(next.map((k) => ({ id: k, keyword: k })));
+        }
       }
     }
-  }, [q, user]);
+  }, [q, user, currentPage]);
+
+  useEffect(() => {
+    if (loading || currentPage >= totalPages - 1) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setCurrentPage((prev) => prev + 1);
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    const currentRef = observerRef.current;
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+    };
+  }, [loading, currentPage, totalPages]);
 
   const pick = (k: string) => {
     setSearchParams({ q: k }, { replace: true });
@@ -149,11 +196,24 @@ export function SearchPage() {
       <p className={styles.resultHead}>
         <b>{q}</b> 검색 결과
       </p>
-      <div className={styles.grid}>
-        {results.map((p) => (
-          <ProductCard key={p.id} product={p} />
-        ))}
-      </div>
+      {loading && currentPage === 0 ? (
+        <p className={styles.empty}>불러오는 중...</p>
+      ) : !loading && results.length === 0 ? (
+        <p className={styles.empty}>검색 결과가 없습니다.</p>
+      ) : (
+        <div className={styles.grid}>
+          {results.map((p) => (
+            <ProductCard key={p.id} product={p} />
+          ))}
+        </div>
+      )}
+
+      {/* 무한 스크롤 스크롤 트리거 */}
+      {totalPages > 1 && currentPage < totalPages - 1 && (
+        <div ref={observerRef} style={{ textAlign: "center", padding: "30px 0", color: "var(--color-text-muted)" }}>
+          {loading ? "불러오는 중..." : "스크롤하여 더 보기"}
+        </div>
+      )}
     </Layout>
   );
 }

@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, LogOut } from "lucide-react";
+import { Menu, X, Home } from "lucide-react";
 import { logout } from "../lib/auth";
 import styles from "./AdminLayout.module.css";
 
@@ -30,16 +30,16 @@ const GROUPS: { title: string; items: Item[] }[] = [
     title: "부가",
     items: [{ to: "/admin/coupons", label: "쿠폰·이벤트" }],
   },
+  {
+    title: "바로가기",
+    items: [{ to: "/", label: "🏠 쇼핑몰 홈으로 이동" }],
+  },
 ];
 
 export function AdminLayout({ title, children }: { title: string; children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const path = useLocation().pathname;
   const navigate = useNavigate();
-  const exit = () => {
-    logout();
-    navigate("/admin/login");
-  };
   const active = (to: string, exact?: boolean) =>
     exact ? path === to : path === to || path.startsWith(to + "/");
 
@@ -52,8 +52,8 @@ export function AdminLayout({ title, children }: { title: string; children: Reac
               <Menu size={22} />
             </button>
             <span className={styles.brand}>KOPANG 관리자</span>
-            <button className={styles.iconBtn} onClick={exit} aria-label="나가기">
-              <LogOut size={20} />
+            <button className={styles.iconBtn} onClick={() => navigate("/")} aria-label="쇼핑몰 홈">
+              <Home size={20} />
             </button>
           </div>
         </header>

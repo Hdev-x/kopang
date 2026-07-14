@@ -7,7 +7,7 @@ import { useAuth } from "../hooks/useAuth";
 export function AdminRoute({ children }: { children: ReactNode }) {
   const user = useAuth();
   if (!user || user.role !== "ADMIN") {
-    return <Navigate to="/admin/login" replace />;
+    return <Navigate to="/login" replace />;
   }
   return <>{children}</>;
 }

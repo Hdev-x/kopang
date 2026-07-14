@@ -3,18 +3,33 @@ import { useParams } from "react-router-dom";
 import { Layout } from "../../components/Layout";
 import { PageHeader } from "../../components/PageHeader";
 import { Card } from "../../components/Card";
-import { getQna } from "../../api/qna";
+import { answerQna, getQna } from "../../api/qna";
 import type { QnaPost } from "../../types/qna";
 import s from "../../styles/Qna.module.css";
 
 export function QnaDetailPage() {
   const { id } = useParams();
   const [post, setPost] = useState<QnaPost | null>(null);
+  const [answerContent, setAnswerContent] = useState("");
+
 
   useEffect(() => {
     if (id) getQna(Number(id)).then(setPost).catch(console.error);
   }, [id]);
 
+  async function handleAnswerSubmit() {
+    const trimmedAnswer = answerContent.trim();
+
+    if (!id || !trimmedAnswer) {
+      return;
+    }
+    await answerQna(Number(id), trimmedAnswer);
+
+    const updatePost = await getQna(Number(id));
+    setPost(updatePost);
+    setAnswerContent("");
+
+  }
   if (!post) {
     return (
       <Layout>
@@ -39,14 +54,28 @@ export function QnaDetailPage() {
         <p className={s.qContent}>{post.content}</p>
       </Card>
 
-      {post.answer ? (
+      {post.answerContent ? (
         <Card className={s.aCard}>
           <p className={s.aLabel}>답변 · 코팡 고객센터</p>
-          <p className={s.aContent}>{post.answer.content}</p>
-          <p className={s.date}>{post.answer.createdAt}</p>
+          <p className={s.aContent}>{post.answerContent}</p>
         </Card>
       ) : (
-        <p className={s.waiting}>답변을 준비 중이에요.</p>
+        <div className={s.answerForm}>
+          <p className={s.waiting}>답변을 준비 중이에요.</p>
+          <textarea
+            className={s.answerTextarea}
+            value={answerContent}
+            onChange={(e) => setAnswerContent(e.target.value)}
+            placeholder="답변 내용을 입력하세요"
+          />
+          <button
+            className={s.answerButton}
+            type="button"
+            onClick={handleAnswerSubmit}
+          >
+            답변등록
+          </button>
+        </div>
       )}
     </Layout>
   );

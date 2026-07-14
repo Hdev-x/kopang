@@ -6,7 +6,7 @@ import { PageHeader } from "../../components/PageHeader";
 import { Card } from "../../components/Card";
 import { Button } from "../../components/Button";
 import { WriteReviewModal } from "../../components/WriteReviewModal";
-import { getOrders, deleteOrder, formatOrderStatus } from "../../api/order";
+import { getOrders, deleteOrder, formatOrderStatus, confirmPurchase } from "../../api/order";
 import { getMyReviews, deleteReview } from "../../api/review";
 import type { Order } from "../../api/order";
 import type { Review } from "../../api/review";
@@ -66,6 +66,21 @@ export function OrderHistoryPage() {
       })
       .catch((err) => {
         const errMsg = err.response?.data?.message || "주문 내역 삭제에 실패했습니다.";
+        alert(errMsg);
+      });
+  };
+
+  const handleConfirmPurchase = (orderId: number) => {
+    if (!window.confirm("정말로 이 주문을 구매확정 하시겠습니까?\n구매확정 후에는 반품 및 교환 신청이 불가능합니다.")) {
+      return;
+    }
+    confirmPurchase(orderId)
+      .then(() => {
+        alert("구매확정이 완료되었습니다.");
+        fetchOrders();
+      })
+      .catch((err) => {
+        const errMsg = err.response?.data?.message || "구매확정에 실패했습니다.";
         alert(errMsg);
       });
   };
@@ -160,8 +175,32 @@ export function OrderHistoryPage() {
                         </div>
                       </div>
 
-                      {/* 주문내역 리스트에서 배송완료 시 상품별 리뷰 작성 노출 */}
-                      {o.orderStatus === "DELIVERED" && o.items && o.items.length > 0 && (
+                      {/* 주문내역 리스트에서 배송완료 시 구매확정 버튼 노출 */}
+                      {o.orderStatus === "DELIVERED" && (
+                        <div
+                          style={{
+                            marginTop: "12px",
+                            borderTop: "1px dashed var(--color-border)",
+                            paddingTop: "8px",
+                            display: "flex",
+                            justifyContent: "flex-end"
+                          }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                        >
+                          <Button
+                            size="sm"
+                            onClick={() => handleConfirmPurchase(o.orderId)}
+                          >
+                            구매확정
+                          </Button>
+                        </div>
+                      )}
+
+                      {/* 주문내역 리스트에서 구매확정 시 상품별 리뷰 작성 노출 */}
+                      {o.orderStatus === "CONFIRMED" && o.items && o.items.length > 0 && (
                         <div
                           style={{
                             marginTop: "12px",
