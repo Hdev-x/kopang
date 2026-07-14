@@ -2,11 +2,13 @@ package com.kopang.app.domain.user;
 
 import com.kopang.app.global.common.ApiResponse;
 import com.kopang.app.global.security.JwtAuthenticationFilter.CustomUserDetails;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -14,9 +16,11 @@ import java.util.Map;
 public class UserController {
 
     private final UserService userService;
+    private final UserAddressMapper userAddressMapper;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, UserAddressMapper userAddressMapper) {
         this.userService = userService;
+        this.userAddressMapper = userAddressMapper;
     }
 
     // 1. 회원가입 (POST /api/auth/signup)
@@ -181,6 +185,182 @@ public class UserController {
 
             return ResponseEntity.ok(ApiResponse.success(data));
         } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.fail(e.getMessage()));
+        }
+    }
+
+    // 10. 내 기본 배송지 조회 (GET /api/users/me/address)
+    @GetMapping("/users/me/address")
+    public ResponseEntity<ApiResponse<UserAddressDTO>> getMyAddress(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.fail("인증되지 않은 사용자입니다"));
+        }
+        try {
+            UserDTO user = userService.detailByEmail(userDetails.getEmail());
+            UserAddressDTO address = userAddressMapper.findDefaultByUserId(user.getUserId());
+            if (address == null) {
+                // 기본 배송지가 없으면 아무 배송지나 조회
+                List<UserAddressDTO> list = userAddressMapper.findAllByUserId(user.getUserId());
+                if (!list.isEmpty()) {
+                    address = list.get(0);
+                } else {
+                    // 배송지가 완전히 비어있는 경우 null을 그대로 반환하여 프론트에서 빈 상태를 표현하도록 함
+                    address = null;
+                }
+            }
+            return ResponseEntity.ok(ApiResponse.success(address));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.fail(e.getMessage()));
+        }
+    }
+
+    // 11. 내 전체 배송지 조회 (GET /api/users/me/addresses)
+    @GetMapping("/users/me/addresses")
+    public ResponseEntity<ApiResponse<List<UserAddressDTO>>> getMyAddresses(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.fail("인증되지 않은 사용자입니다"));
+        }
+        try {
+            Long userId = userService.detailByEmail(userDetails.getEmail()).getUserId();
+            List<UserAddressDTO> list = userAddressMapper.findAllByUserId(userId);
+            return ResponseEntity.ok(ApiResponse.success(list));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.fail(e.getMessage()));
+        }
+    }
+
+    // 12. 배송지 등록 (POST /api/users/me/addresses)
+    @PostMapping("/users/me/addresses")
+    public ResponseEntity<ApiResponse<UserAddressDTO>> addAddress(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody UserAddressDTO request) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.fail("인증되지 않은 사용자입니다"));
+        }
+        try {
+            Long userId = userService.detailByEmail(userDetails.getEmail()).getUserId();
+            request.setUserId(userId);
+
+            // 첫 등록이거나 isDefault가 true인 경우 기존 기본 배송지 해제
+            List<UserAddressDTO> list = userAddressMapper.findAllByUserId(userId);
+            if (list.isEmpty()) {
+                request.setIsDefault(true);
+            } else if (Boolean.TRUE.equals(request.getIsDefault())) {
+                userAddressMapper.clearDefault(userId);
+            } else {
+                request.setIsDefault(false);
+            }
+
+            userAddressMapper.insert(request);
+            return ResponseEntity.ok(ApiResponse.success(request));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.fail(e.getMessage()));
+        }
+    }
+
+    // 13. 배송지 수정 (PUT /api/users/me/addresses/{id})
+    @PutMapping("/users/me/addresses/{id}")
+    public ResponseEntity<ApiResponse<Void>> updateAddress(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable("id") Long addressId,
+            @RequestBody UserAddressDTO request) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.fail("인증되지 않은 사용자입니다"));
+        }
+        try {
+            Long userId = userService.detailByEmail(userDetails.getEmail()).getUserId();
+            UserAddressDTO existing = userAddressMapper.findById(addressId);
+            if (existing == null) {
+                return ResponseEntity.badRequest().body(ApiResponse.fail("배송지가 존재하지 않습니다."));
+            }
+            if (!existing.getUserId().equals(userId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(ApiResponse.fail("해당 배송지에 대한 접근 권한이 없습니다."));
+            }
+
+            request.setAddressId(addressId);
+            request.setUserId(userId);
+
+            if (Boolean.TRUE.equals(request.getIsDefault())) {
+                userAddressMapper.clearDefault(userId);
+            }
+
+            userAddressMapper.update(request);
+            return ResponseEntity.ok(ApiResponse.success(null));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.fail(e.getMessage()));
+        }
+    }
+
+    // 14. 배송지 삭제 (DELETE /api/users/me/addresses/{id})
+    @DeleteMapping("/users/me/addresses/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteAddress(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable("id") Long addressId) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.fail("인증되지 않은 사용자입니다"));
+        }
+        try {
+            Long userId = userService.detailByEmail(userDetails.getEmail()).getUserId();
+            UserAddressDTO existing = userAddressMapper.findById(addressId);
+            if (existing == null) {
+                return ResponseEntity.badRequest().body(ApiResponse.fail("배송지가 존재하지 않습니다."));
+            }
+            if (!existing.getUserId().equals(userId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(ApiResponse.fail("해당 배송지를 삭제할 권한이 없습니다."));
+            }
+
+            userAddressMapper.delete(addressId);
+
+            // 삭제된 배송지가 기본 배송지였고 남은 배송지가 있으면 그 중 하나를 기본 배송지로 자동 지정
+            if (Boolean.TRUE.equals(existing.getIsDefault())) {
+                List<UserAddressDTO> list = userAddressMapper.findAllByUserId(userId);
+                if (!list.isEmpty()) {
+                    UserAddressDTO nextDefault = list.get(0);
+                    nextDefault.setIsDefault(true);
+                    userAddressMapper.update(nextDefault);
+                }
+            }
+
+            return ResponseEntity.ok(ApiResponse.success(null));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.fail(e.getMessage()));
+        }
+    }
+
+    // 15. 기본 배송지 설정 (POST /api/users/me/addresses/{id}/default)
+    @PostMapping("/users/me/addresses/{id}/default")
+    public ResponseEntity<ApiResponse<Void>> setDefaultAddress(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable("id") Long addressId) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.fail("인증되지 않은 사용자입니다"));
+        }
+        try {
+            Long userId = userService.detailByEmail(userDetails.getEmail()).getUserId();
+            UserAddressDTO existing = userAddressMapper.findById(addressId);
+            if (existing == null) {
+                return ResponseEntity.badRequest().body(ApiResponse.fail("배송지가 존재하지 않습니다."));
+            }
+            if (!existing.getUserId().equals(userId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(ApiResponse.fail("해당 배송지를 수정할 권한이 없습니다."));
+            }
+
+            userAddressMapper.clearDefault(userId);
+            existing.setIsDefault(true);
+            userAddressMapper.update(existing);
+
+            return ResponseEntity.ok(ApiResponse.success(null));
+        } catch (Exception e) {
             return ResponseEntity.badRequest().body(ApiResponse.fail(e.getMessage()));
         }
     }

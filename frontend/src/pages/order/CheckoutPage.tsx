@@ -3,6 +3,7 @@ import { Layout } from "../../components/Layout";
 import { PageHeader } from "../../components/PageHeader";
 import { Button } from "../../components/Button";
 import { getCart } from "../../api/cart";
+import { getUserAddress, getUserAddresses, type UserAddressResponse } from "../../api/auth";
 import { createOrder } from "../../api/order";
 import type { CartItem } from "../../types/cart";
 import styles from "./CheckoutPage.module.css";
@@ -21,8 +22,22 @@ export function CheckoutPage() {
   const [couponId, setCouponId] = useState(0);
   const [pointInput, setPointInput] = useState("");
 
+  // 배송지 관련 상태
+  const [selectedAddress, setSelectedAddress] = useState<UserAddressResponse | null>(null);
+  const [addressList, setAddressList] = useState<UserAddressResponse[]>([]);
+  const [showSelectModal, setShowSelectModal] = useState(false);
+
+  const loadDefaultAddress = () => {
+    getUserAddress()
+      .then((addr) => {
+        setSelectedAddress(addr);
+      })
+      .catch(console.error);
+  };
+
   useEffect(() => {
     getCart().then(setItems).catch(console.error);
+    loadDefaultAddress();
   }, []);
 
   const total = items.reduce((s, it) => s + it.price * it.quantity, 0);
@@ -32,8 +47,21 @@ export function CheckoutPage() {
   const pointUsed = Math.min(Math.max(0, Number(pointInput) || 0), maxPoint);
   const finalPrice = afterCoupon - pointUsed;
 
+  const handleOpenSelectModal = () => {
+    getUserAddresses()
+      .then((list) => {
+        setAddressList(list || []);
+        setShowSelectModal(true);
+      })
+      .catch(console.error);
+  };
+
   const handleCheckout = async () => {
     if (items.length === 0) return;
+    if (!selectedAddress) {
+      alert("배송지를 선택해주세요.");
+      return;
+    }
     try {
       // 같은 결제 세션에서 이미 생성된 PENDING 주문이 있으면 재사용
       const savedId = sessionStorage.getItem("checkout_pending_order_id");
@@ -91,14 +119,32 @@ export function CheckoutPage() {
         <PageHeader title="주문/결제" />
 
         {/* ── 배송지 ── */}
-        <p className={styles.section}>배송지</p>
-        <div className={styles.card}>
-          <p className={styles.name}>
-            홍길동 <span className={styles.badge}>기본</span>
-          </p>
-          <p className={styles.muted}>010-1234-5678</p>
-          <p className={styles.muted}>서울 강남구 테헤란로 123, 4층</p>
+        <div className={styles.sectionHeader}>
+          <p className={styles.section}>배송지</p>
+          <button type="button" className={styles.changeBtn} onClick={handleOpenSelectModal}>
+            {selectedAddress ? "변경" : "선택"}
+          </button>
         </div>
+        {selectedAddress ? (
+          <div className={styles.card}>
+            <p className={styles.name}>
+              {selectedAddress.receiver}{" "}
+              {selectedAddress.isDefault && <span className={styles.badge}>기본</span>}
+            </p>
+            {selectedAddress.phone && <p className={styles.muted}>{selectedAddress.phone}</p>}
+            <p className={styles.muted}>
+              [{selectedAddress.zipcode || "우편번호 없음"}] {selectedAddress.address}{" "}
+              {selectedAddress.detailAddress || ""}
+            </p>
+          </div>
+        ) : (
+          <div className={styles.cardEmpty}>
+            <p className={styles.emptyText}>등록된 배송지가 없습니다.</p>
+            <Button size="sm" onClick={handleOpenSelectModal}>
+              배송지 선택 / 추가
+            </Button>
+          </div>
+        )}
 
         {/* ── 주문 상품 ── */}
         <p className={styles.section}>주문 상품</p>
@@ -207,6 +253,74 @@ export function CheckoutPage() {
           </Button>
         </div>
       </div>
+
+      {/* 배송지 선택 모달 */}
+      {showSelectModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowSelectModal(false)}>
+          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>배송지 선택</h3>
+              <button
+                type="button"
+                className={styles.refreshBtn}
+                onClick={handleOpenSelectModal}
+                title="새로고침"
+              >
+                🔄 새로고침
+              </button>
+            </div>
+            
+            <div className={styles.modalBody}>
+              {addressList.length === 0 ? (
+                <div className={styles.modalEmpty}>
+                  <p className={styles.muted}>등록된 배송지가 없습니다.</p>
+                  <p className={styles.muted}>배송지 관리를 눌러 새 주소를 추가해주세요.</p>
+                </div>
+              ) : (
+                <div className={styles.addressList}>
+                  {addressList.map((addr) => (
+                    <div
+                      key={addr.addressId}
+                      className={`${styles.addressItem} ${
+                        selectedAddress?.addressId === addr.addressId ? styles.selectedItem : ""
+                      }`}
+                      onClick={() => {
+                        setSelectedAddress(addr);
+                        setShowSelectModal(false);
+                      }}
+                    >
+                      <div className={styles.addressItemHeader}>
+                        <strong>{addr.receiver}</strong>
+                        {addr.isDefault && <span className={styles.badge}>기본</span>}
+                        {selectedAddress?.addressId === addr.addressId && (
+                          <span className={styles.selectedBadge}>선택됨</span>
+                        )}
+                      </div>
+                      {addr.phone && <p className={styles.addressItemPhone}>{addr.phone}</p>}
+                      <p className={styles.addressItemText}>
+                        [{addr.zipcode || "우편번호 없음"}] {addr.address} {addr.detailAddress || ""}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className={styles.modalButtons}>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => window.open("/my/addresses", "_blank")}
+              >
+                배송지 관리 가기
+              </Button>
+              <Button type="button" onClick={() => setShowSelectModal(false)}>
+                닫기
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }

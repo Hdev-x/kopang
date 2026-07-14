@@ -15,6 +15,7 @@ import { PointHistoryPage } from "../pages/my/PointHistoryPage";
 import { CouponPage } from "../pages/my/CouponPage";
 import { MyInquiriesPage } from "../pages/my/MyInquiriesPage";
 import { MyInquiryDetailPage } from "../pages/my/MyInquiryDetailPage";
+import { AddressManagementPage } from "../pages/my/AddressManagementPage";
 
 // ===== 멤버십 (membership) — 담당 A =====
 import { MembershipPage } from "../pages/membership/MembershipPage";
@@ -84,6 +85,7 @@ export function AppRouter() {
       {/* ---------- 마이페이지 ---------- */}
       <Route path="/my" element={<MyPage />} />
       <Route path="/my/profile" element={<EditProfilePage />} />
+      <Route path="/my/addresses" element={<AddressManagementPage />} />
       <Route path="/my/wishlist" element={<WishlistPage />} />
       <Route path="/my/points" element={<PointHistoryPage />} />
       <Route path="/my/coupons" element={<CouponPage />} />

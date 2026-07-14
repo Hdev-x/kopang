@@ -18,6 +18,7 @@ const MENU: { label: string; to?: string }[] = [
   { label: "쿠폰함", to: "/my/coupons" },
   { label: "WOW 멤버십", to: "/membership" },
   { label: "회원정보 수정", to: "/my/profile" },
+  { label: "배송지 관리", to: "/my/addresses" },
   { label: "문의내역", to: "/my/inquiries" },
   { label: "고객센터", to: "/my/support" },
 ];
