@@ -2,6 +2,10 @@ package com.kopang.app.domain.churn;
 
 import java.util.List;
 
+
+import com.kopang.app.domain.intervention.InterventionDTO;
+import com.kopang.app.domain.notification.NotificationDTO;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,6 +16,11 @@ import lombok.RequiredArgsConstructor;
 public class ChurnScoreServiceImpl implements ChurnScoreService {
 
     private final ChurnMapper churnMapper;
+
+
+    // ============================================
+    // 감지 (룰별 → churn_score 저장)
+    // ============================================
 
     // 공통 저장: 대상 목록을 받아 회원마다 판정 결과(DTO)를 churn_score에 저장
     private void save(List<Long> userIds, double score, String level, String type) {
@@ -134,4 +143,46 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
         detectSpendingDrop();
         detectBadExperience();
     }
+
+    // ============================================
+    // 대응 (intervention)
+    // ============================================
+
+    // 대응 발송 — 오늘자 ④⑧ 대상에 대조군 분리 후 알림 발송 + 전원 기록
+    @Transactional
+    @Override
+    public void runInterventions() {
+        // 조회 → for → if(대조군) → switch(riskType 매핑) → 처치군 발송+로그 / 대조군 로그만
+        List<ChurnScoreDTO> targets = churnMapper.findInterventionTargets();
+        for (ChurnScoreDTO target : targets) {
+            Long userId = target.getUserId();
+            boolean isControl = (userId % 5 == 0);
+            if (!isControl) {
+                // ① riskType → 알림 종류·문구 정하기
+                String type;
+                String message;
+                switch (target.getRiskType()) {
+                    case "WISHLIST_IDLE" -> { type = "WISHLIST"; message = "찜하신 상품이 기다려요"; }
+                    case "SPENDING_DROP" -> { type = "REBUY";    message = "요즘 뜸하셨네요, 특가 준비했어요"; }
+                    default -> throw new IllegalArgumentException("모르는 유형: " + target.getRiskType());
+                }
+                // ② NotificationDTO 만들어 채우고 churnMapper.insertNotification() — 처치군 알림 발송
+                NotificationDTO noti = new NotificationDTO();
+                noti.setUserId(userId);
+                noti.setType(type);
+                noti.setMessage(message);
+                churnMapper.insertNotification(noti);
+            }
+            // ③ InterventionDTO 만들어 채우고 churnMapper.insertIntervention() — 대조군·처치군 전원 로그 (isControl 그대로)
+            InterventionDTO log = new InterventionDTO();
+            log.setUserId(userId);
+            log.setChurnScoreId(target.getChurnScoreId());
+            log.setRiskType(target.getRiskType());
+            log.setActionType("PUSH");
+            log.setIsControl(isControl);
+            log.setChannel("IN_APP");
+            churnMapper.insertIntervention(log);
+        }
+    }
+    
 }
