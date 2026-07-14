@@ -64,6 +64,7 @@ const STATUS_LABEL: Record<string, string> = {
   ORDERED:   "주문완료",
   SHIPPING:  "배송중",
   DELIVERED: "배송완료",
+  CONFIRMED: "구매확정",
   CANCELLED: "주문취소",
   RETURNED:  "반품",
 };
@@ -94,6 +95,12 @@ export async function updateOrderShipStatus(orderId: number, status: string) {
 // 8. 주문 환불 신청 (POST /api/orders/:id/refund)
 export async function refundOrder(orderId: number) {
   const res = await client.post<ApiResponse<void>>(`/orders/${orderId}/refund`);
+  return res.data;
+}
+
+// 9. 주문 구매 확정 (POST /api/orders/:id/confirm-purchase)
+export async function confirmPurchase(orderId: number) {
+  const res = await client.post<ApiResponse<void>>(`/orders/${orderId}/confirm-purchase`);
   return res.data;
 }
 

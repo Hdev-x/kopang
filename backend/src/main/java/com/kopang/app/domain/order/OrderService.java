@@ -220,4 +220,16 @@ public class OrderService {
         }
         orderMapper.updateOrderStatus(orderId, "RETURNED");
     }
+
+    @Transactional
+    public void confirmPurchase(Long orderId) {
+        OrderDTO order = orderMapper.findOrderById(orderId);
+        if (order == null) {
+            throw new IllegalArgumentException("주문건이 존재하지 않습니다. ID: " + orderId);
+        }
+        if (!"DELIVERED".equals(order.getOrderStatus())) {
+            throw new IllegalStateException("배송이 완료된 주문만 구매확정이 가능합니다.");
+        }
+        orderMapper.updateOrderStatus(orderId, "CONFIRMED");
+    }
 }

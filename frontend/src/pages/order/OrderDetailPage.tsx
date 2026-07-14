@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { Layout } from "../../components/Layout";
 import { PageHeader } from "../../components/PageHeader";
 import { Card } from "../../components/Card";
-import { getOrderDetails, cancelOrder, refundOrder, formatOrderStatus } from "../../api/order";
+import { getOrderDetails, cancelOrder, refundOrder, formatOrderStatus, confirmPurchase } from "../../api/order";
 import { Button } from "../../components/Button";
 import { WriteReviewModal } from "../../components/WriteReviewModal";
 import type { Order } from "../../api/order";
@@ -57,6 +57,20 @@ export function OrderDetailPage() {
     alert("교환 신청이 성공적으로 접수되었습니다. 고객센터에서 신속히 안내해 드리겠습니다.");
   };
 
+  const handleConfirmPurchase = () => {
+    if (!order) return;
+    if (!window.confirm("정말로 이 주문을 구매확정 하시겠습니까?\n구매확정 후에는 반품 및 교환 신청이 불가능합니다.")) return;
+    confirmPurchase(order.orderId)
+      .then(() => {
+        alert("구매확정이 완료되었습니다.");
+        setOrder((prev) => (prev ? { ...prev, orderStatus: "CONFIRMED" } : null));
+      })
+      .catch((err) => {
+        const errMsg = err.response?.data?.message || "구매확정에 실패했습니다.";
+        alert(errMsg);
+      });
+  };
+
   // PENDING 주문은 위젯이 있는 재결제 페이지로 이동
   const handlePayNow = () => {
     if (!order) return;
@@ -81,10 +95,10 @@ export function OrderDetailPage() {
 
   const dateStr = order.createdAt ? order.createdAt.split("T")[0] : "";
   const dummyTracking = [
-    { step: "결제완료", done: order.paymentStatus === "PAID" || order.orderStatus === "PAID" || order.orderStatus === "SHIPPING" || order.orderStatus === "DELIVERED" },
-    { step: "상품준비중", done: order.orderStatus === "PAID" || order.orderStatus === "SHIPPING" || order.orderStatus === "DELIVERED" },
-    { step: "배송중", done: order.orderStatus === "SHIPPING" || order.orderStatus === "DELIVERED" },
-    { step: "배송완료", done: order.orderStatus === "DELIVERED" },
+    { step: "결제완료", done: order.paymentStatus === "PAID" || order.orderStatus === "PAID" || order.orderStatus === "SHIPPING" || order.orderStatus === "DELIVERED" || order.orderStatus === "CONFIRMED" },
+    { step: "상품준비중", done: order.orderStatus === "PAID" || order.orderStatus === "SHIPPING" || order.orderStatus === "DELIVERED" || order.orderStatus === "CONFIRMED" },
+    { step: "배송중", done: order.orderStatus === "SHIPPING" || order.orderStatus === "DELIVERED" || order.orderStatus === "CONFIRMED" },
+    { step: "배송완료", done: order.orderStatus === "DELIVERED" || order.orderStatus === "CONFIRMED" },
   ];
 
   return (
@@ -126,8 +140,11 @@ export function OrderDetailPage() {
                 <Button variant="ghost" size="sm" onClick={handleRefund} style={{ color: "var(--orange-600)", borderColor: "var(--orange-200)" }}>
                   환불 신청
                 </Button>
-                <Button size="sm" onClick={handleExchange}>
+                <Button variant="ghost" size="sm" onClick={handleExchange}>
                   교환 신청
+                </Button>
+                <Button size="sm" onClick={handleConfirmPurchase}>
+                  구매확정
                 </Button>
               </>
             )}
@@ -170,7 +187,7 @@ export function OrderDetailPage() {
                       <p className={s.strong} style={{ margin: 0 }}>
                         {(it.price * it.quantity).toLocaleString()}원
                       </p>
-                      {order.orderStatus === "DELIVERED" && (
+                      {order.orderStatus === "CONFIRMED" && (
                         <Button
                           size="sm"
                           variant="ghost"
