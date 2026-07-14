@@ -30,14 +30,20 @@ export function SearchBarInput() {
         onChange={(e) => {
           const v = e.target.value;
           setText(v); // 로컬 값은 항상 갱신 (조합 유지)
-          if (!composing.current) sync(v); // 조합 중이 아니면 URL 반영
+          if (v.trim() === "") {
+            sync(""); // 입력이 완전히 비워지면 즉시 URL 반영하여 초기화
+          }
         }}
         onCompositionStart={() => {
           composing.current = true;
         }}
-        onCompositionEnd={(e) => {
+        onCompositionEnd={() => {
           composing.current = false;
-          sync(e.currentTarget.value); // 조합 완료 시 확정 반영
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            sync(text.trim());
+          }
         }}
       />
     </div>
