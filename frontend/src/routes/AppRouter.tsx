@@ -114,8 +114,9 @@ export function AppRouter() {
       <Route path="/my/support/notices/:id" element={<NoticeDetailPage />} />
       <Route path="/my/support/faq" element={<FaqPage />} />
       <Route path="/qna" element={<QnaListPage />} />
-      <Route path="/qna/:id" element={<QnaDetailPage />} />
       <Route path="/qna/write" element={<QnaWritePage />} />
+      <Route path="/qna/:id" element={<QnaDetailPage />} />
+      
 
       {/* ---------- 관리자 ---------- */}
       <Route path="/admin/login" element={<AdminLoginPage />} />

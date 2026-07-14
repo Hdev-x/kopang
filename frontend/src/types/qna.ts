@@ -5,11 +5,13 @@ export type QnaAnswer = {
 
 export type QnaPost = {
   id: number;
+  type?: "PRODUCT" | "GENERAL";
   title: string;
   content: string;
   author: string; // 마스킹된 작성자 (예: 김**)
   status: "답변대기" | "답변완료";
   createdAt: string;
+  answerContent?: string;
   answer?: QnaAnswer;
 };
 

@@ -17,12 +17,19 @@ export function SupportPage() {
 
       <Button
         style={{ width: "100%", marginBottom: "var(--space-2)" }}
-        onClick={() => navigate("/my/support/inquiry")}
+        onClick={() => navigate("/qna/write")}
       >
         1:1 문의하기
       </Button>
+      <Button
+        variant="ghost"
+        style={{ width: "100%", marginBottom: "var(--space-2)" }}
+        onClick={() => navigate("/qna")}
+      >
+        문의 내역 보기
+      </Button>
       <p className={s.muted} style={{ fontSize: "var(--font-xs)" }}>
-        문의 내역은 마이페이지 &gt; 문의내역에서 확인할 수 있어요.
+        문의 내역은 1:1 문의 목록에서 확인할 수 있어요.
       </p>
 
       <div className={s.sectionHead}>
@@ -50,14 +57,16 @@ export function SupportPage() {
           더보기
         </Link>
       </div>
-      <div className={s.list}>
-        {FAQS.slice(0, 3).map((f, i) => (
-          <Card key={i}>
+    <div className={s.list}>
+      {FAQS.slice(0, 3).map((f, i) => (
+        <Link key={i} to="/my/support/faq" className={s.cardLink}>
+          <Card>
             <p className={s.faqQ}>Q. {f.q}</p>
             <p className={s.faqA}>{f.a}</p>
           </Card>
-        ))}
-      </div>
+        </Link>
+      ))}
+    </div>
     </Layout>
   );
 }
