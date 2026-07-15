@@ -21,14 +21,14 @@ export function MembershipSuccessPage() {
     if (!paymentKey || !orderId || !amount) {
       navigate(
         "/membership/fail?code=INVALID_PARAMS&message=" +
-          encodeURIComponent("유효하지 않은 결제 정보입니다."),
+        encodeURIComponent("유효하지 않은 결제 정보입니다."),
         { replace: true }
       );
       return;
     }
 
-    // 결제 성공 시 실제 백엔드 멤버십 가입 API 호출
-    subscribeMembership()
+    // 결제 성공 시 실제 백엔드 멤버십 가입 API 호출 (검증 값 전달)
+    subscribeMembership({ paymentKey, orderId, amount })
       .then(() => {
         setMessage("와우 멤버십 가입이 성공적으로 완료되었습니다! 잠시 후 멤버십 페이지로 이동합니다.");
         setTimeout(() => {
