@@ -21,9 +21,13 @@ export async function getMembershipStatus() {
     return res.data.data;
 }
 
-// 2. 멤버십 가입 신청
-export async function subscribeMembership() {
-    const res = await client.post<ApiResponse<UserMembershipResponse>>("/membership/subscribe");
+// 2. 멤버십 가입 신청 (토스 결제 검증 파라미터 포함)
+export async function subscribeMembership(params: {
+    paymentKey: string;
+    orderId: string;
+    amount: number;
+}) {
+    const res = await client.post<ApiResponse<UserMembershipResponse>>("/membership/subscribe", params);
     return res.data.data;
 }
 
