@@ -35,6 +35,7 @@
         = #{status},</if> updated_at = NOW() </set> WHERE user_id = #{userId} </update>
 
     <!-- 6. 회원 탈퇴 -->
-    <delete id="delete"> DELETE FROM users WHERE user_id = #{userId} </delete>
+    <delete id="delete"> UPDATE users SET email = 'withdrawn_' || user_id || '_' || email, password
+        = '', role = 'WITHDRAWN', status = 'WITHDRAWN', updated_at = NOW() WHERE user_id = #{userId} </delete>
 
 </mapper>

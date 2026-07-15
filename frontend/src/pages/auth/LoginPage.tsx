@@ -11,6 +11,7 @@ import styles from "../../styles/LoginPage.module.css";
 export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: FormEvent) => {
@@ -24,11 +25,12 @@ export function LoginPage() {
 
     try {
       const data = await apiLogin(email, password);
-      // 실제 로그인 정보 저장 (이름, 권한, 토큰)
+      // 실제 로그인 정보 저장 (이름, 권한, 토큰, 자동로그인 여부)
       authLogin(
         { name: data.user.name, role: data.user.role },
         data.accessToken,
-        data.refreshToken
+        data.refreshToken,
+        rememberMe
       );
       navigate("/");
     } catch (err: any) {
@@ -56,6 +58,12 @@ export function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
+          <div style={{ display: "flex", alignItems: "center", marginBottom: "15px" }}>
+            <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", cursor: "pointer", color: "var(--color-text)" }}>
+              <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
+              자동 로그인
+            </label>
+          </div>
           <Button type="submit" className={styles.submit}>
             로그인
           </Button>
@@ -108,12 +116,6 @@ export function LoginPage() {
           >
             Naver 계정으로 로그인
           </a>
-        </div>
-
-        <div className={styles.adminEntry}>
-          <Link to="/admin/login" className={styles.adminLink}>
-            관리자 로그인
-          </Link>
         </div>
       </div>
     </Layout>

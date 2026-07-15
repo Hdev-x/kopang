@@ -15,6 +15,8 @@ import { PointHistoryPage } from "../pages/my/PointHistoryPage";
 import { CouponPage } from "../pages/my/CouponPage";
 import { MyInquiriesPage } from "../pages/my/MyInquiriesPage";
 import { MyInquiryDetailPage } from "../pages/my/MyInquiryDetailPage";
+import { AddressManagementPage } from "../pages/my/AddressManagementPage";
+
 
 // ===== 멤버십 (membership) — 담당 A =====
 import { MembershipPage } from "../pages/membership/MembershipPage";
@@ -111,6 +113,7 @@ export function AppRouter() {
       <Route path="/payment/fail" element={<PaymentFailPage />} />
       <Route path="/my/orders" element={<OrderHistoryPage />} />
       <Route path="/my/orders/:no" element={<OrderDetailPage />} />
+      <Route path="/my/addresses" element={<AddressManagementPage />} />
 
       {/* ---------- 알림 ---------- */}
       <Route path="/notifications" element={<NotificationsPage />} />
