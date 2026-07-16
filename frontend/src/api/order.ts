@@ -9,6 +9,8 @@ export interface OrderItemRequest {
 
 export interface OrderRequest {
   totalPrice: number;
+  usedPoint?: number;
+  userCouponId?: number;
   items: OrderItemRequest[];
 }
 

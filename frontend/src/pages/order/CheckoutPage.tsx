@@ -5,22 +5,20 @@ import { Button } from "../../components/Button";
 import { getCart } from "../../api/cart";
 import { getUserAddress, getUserAddresses, type UserAddressResponse } from "../../api/auth";
 import { createOrder } from "../../api/order";
+import { getPointBalance } from "../../api/point";
+import { getMyCoupons } from "../../api/coupon";
 import type { CartItem } from "../../types/cart";
 import styles from "./CheckoutPage.module.css";
 
 const CLIENT_KEY = "test_ck_nRQoOaPz8LNMgv7d5bDPVy47BMw6";
-const AVAILABLE_POINT = 1200;
-const COUPONS = [
-  { id: 0, name: "적용 안 함", discount: 0 },
-  { id: 1, name: "신규가입 5,000원 할인", discount: 5000 },
-  { id: 2, name: "생일 축하 3,000원 할인", discount: 3000 },
-];
 
 export function CheckoutPage() {
   const [items, setItems] = useState<CartItem[]>([]);
   const [pay, setPay] = useState("신용/체크카드");
-  const [couponId, setCouponId] = useState(0);
   const [pointInput, setPointInput] = useState("");
+  const [availablePoint, setAvailablePoint] = useState(0);
+  const [myCoupons, setMyCoupons] = useState<any[]>([]);
+  const [selectedUserCouponId, setSelectedUserCouponId] = useState("");
 
   // 배송지 관련 상태
   const [selectedAddress, setSelectedAddress] = useState<UserAddressResponse | null>(null);
@@ -38,12 +36,24 @@ export function CheckoutPage() {
   useEffect(() => {
     getCart().then(setItems).catch(console.error);
     loadDefaultAddress();
+    getPointBalance().then((d) => setAvailablePoint(d.balance)).catch(console.error);
+    getMyCoupons().then((list) => setMyCoupons(list.filter((c) => !c.used))).catch(console.error);
   }, []);
 
   const total = items.reduce((s, it) => s + it.price * it.quantity, 0);
-  const couponDiscount = COUPONS.find((c) => c.id === couponId)?.discount ?? 0;
+
+  const selectedCoupon = myCoupons.find((c) => c.userCouponId === Number(selectedUserCouponId));
+  let couponDiscount = 0;
+  if (selectedCoupon) {
+    if (selectedCoupon.discountType === "RATE") {
+      couponDiscount = Math.floor(total * (selectedCoupon.discountValue / 100));
+    } else {
+      couponDiscount = selectedCoupon.discountValue;
+    }
+  }
+
   const afterCoupon = Math.max(0, total - couponDiscount);
-  const maxPoint = Math.min(AVAILABLE_POINT, afterCoupon);
+  const maxPoint = Math.min(availablePoint, afterCoupon);
   const pointUsed = Math.min(Math.max(0, Number(pointInput) || 0), maxPoint);
   const finalPrice = afterCoupon - pointUsed;
 
@@ -63,23 +73,19 @@ export function CheckoutPage() {
       return;
     }
     try {
-      // 같은 결제 세션에서 이미 생성된 PENDING 주문이 있으면 재사용
-      const savedId = sessionStorage.getItem("checkout_pending_order_id");
-      let orderId: number;
-
-      if (savedId) {
-        orderId = Number(savedId);
-      } else {
-        orderId = await createOrder({
-          totalPrice: finalPrice,
-          items: items.map((it) => ({
-            productId: it.productId,
-            quantity: it.quantity,
-            price: it.price,
-          })),
-        });
-        sessionStorage.setItem("checkout_pending_order_id", String(orderId));
-      }
+      // 금액 위변조 에러 방지: 쿠폰이나 포인트를 변경한 후 결제를 다시 시도할 때
+      // 기존 PENDING 주문의 총금액과 일치하지 않는 문제를 방지하기 위해 매 결제 요청마다 새로운 주문을 생성합니다.
+      const orderId = await createOrder({
+        totalPrice: finalPrice,
+        usedPoint: pointUsed,
+        userCouponId: selectedUserCouponId ? Number(selectedUserCouponId) : undefined,
+        items: items.map((it) => ({
+          productId: it.productId,
+          quantity: it.quantity,
+          price: it.price,
+        })),
+      });
+      sessionStorage.setItem("checkout_pending_order_id", String(orderId));
 
       const tossPayments = (
         window as unknown as {
@@ -167,14 +173,18 @@ export function CheckoutPage() {
             <span className={styles.fieldLabel}>쿠폰</span>
             <select
               className={styles.select}
-              value={couponId}
-              onChange={(e) => setCouponId(Number(e.target.value))}
+              value={selectedUserCouponId}
+              onChange={(e) => setSelectedUserCouponId(e.target.value)}
             >
-              {COUPONS.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
+              <option value="">적용 안 함</option>
+              {myCoupons.map((c) => {
+                const discountText = c.discountType === "RATE" ? `${c.discountValue}%` : `${c.discountValue.toLocaleString()}원`;
+                return (
+                  <option key={c.userCouponId} value={c.userCouponId}>
+                    {c.name} ({discountText} 할인)
+                  </option>
+                );
+              })}
             </select>
           </div>
           <div className={styles.field}>
@@ -201,7 +211,7 @@ export function CheckoutPage() {
               </button>
             </div>
           </div>
-          <p className={styles.pointHint}>보유 {AVAILABLE_POINT.toLocaleString()}P</p>
+          <p className={styles.pointHint}>보유 {availablePoint.toLocaleString()}P</p>
         </div>
 
         {/* ── 결제 수단 ── */}
@@ -269,7 +279,7 @@ export function CheckoutPage() {
                 🔄 새로고침
               </button>
             </div>
-            
+
             <div className={styles.modalBody}>
               {addressList.length === 0 ? (
                 <div className={styles.modalEmpty}>
@@ -281,9 +291,8 @@ export function CheckoutPage() {
                   {addressList.map((addr) => (
                     <div
                       key={addr.addressId}
-                      className={`${styles.addressItem} ${
-                        selectedAddress?.addressId === addr.addressId ? styles.selectedItem : ""
-                      }`}
+                      className={`${styles.addressItem} ${selectedAddress?.addressId === addr.addressId ? styles.selectedItem : ""
+                        }`}
                       onClick={() => {
                         setSelectedAddress(addr);
                         setShowSelectModal(false);
