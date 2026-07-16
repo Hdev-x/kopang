@@ -21,13 +21,21 @@ export function isAdmin(): boolean {
   return getAuth()?.role === "ADMIN";
 }
 
-export function login(user: AuthUser, accessToken?: string, refreshToken?: string): void {
+export function login(user: AuthUser, accessToken?: string, refreshToken?: string, rememberMe?: boolean): void {
   localStorage.setItem(KEY, JSON.stringify(user));
   if (accessToken) {
-    sessionStorage.setItem("accessToken", accessToken);
+    if (rememberMe) {
+      localStorage.setItem("accessToken", accessToken);
+    } else {
+      sessionStorage.setItem("accessToken", accessToken);
+    }
   }
   if (refreshToken) {
-    sessionStorage.setItem("refreshToken", refreshToken);
+    if (rememberMe) {
+      localStorage.setItem("refreshToken", refreshToken);
+    } else {
+      sessionStorage.setItem("refreshToken", refreshToken);
+    }
   }
   window.dispatchEvent(new Event("auth-change"));
 }
@@ -37,5 +45,7 @@ export function logout(): void {
   localStorage.removeItem(KEY);
   sessionStorage.removeItem("accessToken");
   sessionStorage.removeItem("refreshToken");
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
   window.dispatchEvent(new Event("auth-change"));
 }
