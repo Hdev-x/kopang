@@ -9,16 +9,14 @@ import { getProduct } from "../../api/products";
 import { addToCart } from "../../api/cart";
 import { checkWishlist, addWishlist, deleteWishlist } from "../../api/wishlist";
 import { getProductReviews } from "../../api/review";
+import { getProductQnaList } from "../../api/qna";
 import { useAuth } from "../../hooks/useAuth";
 import type { Product } from "../../types/product";
 import type { Review } from "../../api/review";
 import styles from "./ProductDetailPage.module.css";
+import type { QnaSummary } from "../../types/qna";
 
-// 목업 상품문의
-const PRODUCT_QNA = [
-  { q: "재고 언제 다시 들어오나요?", a: "이번 주 내 입고 예정입니다.", status: "답변완료" },
-  { q: "유통기한이 어떻게 되나요?", a: null, status: "답변대기" },
-];
+
 
 export function ProductDetailPage() {
   const { id } = useParams();
@@ -29,13 +27,17 @@ export function ProductDetailPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [tab, setTab] = useState<"review" | "qna">("review");
+  const [productQna, setProductQna] = useState<QnaSummary[]>([]);
 
   useEffect(() => {
     if (id) {
       const prodId = Number(id);
       getProduct(prodId).then(setProduct).catch(console.error);
       getProductReviews(prodId).then(setReviews).catch(console.error);
-      
+      getProductQnaList(prodId)
+        .then(setProductQna)
+        .catch(console.error);
+
       if (user) {
         checkWishlist(prodId).then(setWished).catch(console.error);
       } else {
@@ -158,7 +160,7 @@ export function ProductDetailPage() {
           className={`${styles.tab} ${tab === "qna" ? styles.tabActive : ""}`}
           onClick={() => setTab("qna")}
         >
-          상품문의 {PRODUCT_QNA.length}
+          상품문의 {productQna.length}
         </button>
       </div>
 
@@ -183,18 +185,22 @@ export function ProductDetailPage() {
         )
       ) : (
         <>
-          <Button variant="ghost" className={styles.askBtn} onClick={() => navigate("/qna/write")}>
+          <Button
+            variant="ghost"
+            className={styles.askBtn}
+            onClick={() => navigate(`/qna/write?type=PRODUCT&productId=${id}`)}
+          >
             상품 문의하기
           </Button>
-          {PRODUCT_QNA.map((item, i) => (
-            <Card key={i} className={styles.review}>
+          {productQna.map((item) => (
+            <Card key={item.id} className={styles.review}>
               <p className={styles.qnaQ}>
-                Q. {item.q}
+                Q. {item.title}
                 <span className={`${styles.qnaStatus} ${item.status === "답변완료" ? styles.done : styles.wait}`}>
                   {item.status}
                 </span>
               </p>
-              {item.a && <p className={styles.qnaA}>A. {item.a}</p>}
+              {item.answerContent && <p className={styles.qnaA}>A. {item.answerContent}</p>}
             </Card>
           ))}
         </>

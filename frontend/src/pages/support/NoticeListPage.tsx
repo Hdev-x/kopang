@@ -1,21 +1,40 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "../../components/Layout";
 import { PageHeader } from "../../components/PageHeader";
-import { NOTICES } from "../../mocks/supportData";
+import { getNoticeList } from "../../api/notice";
+import type { Notice } from "../../types/notice";
 import s from "../../styles/Qna.module.css";
 
+
 export function NoticeListPage() {
+  const [notices, setNotices] = useState<Notice[]>([]);
+
+  useEffect(() => {
+    getNoticeList()
+      .then(setNotices)
+      .catch(console.error);
+  }, []);
+
   return (
     <Layout>
       <PageHeader title="공지사항" />
+
       <div className={s.list}>
-        {NOTICES.map((n) => (
-          <Link key={n.id} to={`/my/support/notices/${n.id}`} className={s.cardLink}>
+        {notices.map((notice) => (
+          <Link
+            key={notice.id}
+            to={`/my/support/notices/${notice.id}`}
+            className={s.cardLink}
+          >
             <div className={s.item}>
               <div className={s.itemHead}>
-                <span className={s.date}>{n.date}</span>
+                <span className={s.date}>
+                  {notice.createdAt.slice(0, 10)}
+                </span>
               </div>
-              <p className={s.itemTitle}>{n.title}</p>
+
+              <p className={s.itemTitle}>{notice.title}</p>
             </div>
           </Link>
         ))}

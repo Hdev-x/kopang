@@ -1,22 +1,86 @@
 import { http, HttpResponse } from "msw";
-// import { mockProducts } from "./categoryData";
-// import { ensureRealImages } from "./dummyImages";
+import { mockProducts, categoryTree } from "./categoryData";
+import { ensureRealImages } from "./dummyImages";
 import { qnaPosts } from "./qnaData";
+import { NOTICES } from "./supportData";
 
 // API 명세 초안 기반 mock. 응답은 { success, data, message } 래퍼로 감쌈.
 export const handlers = [
 
   // 상품 상세
-  // http.get("/api/products/:id", async ({ params }) => {
-  //   await ensureRealImages(mockProducts);
-  //   const p = mockProducts.find((x) => x.id === Number(params.id)) ?? mockProducts[0];
-  //   return HttpResponse.json({
-  //     success: true,
-  //     data: { ...p, description: `${p.name} — 데일리로 좋은 ${p.brand} 제품입니다.`, stock: 50 },
-  //     message: null,
-  //   });
-  // }),
+  http.get("/api/products/:id", async ({ params }) => {
+    await ensureRealImages(mockProducts);
+    const p = mockProducts.find((x) => x.id === Number(params.id)) ?? mockProducts[0];
+    return HttpResponse.json({
+      success: true,
+      data: { ...p, description: `${p.name} — 데일리로 좋은 ${p.brand} 제품입니다.`, stock: 50 },
+      message: null,
+    });
+  }),
 
+  // 상품 목록
+  http.get("/api/products", async ({ request }) => {
+    await ensureRealImages(mockProducts);
+
+    const url = new URL(request.url);
+    const page = Number(url.searchParams.get("page") ?? 0);
+    const size = Number(url.searchParams.get("size") ?? 20);
+
+    const start = page * size;
+    const content = mockProducts.slice(start, start + size);
+
+    return HttpResponse.json({
+      success: true,
+      data: {
+        content,
+        number: page,
+        totalPages: Math.ceil(mockProducts.length / size),
+        totalElements: mockProducts.length,
+      },
+      message: null,
+    });
+  }),
+
+  // 카테고리 목록
+  http.get("/api/categories", () =>
+    HttpResponse.json({
+      success: true,
+      data: categoryTree,
+      message: null,
+    }),
+  ),
+
+  // 공지사항 목록
+  http.get("/api/notices", () =>
+    HttpResponse.json({
+      success: true,
+      data: NOTICES.map((notice, index) => ({
+        id: index + 1,
+        title: notice.title,
+        content: notice.content,
+        createdAt: notice.date,
+      })),
+      message: null,
+    }),
+  ),
+
+
+
+  // 공지사항 상세
+  http.get("/api/notices/:id", ({ params }) => {
+    const notice = NOTICES[Number(params.id) - 1];
+
+    return HttpResponse.json({
+      success: true,
+      data: {
+        id: Number(params.id),
+        title: notice.title,
+        content: notice.content,
+        createdAt: notice.date,
+      },
+      message: null,
+    });
+  }),
   // 내 장바구니 — 상품 정보는 실제 목 상품에서 끌어와 일관성 유지
   // http.get("/api/cart", async () => {
   //   await ensureRealImages(mockProducts);
@@ -65,10 +129,37 @@ export const handlers = [
       success: true,
       data: filteredPosts.map((q) => ({
         id: q.id,
+        type: q.type,
+        productId: q.productId,
         title: q.title,
         author: q.author,
         status: q.status,
         createdAt: q.createdAt,
+        answerContent: q.answerContent,
+      })),
+      message: null,
+    });
+  }),
+
+  // 상품별 문의 목록
+  http.get("/api/inquiries/product/:productId", ({ params }) => {
+    const productId = Number(params.productId);
+
+    const productPosts = qnaPosts.filter(
+      (q) => q.type === "PRODUCT" && q.productId === productId
+    );
+
+    return HttpResponse.json({
+      success: true,
+      data: productPosts.map((q) => ({
+        id: q.id,
+        type: q.type,
+        productId: q.productId,
+        title: q.title,
+        author: q.author,
+        status: q.status,
+        createdAt: q.createdAt,
+        answerContent: q.answerContent,
       })),
       message: null,
     });
@@ -113,9 +204,16 @@ export const handlers = [
 
   // 1:1 문의 작성 - API 명세서 주소
   http.post("/api/inquiries", async ({ request }) => {
-    const body = (await request.json()) as { title: string; content: string };
+    const body = (await request.json()) as {
+      title: string;
+      content: string
+      type?: "PRODUCT" | "GENERAL"
+      productId?: number;
+    };
     const created = {
       id: qnaPosts.length + 1,
+      type: body.type ?? "GENERAL",
+      productId: body.productId,
       title: body.title,
       content: body.content,
       author: "홍**",
@@ -130,18 +228,18 @@ export const handlers = [
 
 
   // // 로그인
-  // http.post("/api/auth/login", async ({ request }) => {
-  //   (await request.json()) as { email: string; password: string };
-  //   return HttpResponse.json({
-  //     success: true,
-  //     data: {
-  //       accessToken: "fake-access-token",
-  //       refreshToken: "fake-refresh-token",
-  //       user: { id: 1, name: "홍길동" },
-  //     },
-  //     message: null,
-  //   });
-  // }),
+  http.post("/api/auth/login", async ({ request }) => {
+    (await request.json()) as { email: string; password: string };
+    return HttpResponse.json({
+      success: true,
+      data: {
+        accessToken: "fake-access-token",
+        refreshToken: "fake-refresh-token",
+        user: { id: 1, name: "홍길동" },
+      },
+      message: null,
+    });
+  }),
 
   // 1:1 문의 답변 등록
   http.post("/api/qna/:id/answer", async ({ params, request }) => {
