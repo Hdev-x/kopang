@@ -5,6 +5,7 @@ import java.util.List;
 import com.kopang.app.domain.intervention.InterventionRequest;
 import com.kopang.app.domain.intervention.InterventionService;
 import com.kopang.app.domain.notification.NotificationDTO;
+import com.kopang.app.domain.notification.NotificationMapper;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 public class ChurnScoreServiceImpl implements ChurnScoreService {
 
     private final ChurnMapper churnMapper;
+    private final NotificationMapper notificationMapper;
     private final InterventionService interventionService;
 
     // ============================================
@@ -176,7 +178,7 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
                 noti.setUserId(userId);
                 noti.setType(type);
                 noti.setMessage(message);
-                churnMapper.insertNotification(noti);
+                notificationMapper.insertNotification(noti);
             }
         }
     }

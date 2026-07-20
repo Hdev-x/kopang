@@ -4,7 +4,6 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 
 import com.kopang.app.domain.intervention.InterventionDTO;
-import com.kopang.app.domain.notification.NotificationDTO;
 
 @Mapper
 public interface ChurnMapper {
@@ -50,8 +49,7 @@ public interface ChurnMapper {
     // 오늘자 ④⑧ 발송 대상 (7일 내 중복 발송 제외)
     List<ChurnScoreDTO> findInterventionTargets();
 
-    // 알림 발송 (처치군)
-    void insertNotification(NotificationDTO notification);
+    // 알림 발송은 NotificationMapper로 분리 (NOTI-01)
 
     // 발송 기록 (대조군 포함 전원)
     void insertIntervention(InterventionDTO intervention);

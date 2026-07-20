@@ -172,21 +172,7 @@
             )
     </select>
 
-    <!-- 알림 -->
-    <insert id="insertNotification">
-        INSERT INTO notifications
-        (
-            user_id,
-            type,
-            message
-        )
-        VALUES
-        (
-            #{userId},
-            #{type},
-            #{message}
-        )
-    </insert>
+    <!-- 알림 INSERT는 notification/NotificationMapper.xml로 분리 (NOTI-01) -->
 
     <!-- 로그 -->
     <insert id="insertIntervention">
