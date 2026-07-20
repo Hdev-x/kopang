@@ -7,6 +7,9 @@ public interface MembershipService {
     // 2. WOW 멤버십 가입
     public UserMembershipDTO subscribe(String email);
 
+    // 2-1. WOW 멤버십 가입 결제 2차 검증 포함
+    public UserMembershipDTO subscribe(String email, String paymentKey, String orderId, int amount);
+
     // 3. WOW 멤버십 해지 예약
     public void cancel(String email);
 

@@ -37,12 +37,18 @@ public class MembershipController {
     // 2. 멤버십 가입 신청 (POST /api/membership/subscribe)
     @PostMapping("/subscribe")
     public ResponseEntity<ApiResponse<UserMembershipDTO>> subscribe(
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody java.util.Map<String, Object> body) {
         if (userDetails == null) {
             return ResponseEntity.status(401).body(ApiResponse.fail("인증되지 않은 사용자입니다"));
         }
         try {
-            UserMembershipDTO membership = membershipService.subscribe(userDetails.getEmail());
+            String paymentKey = (String) body.get("paymentKey");
+            String orderId = (String) body.get("orderId");
+            int amount = Integer.parseInt(String.valueOf(body.get("amount")));
+
+            UserMembershipDTO membership = membershipService.subscribe(
+                    userDetails.getEmail(), paymentKey, orderId, amount);
             return ResponseEntity.ok(ApiResponse.success(membership));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ApiResponse.fail(e.getMessage()));

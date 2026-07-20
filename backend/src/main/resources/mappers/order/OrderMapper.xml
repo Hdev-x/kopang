@@ -5,8 +5,8 @@
 <mapper namespace="com.kopang.app.domain.order.OrderMapper">
 
     <insert id="insertOrder" useGeneratedKeys="true" keyProperty="orderId">
-        INSERT INTO orders (user_id, total_price, payment_status)
-        VALUES (#{userId}, #{totalPrice}, #{paymentStatus})
+        INSERT INTO orders (user_id, total_price, payment_status, used_point, user_coupon_id)
+        VALUES (#{userId}, #{totalPrice}, #{paymentStatus}, #{usedPoint}, #{userCouponId})
     </insert>
 
     <insert id="insertOrderItem">
@@ -22,6 +22,8 @@
         <result property="paymentStatus" column="paymentStatus"/>
         <result property="orderStatus" column="orderStatus"/>
         <result property="createdAt" column="createdAt"/>
+        <result property="usedPoint" column="usedPoint"/>
+        <result property="userCouponId" column="userCouponId"/>
         <collection property="items" ofType="com.kopang.app.domain.order.OrderItemDTO">
             <id property="orderItemId" column="orderItemId"/>
             <result property="orderId" column="orderId"/>
@@ -41,6 +43,8 @@
             o.payment_status AS paymentStatus,
             o.order_status AS orderStatus,
             o.ordered_at AS createdAt,
+            o.used_point AS usedPoint,
+            o.user_coupon_id AS userCouponId,
             u.name AS userName,
             oi.order_item_id AS orderItemId,
             oi.product_id AS productId,
@@ -68,6 +72,8 @@
             o.payment_status AS paymentStatus,
             o.order_status AS orderStatus,
             o.ordered_at AS createdAt,
+            o.used_point AS usedPoint,
+            o.user_coupon_id AS userCouponId,
             u.name AS userName,
             oi.order_item_id AS orderItemId,
             oi.product_id AS productId,
@@ -111,7 +117,9 @@
             total_price AS totalPrice,
             payment_status AS paymentStatus,
             order_status AS orderStatus,
-            ordered_at AS createdAt
+            ordered_at AS createdAt,
+            used_point AS usedPoint,
+            user_coupon_id AS userCouponId
         FROM orders
         WHERE order_id = #{orderId}
     </select>
