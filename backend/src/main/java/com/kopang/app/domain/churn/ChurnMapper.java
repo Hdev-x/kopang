@@ -2,6 +2,7 @@ package com.kopang.app.domain.churn;
 
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import com.kopang.app.domain.intervention.InterventionDTO;
 
@@ -48,6 +49,9 @@ public interface ChurnMapper {
 
     // 오늘자 ④⑧ 발송 대상 (7일 내 중복 발송 제외)
     List<ChurnScoreDTO> findInterventionTargets();
+
+    // 팀원 대응용: 지정한 risk_type들의 오늘자 발송 대상 (7일 내 중복 제외)
+    List<ChurnScoreDTO> findTargetsByRiskTypes(@Param("riskTypes") List<String> riskTypes);
 
     // 알림 발송은 NotificationMapper로 분리 (NOTI-01)
 
