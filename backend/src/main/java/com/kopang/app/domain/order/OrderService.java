@@ -140,12 +140,11 @@ public class OrderService {
             productMapper.updateStock(item.getProductId(), product.getStock() - item.getQuantity());
         }
 
-        // 6. 장바구니 비우기
+        // 6. 구매한 상품들만 장바구니에서 선택적 삭제
         Long cartId = cartMapper.findCartIdByUserId(userId);
         if (cartId != null) {
-            List<CartItemDTO> cartItems = cartMapper.findCartItemsByCartId(cartId);
-            for (CartItemDTO ci : cartItems) {
-                cartMapper.deleteCartItem(ci.getItemId());
+            for (OrderItemDTO item : items) {
+                cartMapper.deleteCartItemByProduct(cartId, item.getProductId());
             }
         }
     }

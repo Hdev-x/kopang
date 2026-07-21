@@ -68,4 +68,9 @@
         WHERE cart_item_id = #{cartItemId}
     </delete>
 
+    <delete id="deleteCartItemByProduct">
+        DELETE FROM cart_item
+        WHERE cart_id = #{cartId} AND product_id = #{productId}
+    </delete>
+
 </mapper>
