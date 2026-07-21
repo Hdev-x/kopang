@@ -156,6 +156,7 @@ public class AISearchService {
 
         Map<String, Object> generationConfig = new HashMap<>();
         generationConfig.put("responseMimeType", "application/json");
+        generationConfig.put("maxOutputTokens", 2048);
         contents.put("generationConfig", generationConfig);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(contents, headers);
