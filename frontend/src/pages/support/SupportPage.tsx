@@ -4,18 +4,24 @@ import { Layout } from "../../components/Layout";
 import { PageHeader } from "../../components/PageHeader";
 import { Card } from "../../components/Card";
 import { Button } from "../../components/Button";
-import { FAQS } from "../../mocks/supportData";
+import { getFaqList } from "../../api/faq";
 import { getNoticeList } from "../../api/notice";
+import type { Faq } from "../../types/faq";
 import type { Notice } from "../../types/notice";
 import s from "../../styles/AccountPages.module.css";
 
 export function SupportPage() {
   const navigate = useNavigate();
   const [notices, setNotices] = useState<Notice[]>([]);
+  const [faqs, setFaqs] = useState<Faq[]>([]);
 
   useEffect(() => {
     getNoticeList()
       .then(setNotices)
+      .catch(console.error);
+
+    getFaqList()
+      .then(setFaqs)
       .catch(console.error);
   }, []);
   return (
@@ -74,11 +80,11 @@ export function SupportPage() {
         </Link>
       </div>
       <div className={s.list}>
-        {FAQS.slice(0, 3).map((f, i) => (
-          <Link key={i} to="/my/support/faq" className={s.cardLink}>
+        {faqs.slice(0, 3).map((faq) => (
+          <Link key={faq.id} to="/my/support/faq" className={s.cardLink}>
             <Card>
-              <p className={s.faqQ}>Q. {f.q}</p>
-              <p className={s.faqA}>{f.a}</p>
+              <p className={s.faqQ}>Q. {faq.question}</p>
+              <p className={s.faqA}>{faq.answer}</p>
             </Card>
           </Link>
         ))}
