@@ -13,6 +13,7 @@ public class ProductService {
 
     private final ProductMapper productMapper;
     private final S3Service s3Service;
+    private final AISimilarProductService aiSimilarProductService;
 
     public PageResponse<ProductResponseDTO> getProducts(Long categoryId, String keyword, String sort, int page, int size) {
         int offset = page * size;
@@ -22,6 +23,13 @@ public class ProductService {
         List<ProductResponseDTO> content = products.stream()
                 .map(ProductResponseDTO::from)
                 .collect(Collectors.toList());
+
+        // 백그라운드 AI 추천 예열 (상위 5개 상품)
+        List<Long> topIds = products.stream()
+                .limit(5)
+                .map(p -> (long) p.getProductId())
+                .collect(Collectors.toList());
+        aiSimilarProductService.warmupRecommendationsAsync(topIds);
 
         return new PageResponse<>(content, page, size, totalCount);
     }
@@ -119,5 +127,16 @@ public class ProductService {
                 s3Service.deleteFile(url);
             }
         }
+    }
+
+    public List<ProductResponseDTO> getSimilarProducts(Long id) {
+        ProductDTO product = productMapper.findById(id);
+        if (product == null) {
+            return java.util.Collections.emptyList();
+        }
+        Long categoryId = (long) product.getCategoryId();
+        int price = product.getPrice();
+        List<ProductDTO> sim = productMapper.findSimilarProducts(id, categoryId, price, 6);
+        return sim.stream().map(ProductResponseDTO::from).collect(Collectors.toList());
     }
 }

@@ -4,8 +4,13 @@ import styles from "./Card.module.css";
 type Props = {
   children: ReactNode;
   className?: string;
+  onClick?: () => void;
 };
 
-export function Card({ children, className }: Props) {
-  return <div className={`${styles.card} ${className ?? ""}`}>{children}</div>;
+export function Card({ children, className, onClick }: Props) {
+  return (
+    <div className={`${styles.card} ${className ?? ""}`} onClick={onClick}>
+      {children}
+    </div>
+  );
 }

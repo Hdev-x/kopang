@@ -35,4 +35,11 @@ public interface ProductMapper {
     List<String> findImageUrlsByProductId(@Param("productId") int productId);
 
     void deleteProductImagesByProductId(@Param("productId") int productId);
+
+    List<ProductDTO> findSimilarProducts(
+        @Param("productId") Long productId,
+        @Param("categoryId") Long categoryId,
+        @Param("price") int price,
+        @Param("limit") int limit
+    );
 }
