@@ -5,4 +5,5 @@ export type CartItem = {
   price: number;
   quantity: number;
   imageUrl: string;
+  addedAt?: string;
 };

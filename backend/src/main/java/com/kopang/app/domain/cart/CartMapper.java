@@ -29,4 +29,7 @@ public interface CartMapper {
     
     // 8. 장바구니 아이템 삭제
     void deleteCartItem(@Param("cartItemId") Long cartItemId);
+
+    // 9. 특정 카트 ID 및 상품 ID에 해당하는 장바구니 아이템 삭제
+    void deleteCartItemByProduct(@Param("cartId") Long cartId, @Param("productId") Long productId);
 }
