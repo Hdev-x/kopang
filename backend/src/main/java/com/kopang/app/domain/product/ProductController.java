@@ -15,6 +15,7 @@ public class ProductController {
     private final ProductService productService;
     private final S3Service s3Service;
     private final AISearchService aiSearchService;
+    private final AISimilarProductService aiSimilarProductService;
 
     @GetMapping("/ai-search")
     public ApiResponse<PageResponse<ProductResponseDTO>> aiSearch(
@@ -23,6 +24,12 @@ public class ProductController {
             @RequestParam(value = "size", defaultValue = "40") int size) {
         PageResponse<ProductResponseDTO> results = aiSearchService.search(query, page, size);
         return ApiResponse.success(results);
+    }
+
+    @GetMapping("/{id}/ai-recommendations")
+    public ApiResponse<AIRecommendationResponseDTO> getAIRecommendations(@PathVariable("id") Long id) {
+        AIRecommendationResponseDTO res = aiSimilarProductService.getAIRecommendations(id);
+        return ApiResponse.success(res);
     }
 
     @GetMapping
@@ -42,6 +49,12 @@ public class ProductController {
     @GetMapping("/{id}")
     public ApiResponse<ProductResponseDTO> getProduct(@PathVariable("id") Long id) {
         return ApiResponse.success(productService.getProduct(id));
+    }
+
+    @GetMapping("/{id}/similar")
+    public ApiResponse<List<ProductResponseDTO>> getSimilarProducts(@PathVariable("id") Long id) {
+        List<ProductResponseDTO> similar = productService.getSimilarProducts(id);
+        return ApiResponse.success(similar);
     }
 
     @PostMapping
