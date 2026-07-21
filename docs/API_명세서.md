@@ -207,6 +207,7 @@ POST /api/satisfaction
 | Method | Path | 설명 |
 | --- | --- | --- |
 | GET | `/api/inquiries?type=PRODUCT|GENERAL` | 내 문의내역 (탭별) |
+| GET | `/api/inquiries/product/{productId}` | 상품 상세에서 특정 상품의 문의 목록 조회 |
 | GET | `/api/inquiries/{id}` | 문의 상세 (질문+답변) |
 | POST | `/api/inquiries` | 문의 등록 |
 

@@ -4,6 +4,7 @@ import type { QnaPost } from "../types/qna";
 export const qnaPosts: QnaPost[] = [
   {
     id: 1,
+    type: "GENERAL",
     title: "배송이 너무 늦어요",
     content: "주문한 지 5일째인데 아직도 배송중이에요. 확인 부탁드립니다.",
     author: "김**",
@@ -14,6 +15,7 @@ export const qnaPosts: QnaPost[] = [
   },
   {
     id: 2,
+    type: "GENERAL",
     title: "포인트가 적립이 안 됐어요",
     content: "리뷰를 작성했는데 포인트가 들어오지 않았습니다.",
     author: "이**",
@@ -23,10 +25,21 @@ export const qnaPosts: QnaPost[] = [
   },
   {
     id: 3,
+    type: "GENERAL",
     title: "멤버십 해지 방법 문의",
     content: "WOW 멤버십을 해지하고 싶은데 어디서 하나요?",
     author: "박**",
     status: "답변대기",
     createdAt: "2026.06.30",
+  },
+  {
+    id: 4,
+    type: "PRODUCT",
+    productId: 1,
+    title: "상품 사이즈 문의",
+    content: "이 상품은 평소 사이즈대로 주문하면 될까요?",
+    author: "최**",
+    status: "답변대기",
+    createdAt: "2026.07.01",
   },
 ];

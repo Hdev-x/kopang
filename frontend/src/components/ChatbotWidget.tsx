@@ -2,7 +2,7 @@ import { useState } from "react";
 import { MessageCircle, X } from "lucide-react";
 import styles from "./ChatbotWidget.module.css";
 import { getChatbotReply, INITIAL_QUESTIONS } from "../api/chatbotRules";
-
+import { askChatbot } from "../api/chatbot";
 
 type Msg = {
   role: "bot" | "user";
@@ -19,15 +19,31 @@ export function ChatbotWidget() {
 
   const [input, setInput] = useState("");
 
-  const ask = (question: string) => {
-    const reply = getChatbotReply(question);
-
+  const ask = async (question: string) => {
     setMsgs((m) => [
       ...m,
       { role: "user", text: question },
-      { role: "bot", text: reply.answer, suggestions: reply.suggestions },
-
     ]);
+
+    try {
+      const reply = await askChatbot(question);
+
+      setMsgs((m) => [
+        ...m,
+        { role: "bot", text: reply.answer, suggestions: reply.suggestions },
+      ]);
+    } catch {
+      const fallback = getChatbotReply(question);
+
+      setMsgs((m) => [
+        ...m,
+        {
+          role: "bot",
+          text: fallback.answer,
+          suggestions: fallback.suggestions,
+        },
+      ]);
+    }
   };
 
   const sendInput = () => {
@@ -37,14 +53,8 @@ export function ChatbotWidget() {
       return;
     }
 
-    const reply = getChatbotReply(question);
-
-    setMsgs((m) => [
-      ...m,
-      { role: "user", text: question },
-      { role: "bot", text: reply.answer, suggestions: reply.suggestions },
-    ]);
     setInput("");
+    void ask(question);
   };
 
   return (
@@ -70,7 +80,7 @@ export function ChatbotWidget() {
 
                 {m.suggestions && (
                   <div className={styles.suggestions}>
-                    {m.suggestions.slice(0,1).map((suggestion) => (
+                    {m.suggestions.slice(0, 1).map((suggestion) => (
                       <button
                         key={suggestion}
                         type="button"

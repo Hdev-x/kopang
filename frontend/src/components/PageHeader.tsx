@@ -3,9 +3,17 @@ import { ChevronLeft } from "lucide-react";
 import styles from "./PageHeader.module.css";
 
 // 뒤로가기 + (있으면) 타이틀. title 없으면 ← 만 단독으로.
-export function PageHeader({ title }: { title?: string }) {
+export function PageHeader({ title, backTo }: { title?: string; backTo?: string }) {
   const navigate = useNavigate();
-  const goBack = () => (window.history.length > 1 ? navigate(-1) : navigate("/"));
+  const goBack = () => {
+    if (backTo) {
+      navigate(backTo);
+      return;
+    }
+    
+    window.history.length > 1 ? navigate(-1) : navigate("/");
+  };
+  
 
   return (
     <div className={styles.header}>

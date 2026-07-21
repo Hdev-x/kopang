@@ -1,30 +1,40 @@
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Layout } from "../../components/Layout";
 import { PageHeader } from "../../components/PageHeader";
 import { Card } from "../../components/Card";
 import { Button } from "../../components/Button";
-import { NOTICES, FAQS } from "../../mocks/supportData";
+import { FAQS } from "../../mocks/supportData";
+import { getNoticeList } from "../../api/notice";
+import type { Notice } from "../../types/notice";
 import s from "../../styles/AccountPages.module.css";
 
 export function SupportPage() {
   const navigate = useNavigate();
+  const [notices, setNotices] = useState<Notice[]>([]);
+
+  useEffect(() => {
+    getNoticeList()
+      .then(setNotices)
+      .catch(console.error);
+  }, []);
   return (
     <Layout>
-      <PageHeader title="고객센터" />
+      <PageHeader title="고객센터" backTo="/my" />
       <p className={s.muted} style={{ marginBottom: "var(--space-4)" }}>
         공지사항·FAQ를 확인하거나, 1:1 문의 또는 우하단 AI 상담봇을 이용하세요.
       </p>
 
       <Button
         style={{ width: "100%", marginBottom: "var(--space-2)" }}
-        onClick={() => navigate("/qna/write")}
+        onClick={() => navigate("/my/support/inquiry")}
       >
         1:1 문의하기
       </Button>
       <Button
         variant="ghost"
         style={{ width: "100%", marginBottom: "var(--space-2)" }}
-        onClick={() => navigate("/qna")}
+        onClick={() => navigate("/my/inquiries?tab=general")}
       >
         문의 내역 보기
       </Button>
@@ -39,12 +49,18 @@ export function SupportPage() {
         </Link>
       </div>
       <div className={s.list}>
-        {NOTICES.slice(0, 3).map((n) => (
-          <Link key={n.id} to={`/my/support/notices/${n.id}`} className={s.cardLink}>
+        {notices.slice(0, 3).map((notice) => (
+          <Link
+            key={notice.id}
+            to={`/my/support/notices/${notice.id}`}
+            className={s.cardLink}
+          >
             <Card>
               <div className={s.row}>
-                <span className={s.strong}>{n.title}</span>
-                <span className={s.muted}>{n.date}</span>
+                <span className={s.strong}>{notice.title}</span>
+                <span className={s.muted}>
+                  {notice.createdAt.slice(0, 10)}
+                </span>
               </div>
             </Card>
           </Link>
@@ -57,16 +73,16 @@ export function SupportPage() {
           더보기
         </Link>
       </div>
-    <div className={s.list}>
-      {FAQS.slice(0, 3).map((f, i) => (
-        <Link key={i} to="/my/support/faq" className={s.cardLink}>
-          <Card>
-            <p className={s.faqQ}>Q. {f.q}</p>
-            <p className={s.faqA}>{f.a}</p>
-          </Card>
-        </Link>
-      ))}
-    </div>
+      <div className={s.list}>
+        {FAQS.slice(0, 3).map((f, i) => (
+          <Link key={i} to="/my/support/faq" className={s.cardLink}>
+            <Card>
+              <p className={s.faqQ}>Q. {f.q}</p>
+              <p className={s.faqA}>{f.a}</p>
+            </Card>
+          </Link>
+        ))}
+      </div>
     </Layout>
   );
 }

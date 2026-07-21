@@ -11,21 +11,26 @@ import java.util.List;
 public class QnAService {
     private final QnAMapper qnAMapper;
 
-    public List<QnADTO> getQnaList(String type) {
+    public List<QnADTO> getQnaList(Long userId, String type) {
         if (type == null || type.isBlank()) {
-            return qnAMapper.findAll();
+            return qnAMapper.findAll(userId);
         }
 
-        return qnAMapper.findByType(type);
+        return qnAMapper.findByType(userId, type);
     }
 
-    public QnADTO getQna(Long id) {
-        QnADTO qna = qnAMapper.findById(id);
+    public List<QnADTO> getProductQnaList(Long productId) {
+        return qnAMapper.findByProductId(productId);
+    }
+
+    public QnADTO getQna(Long userId, Long id) {
+        QnADTO qna = qnAMapper.findByIdAndUserId(id, userId);
+
         if (qna == null) {
             throw new IllegalArgumentException("NOT_FOUND");
         }
-        return qna;
 
+        return qna;
     }
 
     public QnADTO createQna(Long userId, QnADTO qna) {
@@ -35,6 +40,22 @@ public class QnAService {
         }
 
         qna.setUserId(userId);
+
+        if (qna.getType() == null || qna.getType().isBlank()) {
+            qna.setType("GENERAL");
+
+        }
+
+        if ("PRODUCT".equals(qna.getType())) {
+            if (qna.getProductId() == null) {
+                throw new IllegalArgumentException("VALIDATION_ERROR");
+            }
+        } else if ("GENERAL".equals(qna.getType())) {
+            qna.setProductId(null);
+        } else {
+            throw new IllegalArgumentException("VALIDATION_ERROR");
+        }
+
         qna.setStatus("답변대기");
         qnAMapper.insertQna(qna);
 

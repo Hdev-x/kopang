@@ -10,6 +10,15 @@ export async function getQnaList(type?: "PRODUCT" | "GENERAL") {
   return res.data.data;
 }
 
+// 상품별 문의 목록
+export async function getProductQnaList(productId: number) {
+  const res = await client.get<ApiResponse<QnaSummary[]>>(
+    `/inquiries/product/${productId}`
+  );
+  return res.data.data;
+}
+
+
 // 문의 상세 (GET /api/inquiries/:id)
 export async function getQna(id: number) {
   const res = await client.get<ApiResponse<QnaPost>>(`/inquiries/${id}`);
@@ -17,10 +26,23 @@ export async function getQna(id: number) {
 }
 
 // 문의 작성 (POST /api/inquiries)
-export async function createQna(title: string, content: string) {
-  const res = await client.post<ApiResponse<QnaPost>>("/inquiries", { title, content });
+
+export async function createQna(
+  title: string,
+  content: string,
+  type: "PRODUCT" | "GENERAL" = "GENERAL",
+  productId?: number
+) {
+  const res = await client.post<ApiResponse<QnaPost>>("/inquiries", {
+    title,
+    content,
+    type,
+    productId,
+  });
   return res.data.data;
 }
+
+
 export async function answerQna(id: number, answerContent: string) {
   await client.post<ApiResponse<null>>(`/inquiries/${id}/answer`, {
     answerContent,
