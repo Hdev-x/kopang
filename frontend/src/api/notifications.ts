@@ -7,6 +7,7 @@ export type NotificationItem = {
   id: number;
   type: string;
   message: string;
+  refId: number | null; // 클릭 이동 대상(상품·쿠폰 id), 없으면 null
   read: boolean;
   createdAt: string; // ISO 문자열
 };

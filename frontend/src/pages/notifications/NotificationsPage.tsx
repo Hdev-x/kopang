@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Layout } from "../../components/Layout";
 import { PageHeader } from "../../components/PageHeader";
 import { getNotifications, type NotificationItem } from "../../api/notifications";
@@ -17,6 +18,26 @@ const DISPLAY: Record<string, { label: string; emoji: string }> = {
   NOTICE: { label: "공지", emoji: "📢" },
 };
 const FALLBACK = { label: "알림", emoji: "🔔" };
+
+// type + refId → 클릭 이동 경로. 대상 없으면 null(이동 안 함).
+function linkTo(type: string, refId: number | null): string | null {
+  switch (type) {
+    case "WISHLIST":
+    case "RECOMMEND":
+    case "REBUY":
+      return refId ? `/products/${refId}` : null;
+    case "ABANDON":
+      return "/cart";
+    case "COUPON_EXPIRE":
+    case "WELCOME_BACK":
+    case "APOLOGY":
+      return "/my/coupons";
+    case "NOTICE":
+      return refId ? `/my/support/notices/${refId}` : "/my/support/notices";
+    default:
+      return null;
+  }
+}
 
 // ISO 시각 → "방금 / N분 전 / N시간 전 / N일 전 / 날짜"
 function timeAgo(iso: string): string {
@@ -56,8 +77,10 @@ export function NotificationsPage() {
           !error &&
           items.map((n) => {
             const d = DISPLAY[n.type] ?? FALLBACK;
-            return (
-              <div key={n.id} className={`${s.item} ${!n.read ? s.unread : ""}`}>
+            const to = linkTo(n.type, n.refId);
+            const cls = `${s.item} ${!n.read ? s.unread : ""}`;
+            const inner = (
+              <>
                 <span className={s.emoji}>{d.emoji}</span>
                 <div className={s.body}>
                   <p className={s.type}>{d.label} 알림</p>
@@ -65,6 +88,15 @@ export function NotificationsPage() {
                   <p className={s.time}>{timeAgo(n.createdAt)}</p>
                 </div>
                 {!n.read && <span className={s.dot} />}
+              </>
+            );
+            return to ? (
+              <Link key={n.id} to={to} className={cls}>
+                {inner}
+              </Link>
+            ) : (
+              <div key={n.id} className={cls}>
+                {inner}
               </div>
             );
           })}
