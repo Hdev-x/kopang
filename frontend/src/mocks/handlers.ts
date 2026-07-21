@@ -227,20 +227,6 @@ export const handlers = [
   }),
 
 
-  // // 로그인
-  http.post("/api/auth/login", async ({ request }) => {
-    (await request.json()) as { email: string; password: string };
-    return HttpResponse.json({
-      success: true,
-      data: {
-        accessToken: "fake-access-token",
-        refreshToken: "fake-refresh-token",
-        user: { id: 1, name: "홍길동" },
-      },
-      message: null,
-    });
-  }),
-
   // 1:1 문의 답변 등록
   http.post("/api/qna/:id/answer", async ({ params, request }) => {
     const body = (await request.json()) as { answerContent: string };
