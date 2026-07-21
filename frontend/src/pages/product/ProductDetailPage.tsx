@@ -162,19 +162,19 @@ export function ProductDetailPage() {
                 </Card>
               ))
             ) : (
-              similarProducts.map((sim) => (
+              similarProducts.map((sim, idx) => (
                 <Card
-                  key={sim.id}
+                  key={sim.id ? `sim-${sim.id}-${idx}` : `sim-${idx}`}
                   className={styles.similarCard}
-                  onClick={() => navigate(`/products/${sim.id}`)}
+                  onClick={() => sim.id && navigate(`/products/${sim.id}`)}
                 >
                   {sim.imageUrl ? (
-                    <img src={sim.imageUrl} alt={sim.name} className={styles.similarThumb} />
+                    <img src={sim.imageUrl} alt={sim.name || "상품 이미지"} className={styles.similarThumb} />
                   ) : (
                     <div className={styles.similarThumb} />
                   )}
-                  <p className={styles.similarName}>{sim.name}</p>
-                  <p className={styles.similarPrice}>{sim.price.toLocaleString()}원</p>
+                  <p className={styles.similarName}>{sim.name || "상품명 없음"}</p>
+                  <p className={styles.similarPrice}>{(sim.price ?? 0).toLocaleString()}원</p>
                 </Card>
               ))
             )}
@@ -196,19 +196,19 @@ export function ProductDetailPage() {
                 </Card>
               ))
             ) : (
-              togetherProducts.map((item) => (
+              togetherProducts.map((item, idx) => (
                 <Card
-                  key={item.id}
+                  key={item.id ? `tog-${item.id}-${idx}` : `tog-${idx}`}
                   className={styles.similarCard}
-                  onClick={() => navigate(`/products/${item.id}`)}
+                  onClick={() => item.id && navigate(`/products/${item.id}`)}
                 >
                   {item.imageUrl ? (
-                    <img src={item.imageUrl} alt={item.name} className={styles.similarThumb} />
+                    <img src={item.imageUrl} alt={item.name || "상품 이미지"} className={styles.similarThumb} />
                   ) : (
                     <div className={styles.similarThumb} />
                   )}
-                  <p className={styles.similarName}>{item.name}</p>
-                  <p className={styles.similarPrice}>{item.price.toLocaleString()}원</p>
+                  <p className={styles.similarName}>{item.name || "상품명 없음"}</p>
+                  <p className={styles.similarPrice}>{(item.price ?? 0).toLocaleString()}원</p>
                 </Card>
               ))
             )}
