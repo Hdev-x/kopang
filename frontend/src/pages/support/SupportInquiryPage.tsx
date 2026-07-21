@@ -4,6 +4,7 @@ import { Layout } from "../../components/Layout";
 import { PageHeader } from "../../components/PageHeader";
 import { Input } from "../../components/Input";
 import { Button } from "../../components/Button";
+import { createQna } from "../../api/qna";
 import s from "../../styles/AccountPages.module.css";
 
 export function SupportInquiryPage() {
@@ -11,12 +12,16 @@ export function SupportInquiryPage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
 
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
-    // 목업: 등록 후 문의내역(일반문의 탭)으로 이동
-    navigate("/my/inquiries?tab=general");
-  };
 
+    try {
+      await createQna(title, content, "GENERAL");
+      navigate("/my/inquiries?tab=general");
+    } catch (error) {
+      console.error("1:1 문의 등록 실패:", error);
+    }
+  };
   return (
     <Layout>
       <PageHeader title="1:1 문의하기" />

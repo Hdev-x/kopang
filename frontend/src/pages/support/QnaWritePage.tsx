@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Layout } from "../../components/Layout";
 import { PageHeader } from "../../components/PageHeader";
 import { Button } from "../../components/Button";
@@ -10,20 +10,27 @@ export function QnaWritePage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const type = params.get("type") === "PRODUCT" ? "PRODUCT" : "GENERAL";
+  const productId = params.get("productId");
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+
     try {
-      await createQna(title, content);
+      await createQna(title, content, type, productId ? Number(productId) : undefined);
+      navigate(`/my/inquiries?tab=${type === "PRODUCT" ? "product" : "general"}`);
     } catch (err) {
       console.error("문의 등록 실패:", err);
     }
-    navigate("/qna");
   };
 
   return (
     <Layout>
-      <PageHeader title="문의하기" />
+      <PageHeader
+        title="문의하기"
+        backTo={type === "PRODUCT" ? `/products/${productId}` : "/my/support"}
+      />
       <form className={s.form} onSubmit={handleSubmit}>
         <input
           className={s.input}

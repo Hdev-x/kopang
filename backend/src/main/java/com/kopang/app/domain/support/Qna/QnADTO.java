@@ -7,6 +7,9 @@ import java.time.LocalDateTime;
 public class QnADTO {
     private Long id;
     private Long userId;
+    private String type;
+    private Long productId;
+    private String productName;
 
     private String title;
     private String content;
@@ -18,9 +21,7 @@ public class QnADTO {
     private String answerContent;
     private String answerAuthor;
     private String answerStatus;
-    
+
     private LocalDateTime updatedAt;
-
-
 
 }

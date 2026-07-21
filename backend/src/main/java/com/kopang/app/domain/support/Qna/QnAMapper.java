@@ -8,14 +8,23 @@ import java.util.List;
 @Mapper
 public interface QnAMapper {
 
-    List<QnADTO> findAll();
+        List<QnADTO> findAll(@Param("userId") Long userId);
 
-    List<QnADTO> findByType(@Param("type") String type);
+        List<QnADTO> findByType(
+                        @Param("userId") Long userId,
+                        @Param("type") String type);
 
-    QnADTO findById(Long id);
+        List<QnADTO> findByProductId(
+                        @Param("productId") Long productId);
 
-    void insertQna(QnADTO qna);
+        QnADTO findById(Long id);
 
-    void answerQna(@Param("id") Long id, @Param("answerContent") String answerContent);
+        QnADTO findByIdAndUserId(
+                        @Param("id") Long id,
+                        @Param("userId") Long userId);
+
+        void insertQna(QnADTO qna);
+
+        void answerQna(@Param("id") Long id, @Param("answerContent") String answerContent);
 
 }

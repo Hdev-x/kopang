@@ -1,45 +1,106 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.kopang.app.domain.support.Qna.QnAMapper">
-<select id="findAll" resultType="com.kopang.app.domain.support.Qna.QnADTO">
+    <select id="findAll" resultType="com.kopang.app.domain.support.Qna.QnADTO">
+    SELECT 
+        i.inquiry_id AS id,
+        i.user_id AS userId,
+        i.type AS type,
+        i.product_id AS productId,
+        p.name AS productName,
+        i.title AS title,
+        CASE 
+            WHEN u.name IS NULL OR u.name = '' THEN '고객'
+            ELSE CONCAT(SUBSTRING(u.name, 1, 1), '**') 
+        END AS author,
+        i.status AS status,
+        i.created_at AS createdAt,
+        i.answer AS answerContent
+    FROM inquiries i
+    LEFT JOIN products p ON i.product_id = p.product_id
+    LEFT JOIN users u ON i.user_id = u.user_id 
+    WHERE i.user_id = #{userId}
+    ORDER BY i.created_at DESC 
+    </select>
+
+
+    <select id="findByType" resultType="com.kopang.app.domain.support.Qna.QnADTO"> 
+    SELECT
+        i.inquiry_id AS id, 
+        i.user_id AS userId, 
+        i.type AS type,
+        i.product_id AS productId,
+        p.name AS productName,
+        i.title AS title, 
+        CASE 
+            WHEN u.name IS NULL OR u.name = '' THEN '고객' 
+            ELSE CONCAT(SUBSTRING(u.name, 1, 1), '**') 
+        END AS author, 
+        i.status AS status, 
+        i.created_at AS createdAt,
+        i.answer AS answerContent
+    FROM inquiries i 
+    LEFT JOIN products p ON i.product_id = p.product_id
+    LEFT JOIN users u ON i.user_id = u.user_id 
+    WHERE i.user_id = #{userId}
+    AND i.type = #{type}
+    ORDER BY i.created_at DESC 
+</select>
+
+<select id="findByProductId"
+        resultType="com.kopang.app.domain.support.Qna.QnADTO">
     SELECT
         i.inquiry_id AS id,
         i.user_id AS userId,
+        i.type AS type,
+        i.product_id AS productId,
+        p.name AS productName,
         i.title AS title,
         CASE
             WHEN u.name IS NULL OR u.name = '' THEN '고객'
             ELSE CONCAT(SUBSTRING(u.name, 1, 1), '**')
         END AS author,
         i.status AS status,
-        i.created_at AS createdAt
+        i.created_at AS createdAt,
+        i.answer AS answerContent
     FROM inquiries i
+    LEFT JOIN products p ON i.product_id = p.product_id
     LEFT JOIN users u ON i.user_id = u.user_id
-    WHERE i.type = 'GENERAL'
+    WHERE i.type = 'PRODUCT'
+    AND i.product_id = #{productId}
     ORDER BY i.created_at DESC
 </select>
 
-
-<select id="findByType" resultType="com.kopang.app.domain.support.Qna.QnADTO">
-    SELECT
+    <select id="findById" resultType="com.kopang.app.domain.support.Qna.QnADTO"> 
+    SELECT 
         i.inquiry_id AS id,
         i.user_id AS userId,
-        i.title AS title,
-        CASE
-            WHEN u.name IS NULL OR u.name = '' THEN '고객'
-            ELSE CONCAT(SUBSTRING(u.name, 1, 1), '**')
-        END AS author,
-        i.status AS status,
-        i.created_at AS createdAt
-    FROM inquiries i
-    LEFT JOIN users u ON i.user_id = u.user_id
-    WHERE i.type = #{type}
-    ORDER BY i.created_at DESC
+        i.type AS type,
+        i.product_id AS productId, 
+        p.name AS productName,
+        i.title AS title, 
+        i.content AS content, 
+    CASE 
+        WHEN u.name IS NULL OR u.name = '' THEN '고객' 
+        ELSE CONCAT(SUBSTRING(u.name, 1, 1), '**')
+        END AS author, 
+        i.status AS status, 
+        i.created_at AS createdAt, 
+        i.answer AS answerContent 
+    FROM inquiries i 
+    LEFT JOIN products p ON i.product_id = p.product_id
+    LEFT JOIN users u ON i.user_id = u.user_id 
+    WHERE i.inquiry_id = #{id} 
 </select>
 
-<select id="findById" resultType="com.kopang.app.domain.support.Qna.QnADTO">
+<select id="findByIdAndUserId"
+        resultType="com.kopang.app.domain.support.Qna.QnADTO">
     SELECT
         i.inquiry_id AS id,
         i.user_id AS userId,
+        i.type AS type,
+        i.product_id AS productId,
+        p.name AS productName,
         i.title AS title,
         i.content AS content,
         CASE
@@ -50,24 +111,38 @@
         i.created_at AS createdAt,
         i.answer AS answerContent
     FROM inquiries i
+    LEFT JOIN products p ON i.product_id = p.product_id
     LEFT JOIN users u ON i.user_id = u.user_id
     WHERE i.inquiry_id = #{id}
-    AND i.type = 'GENERAL'
+    AND i.user_id = #{userId}
 </select>
-<insert id="insertQna">
-    INSERT INTO inquiries (user_id, type, product_id, title, content, status, created_at)
-    VALUES (#{userId}, 'GENERAL', NULL, #{title}, #{content}, '답변대기', now())
+
+    <insert id="insertQna"> 
+    INSERT INTO inquiries (
+        user_id, 
+        type, 
+        product_id, 
+        title, 
+        content,
+        status, 
+        created_at
+    ) 
+    VALUES (
+        #{userId}, 
+        #{type}, 
+        #{productId}, 
+        #{title}, 
+        #{content}, 
+        '답변대기',
+        now()
+        ) 
     </insert>
-<update id="answerQna">
-    UPDATE inquiries
-    SET answer = #{answerContent}, status = '답변완료'
-    WHERE inquiry_id = #{id}
-        AND type = 'GENERAL'
-</update>
-
-
-
-
+    <update id="answerQna"> 
+    UPDATE inquiries 
+    SET 
+        answer = #{answerContent}, status = '답변완료' 
+    WHERE inquiry_id = #{id} 
+    </update>
 
 
 </mapper>

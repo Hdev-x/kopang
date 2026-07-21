@@ -6,6 +6,7 @@ export type QnaAnswer = {
 export type QnaPost = {
   id: number;
   type?: "PRODUCT" | "GENERAL";
+  productId?: number;
   title: string;
   content: string;
   author: string; // 마스킹된 작성자 (예: 김**)

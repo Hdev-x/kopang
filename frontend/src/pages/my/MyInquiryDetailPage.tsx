@@ -1,18 +1,28 @@
-import { useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams, useSearchParams } from "react-router-dom";
 import { Layout } from "../../components/Layout";
 import { PageHeader } from "../../components/PageHeader";
 import { Card } from "../../components/Card";
-import { INQUIRIES } from "../../mocks/inquiryData";
+import { getQna } from "../../api/qna";
+import type { QnaPost } from "../../types/qna";
 import s from "../../styles/Qna.module.css";
 
 export function MyInquiryDetailPage() {
+  const [params] = useSearchParams();
   const { id } = useParams();
-  const item = INQUIRIES.find((i) => i.id === id);
+  const tab = params.get("tab") === "general" ? "general" : "product";
+  const [item, setItem] = useState<QnaPost | null>(null);
+
+  useEffect(() => {
+    if (!id) return;
+
+    getQna(Number(id)).then(setItem);
+  }, [id]);
 
   if (!item) {
     return (
       <Layout>
-        <PageHeader title="문의 상세" />
+        <PageHeader title="문의 상세" backTo={`/my/inquiries?tab=${tab}`} />
         <p className={s.empty}>문의를 찾을 수 없어요.</p>
       </Layout>
     );
@@ -20,7 +30,7 @@ export function MyInquiryDetailPage() {
 
   return (
     <Layout>
-      <PageHeader title="문의 상세" />
+      <PageHeader title="문의 상세" backTo={`/my/inquiries?tab=${tab}`} />
 
       <Card className={s.qCard}>
         <div className={s.itemHead}>
@@ -28,23 +38,19 @@ export function MyInquiryDetailPage() {
             {item.status}
           </span>
           <span className={s.date}>
-            {item.date} · {item.type === "product" ? "상품문의" : "일반문의"}
+            {item.createdAt} · {item.type === "PRODUCT" ? "상품문의" : "일반문의"}
           </span>
         </div>
         <p className={s.qTitle}>{item.title}</p>
-        {item.product && (
-          <p className={s.author} style={{ marginBottom: "var(--space-2)" }}>
-            {item.product}
-          </p>
-        )}
-        <p className={s.qContent}>{item.question}</p>
+        <p className={s.qContent}>{item.content}</p>
+
       </Card>
 
-      {item.answer ? (
+      {item.answerContent ? (
         <Card className={s.aCard}>
           <p className={s.aLabel}>답변 · 코팡 고객센터</p>
-          <p className={s.aContent}>{item.answer}</p>
-          <p className={s.date}>{item.date}</p>
+          <p className={s.aContent}>{item.answerContent}</p>
+          <p className={s.date}>{item.createdAt}</p>
         </Card>
       ) : (
         <p className={s.waiting}>답변을 준비 중이에요.</p>
