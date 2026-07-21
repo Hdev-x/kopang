@@ -150,4 +150,23 @@
         WHERE product_id = #{productId}
     </delete>
 
+    <select id="findSimilarProducts" resultType="com.kopang.app.domain.product.ProductDTO">
+        SELECT 
+            product_id,
+            category_id,
+            name,
+            description,
+            price,
+            discount_price,
+            stock,
+            image_url,
+            status,
+            created_at
+        FROM products
+        WHERE category_id = #{categoryId}
+          AND product_id != #{productId}
+        ORDER BY ABS(price - #{price}) ASC, product_id DESC
+        LIMIT #{limit}
+    </select>
+
 </mapper>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Layout } from "../../components/Layout";
 import { PageHeader } from "../../components/PageHeader";
 import { Button } from "../../components/Button";
@@ -13,6 +14,9 @@ import styles from "./CheckoutPage.module.css";
 const CLIENT_KEY = "test_ck_nRQoOaPz8LNMgv7d5bDPVy47BMw6";
 
 export function CheckoutPage() {
+  const location = useLocation();
+  const stateSelectedItems = (location.state as { selectedItems?: CartItem[] } | null)?.selectedItems;
+
   const [items, setItems] = useState<CartItem[]>([]);
   const [pay, setPay] = useState("신용/체크카드");
   const [pointInput, setPointInput] = useState("");
@@ -34,7 +38,11 @@ export function CheckoutPage() {
   };
 
   useEffect(() => {
-    getCart().then(setItems).catch(console.error);
+    if (stateSelectedItems && stateSelectedItems.length > 0) {
+      setItems(stateSelectedItems);
+    } else {
+      getCart().then(setItems).catch(console.error);
+    }
     loadDefaultAddress();
     getPointBalance().then((d) => setAvailablePoint(d.balance)).catch(console.error);
     getMyCoupons().then((list) => setMyCoupons(list.filter((c) => !c.used))).catch(console.error);
