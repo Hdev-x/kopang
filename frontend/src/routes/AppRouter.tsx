@@ -40,6 +40,7 @@ import { WebSearchPage } from "../web/pages/WebSearchPage";
 import { WebCartPage } from "../web/pages/WebCartPage";
 import { WebCheckoutPage, WebOrderCompletePage, WebPaymentFailPage, WebPaymentSuccessPage, WebResumeCheckoutPage } from "../web/pages/WebOrderSkeletonPages";
 import { WebAccountPage } from "../web/pages/WebAccountPages";
+import { WebFaqPage, WebMembershipFailPage, WebMembershipPage, WebMembershipSuccessPage, WebNoticeDetailPage, WebNoticeListPage, WebNotificationsPage, WebQnaDetailPage, WebQnaListPage, WebQnaWritePage, WebSupportInquiryPage, WebSupportPage } from "../web/pages/WebServiceSkeletonPages";
 
 // ===== 장바구니 (cart) — 담당 B =====
 import { CartPage } from "../pages/cart/CartPage";
@@ -141,6 +142,18 @@ export function AppRouter() {
       <Route path="/web/my/coupons" element={<WebAccountPage kind="coupons" />} />
       <Route path="/web/my/inquiries" element={<WebAccountPage kind="inquiries" />} />
       <Route path="/web/my/inquiries/:id" element={<WebAccountPage kind="inquiry" />} />
+      <Route path="/web/membership" element={<WebMembershipPage />} />
+      <Route path="/web/membership/success" element={<WebMembershipSuccessPage />} />
+      <Route path="/web/membership/fail" element={<WebMembershipFailPage />} />
+      <Route path="/web/notifications" element={<WebNotificationsPage />} />
+      <Route path="/web/support" element={<WebSupportPage />} />
+      <Route path="/web/support/inquiry" element={<WebSupportInquiryPage />} />
+      <Route path="/web/support/notices" element={<WebNoticeListPage />} />
+      <Route path="/web/support/notices/:id" element={<WebNoticeDetailPage />} />
+      <Route path="/web/support/faq" element={<WebFaqPage />} />
+      <Route path="/web/qna" element={<WebQnaListPage />} />
+      <Route path="/web/qna/:id" element={<WebQnaDetailPage />} />
+      <Route path="/web/qna/write" element={<WebQnaWritePage />} />
       <Route path="/web/oauth2/callback" element={<OAuth2CallbackPage />} />
       {/* 기존 사용자 화면을 mobile 기준으로 유지하는 임시 진입점 */}
       <Route path="/mobile" element={<HomePage />} />

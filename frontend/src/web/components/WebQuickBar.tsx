@@ -128,7 +128,7 @@ export function WebQuickBar() {
               {panel === "help" && (
                 <div className={styles.help}>
                   <p>궁금한 내용을 빠르게 확인하세요.</p>
-                  <Link to="/my/support" onClick={() => setPanel(null)}>고객센터로 이동</Link>
+                  <Link to="/web/support" onClick={() => setPanel(null)}>고객센터로 이동</Link>
                 </div>
               )}
             </div>

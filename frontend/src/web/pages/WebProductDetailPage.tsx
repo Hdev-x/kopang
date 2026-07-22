@@ -214,7 +214,7 @@ export function WebProductDetailPage() {
             <div className={styles.actions}>
               <button type="button" className={styles.wish} aria-label="찜하기"><Heart size={22} /></button>
               <button type="button" className={styles.cart} onClick={handleAddToCart}>장바구니</button>
-              <button type="button" className={styles.buy} onClick={() => navigate("/checkout")}>바로구매</button>
+              <button type="button" className={styles.buy} onClick={() => navigate("/web/checkout")}>바로구매</button>
             </div>
           </div>
         </div>
@@ -292,7 +292,7 @@ export function WebProductDetailPage() {
       <section id="qna" className={styles.communitySection}>
         <header className={styles.contentTitleRow}>
           <div><p className={styles.sectionLabel}>Q&amp;A</p><h2>상품 문의 <span>{productQna.length}</span></h2></div>
-          <button type="button" onClick={() => navigate(`/qna/write?type=PRODUCT&productId=${product.id}`)}>상품 문의하기</button>
+          <button type="button" onClick={() => navigate(`/web/qna/write?type=PRODUCT&productId=${product.id}`)}>상품 문의하기</button>
         </header>
         {productQna.length === 0 ? <div className={styles.placeholder}><strong>등록된 상품 문의가 없어요.</strong><p>상품에 대해 궁금한 점을 문의해 주세요.</p></div> : (
           <div className={styles.qnaList}>
@@ -351,7 +351,7 @@ export function WebProductDetailPage() {
             <div className={styles.actions}>
               <button type="button" className={styles.wish} aria-label="찜하기"><Heart size={22} /></button>
               <button type="button" className={styles.cart} onClick={handleAddToCart}>장바구니</button>
-              <button type="button" className={styles.buy} onClick={() => navigate("/checkout")}>바로구매</button>
+              <button type="button" className={styles.buy} onClick={() => navigate("/web/checkout")}>바로구매</button>
             </div>
           </div>
         </aside>

@@ -28,60 +28,60 @@
 
 ## 3. Web 미구현 — 검색
 
-- [ ] Web Search
-- [ ] 검색 자동완성 또는 최근 검색어 표시
-- [ ] 검색 결과를 Web Product grid로 연결
+- [x] Web Search — `/web/search`
+- [x] 최근 검색어 표시
+- [x] 검색 결과를 Web Product grid로 연결
 
-현재 Web Header 검색 영역은 `/web/products`로만 이동하는 임시 링크다.
+Web Header 검색 영역은 `/web/search`로 이동하며 상품 검색 API와 최근 검색어 API를 공유한다. 자동완성은 아직 적용하지 않았다.
 
 ## 4. Web 미구현 — 장바구니·주문·결제
 
-- [ ] Web Cart 전체 페이지
-- [ ] Web Checkout
-- [ ] Web ResumeCheckout
-- [ ] Web OrderComplete
-- [ ] Web PaymentSuccess
-- [ ] Web PaymentFail
-- [ ] Web OrderHistory
-- [ ] Web OrderDetail
-- [ ] Web AddressManagement
+- [x] Web Cart 전체 페이지 — API 연결
+- [x] Web Checkout — 화면 뼈대
+- [x] Web ResumeCheckout — 화면 뼈대
+- [x] Web OrderComplete — 화면 뼈대
+- [x] Web PaymentSuccess — 화면 뼈대
+- [x] Web PaymentFail — 화면 뼈대
+- [x] Web OrderHistory — 화면 뼈대
+- [x] Web OrderDetail — 화면 뼈대
+- [x] Web AddressManagement — 화면 뼈대
 
 QuickBar 장바구니 Modal은 요약 기능이며 전체 Cart 페이지를 대신하지 않는다.
 
 ## 5. Web 미구현 — 마이페이지
 
-- [ ] Web MyPage
-- [ ] Web EditProfile
-- [ ] Web Wishlist
-- [ ] Web PointHistory
-- [ ] Web Coupon
-- [ ] Web MyInquiries
-- [ ] Web MyInquiryDetail
+- [x] Web MyPage — 화면 뼈대
+- [x] Web EditProfile — 화면 뼈대
+- [x] Web Wishlist — 화면 뼈대
+- [x] Web PointHistory — 화면 뼈대
+- [x] Web Coupon — 화면 뼈대
+- [x] Web MyInquiries — 화면 뼈대
+- [x] Web MyInquiryDetail — 화면 뼈대
 
 Web에서는 좌측 account navigation과 우측 content layout을 우선 검토한다.
 
 ## 6. Web 미구현 — 멤버십
 
-- [ ] Web Membership
-- [ ] Web MembershipSuccess
-- [ ] Web MembershipFail
+- [x] Web Membership — 화면 뼈대
+- [x] Web MembershipSuccess — 화면 뼈대
+- [x] Web MembershipFail — 화면 뼈대
 
 ## 7. Web 미구현 — 알림
 
-- [ ] Web Notifications
+- [x] Web Notifications — 화면 뼈대
 
 알림 API와 type·`refId` 이동 규칙은 기존 구현을 공유한다. Web에서는 목록 밀도와 filter/read 상태 UI만 별도 설계한다.
 
 ## 8. Web 미구현 — 고객지원·Q&A
 
-- [ ] Web Support Home
-- [ ] Web Support Inquiry
-- [ ] Web NoticeList
-- [ ] Web NoticeDetail
-- [ ] Web FAQ
-- [ ] Web QnaList
-- [ ] Web QnaDetail
-- [ ] Web QnaWrite
+- [x] Web Support Home — 화면 뼈대
+- [x] Web Support Inquiry — 화면 뼈대
+- [x] Web NoticeList — 화면 뼈대
+- [x] Web NoticeDetail — 화면 뼈대
+- [x] Web FAQ — 화면 뼈대
+- [x] Web QnaList — 화면 뼈대
+- [x] Web QnaDetail — 화면 뼈대
+- [x] Web QnaWrite — 화면 뼈대
 
 Web ProductDetail 안의 리뷰·상품 문의 목록은 기존 API에 연결됐다. 고객지원·Q&A의 독립 Web page 제작은 별도로 남아 있다.
 
