@@ -130,3 +130,13 @@ Web Wishlist
 - [x] 챗봇 API 실패 시 기존 규칙 기반 fallback 답변 사용
 
 Footer와 챗봇은 공통 `WebLayout`에서 제공하므로 Web 사용자 화면에 일괄 적용한다. 인증 전용 `WebAuthLayout`은 집중도를 위해 Footer와 QuickBar를 표시하지 않는다.
+
+## 12. 로그인 Header와 My navigation
+
+- [x] 로그인 Header: 저장·미읽음 알림 badge·장바구니·원형 profile
+- [x] profile dropdown: 마이페이지·나의 쇼핑·문의·멤버십·고객센터·로그아웃
+- [x] My 1차 navigation: 프로필·나의 쇼핑·나의 리뷰·설정
+- [x] My 영역별 2차 navigation
+- [x] 리뷰 작성 가능 목록·작성 리뷰 화면 뼈대
+
+미읽음 알림 badge는 Notification API를 사용한다. 주문·찜·쿠폰·리뷰·설정의 세부 화면은 현재 Web layout 뼈대이며 실제 API 연결 여부는 각 항목에 별도로 표시한다.
