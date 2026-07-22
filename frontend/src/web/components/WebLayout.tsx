@@ -11,8 +11,15 @@ type Props = {
   children: ReactNode;
 };
 
-const NAV_ITEMS = [
-  { to: "/web", label: "쇼핑홈" },
+const PRIMARY_NAV = [
+  { to: "/web", label: "집구경" },
+  { to: "/web/products", label: "쇼핑" },
+  { to: "/web/products?cat=1", label: "생활/인테리어" },
+];
+
+const SECONDARY_NAV = [
+  { to: "/web", label: "홈" },
+  { to: "/web/products?sort=recommended", label: "추천" },
   { to: "/web/products", label: "카테고리" },
   { to: "/web/products?sort=popular", label: "베스트" },
   { to: "/web/products?sort=latest", label: "신상품" },
@@ -28,17 +35,17 @@ export function WebLayout({ children }: Props) {
     <div className={styles.page}>
       <header className={styles.header}>
         <div className={styles.headerInner}>
-          <Link to="/web" className={styles.logo}>Kopang</Link>
+          <Link to="/web" className={styles.logo}><span aria-hidden="true" />Kopang</Link>
 
-          <nav className={styles.nav} aria-label="웹 쇼핑 메뉴">
-            {NAV_ITEMS.slice(0, 3).map((item) => (
+          <nav className={styles.nav} aria-label="웹 주요 메뉴">
+            {PRIMARY_NAV.map((item) => (
               <Link key={item.label} to={item.to} className={`${styles.navItem} ${(item.to.includes("?") ? currentLocation === item.to : path === item.to) ? styles.navActive : ""}`}>{item.label}</Link>
             ))}
           </nav>
 
           <Link to="/web/search" className={styles.search}>
             <Search size={20} aria-hidden="true" />
-            <span>상품을 검색해보세요</span>
+            <span>통합검색</span>
           </Link>
 
           <div className={styles.accountLinks}>
@@ -49,15 +56,16 @@ export function WebLayout({ children }: Props) {
                 <span>{user.name}</span>
               </Link>
             ) : (
-              <Link to="/web/login" className={styles.accountButton}>로그인</Link>
+              <><Link to="/web/login" className={styles.accountButton}>로그인</Link><Link to="/web/signup" className={styles.viewSwitch}>회원가입</Link></>
             )}
             <Link to="/web/notifications" className={styles.iconLink} aria-label="알림"><Bell size={21} /></Link>
             <Link to="/web/cart" className={styles.headerCart}>
               <ShoppingCart size={22} aria-hidden="true" />
-              <span>장바구니</span>
+              <span className={styles.srOnly}>장바구니</span>
             </Link>
           </div>
         </div>
+        <nav className={styles.secondaryNav} aria-label="웹 홈 세부 메뉴"><div>{SECONDARY_NAV.map((item) => <Link key={item.label} to={item.to} className={(item.to.includes("?") ? currentLocation === item.to : path === item.to) ? styles.secondaryActive : ""}>{item.label}</Link>)}</div></nav>
       </header>
 
       <main className={styles.main}>{children}</main>
