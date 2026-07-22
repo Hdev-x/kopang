@@ -187,9 +187,12 @@
   background: var(--gray-50);
 }
 
-.profileMenu .adminMenuItem {
+.profileMenu .viewMenuItem {
   margin-top: var(--space-2);
   border-top: 1px solid var(--color-border);
+}
+
+.profileMenu .adminMenuItem {
   color: var(--color-primary);
   font-weight: var(--weight-bold);
 }
