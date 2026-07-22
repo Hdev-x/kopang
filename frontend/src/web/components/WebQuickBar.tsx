@@ -89,7 +89,7 @@ export function WebQuickBar() {
             <div className={styles.modalBody}>
               {panel === "cart" && (
                 !user ? (
-                  <EmptyState message="로그인하면 장바구니를 확인할 수 있어요." action="로그인" to="/login" />
+                  <EmptyState message="로그인하면 장바구니를 확인할 수 있어요." action="로그인" to="/web/login" />
                 ) : cartItems === null ? (
                   <p className={styles.status}>장바구니를 불러오는 중이에요.</p>
                 ) : cartItems.length === 0 ? (

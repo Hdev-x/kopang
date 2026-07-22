@@ -11,14 +11,20 @@
 
 ## 2. Web 미구현 — 인증
 
-현재는 기존 mobile 스타일 화면으로만 존재한다.
-
-- [ ] Web Login
-- [ ] Web Signup
-- [ ] Web FindPassword
-- [ ] OAuth2 Callback 결과 처리 화면 검토
+- [x] Web Login — `/web/login`
+- [x] Web Signup — `/web/signup`
+- [x] Web FindPassword — `/web/find-password`
+- [x] OAuth2 Callback 결과 처리 — Web에서 시작한 인증은 `/web` 복귀
 
 인증 API와 token 처리는 공유하고 form 배치·안내 문구·Web Layout 적용 여부만 결정한다.
+
+### 인증 구현 메모
+
+- 기존 `api/auth.ts`와 `lib/auth.ts`를 공유한다.
+- Web 인증 화면은 공통 `WebAuthLayout`을 사용한다.
+- 로그인 성공 후 `/web`으로 이동한다.
+- Web에서 소셜 로그인을 시작하면 임시 보기 모드를 저장하고 callback 완료 후 `/web`으로 돌아온다.
+- 약관 문구는 화면 검증용이므로 팀 확정 약관으로 교체해야 한다.
 
 ## 3. Web 미구현 — 검색
 

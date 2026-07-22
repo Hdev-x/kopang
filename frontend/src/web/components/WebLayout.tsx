@@ -39,7 +39,7 @@ export function WebLayout({ children }: Props) {
                 <span>{user.name}</span>
               </Link>
             ) : (
-              <Link to="/login" className={styles.accountButton}>로그인</Link>
+              <Link to="/web/login" className={styles.accountButton}>로그인</Link>
             )}
             <button type="button" className={styles.headerCart} data-quickbar-cart-trigger>
               <ShoppingCart size={22} aria-hidden="true" />
