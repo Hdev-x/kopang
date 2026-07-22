@@ -34,17 +34,17 @@ export function WebLayout({ children }: Props) {
           <div className={styles.accountLinks}>
             <Link to="/mobile" className={styles.viewSwitch}>모바일 화면</Link>
             {user ? (
-              <Link to="/my" className={styles.accountButton}>
+              <Link to="/web/my" className={styles.accountButton}>
                 <User size={20} aria-hidden="true" />
                 <span>{user.name}</span>
               </Link>
             ) : (
               <Link to="/web/login" className={styles.accountButton}>로그인</Link>
             )}
-            <button type="button" className={styles.headerCart} data-quickbar-cart-trigger>
+            <Link to="/web/cart" className={styles.headerCart}>
               <ShoppingCart size={22} aria-hidden="true" />
               <span>장바구니</span>
-            </button>
+            </Link>
           </div>
         </div>
 
