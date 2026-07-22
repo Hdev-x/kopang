@@ -40,7 +40,8 @@ import { WebSearchPage } from "../web/pages/WebSearchPage";
 import { WebCartPage } from "../web/pages/WebCartPage";
 import { WebCheckoutPage, WebOrderCompletePage, WebPaymentFailPage, WebPaymentSuccessPage, WebResumeCheckoutPage } from "../web/pages/WebOrderSkeletonPages";
 import { WebAccountPage } from "../web/pages/WebAccountPages";
-import { WebFaqPage, WebMembershipFailPage, WebMembershipPage, WebMembershipSuccessPage, WebNoticeDetailPage, WebNoticeListPage, WebNotificationsPage, WebQnaDetailPage, WebQnaListPage, WebQnaWritePage, WebSupportInquiryPage, WebSupportPage } from "../web/pages/WebServiceSkeletonPages";
+import { WebFaqPage, WebNoticeDetailPage, WebNoticeListPage, WebNotificationsPage, WebQnaDetailPage, WebQnaListPage, WebQnaWritePage, WebSupportInquiryPage, WebSupportPage } from "../web/pages/WebServiceSkeletonPages";
+import { WebMembershipFailPage, WebMembershipPage, WebMembershipSuccessPage } from "../web/pages/WebMembershipPages";
 
 // ===== 장바구니 (cart) — 담당 B =====
 import { CartPage } from "../pages/cart/CartPage";
