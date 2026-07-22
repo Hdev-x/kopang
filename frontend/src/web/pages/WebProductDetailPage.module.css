@@ -220,6 +220,7 @@
 .tabs {
   position: sticky;
   top: 125px;
+  z-index: calc(var(--z-header) - 1);
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   margin-top: 80px;
@@ -603,8 +604,9 @@
 
 .stickyPurchase {
   position: sticky;
-  top: 184px;
-  height: calc(100vh - 184px);
+  top: 190px;
+  z-index: 1;
+  height: calc(100vh - 190px);
   min-height: 520px;
   display: flex;
   flex-direction: column;
