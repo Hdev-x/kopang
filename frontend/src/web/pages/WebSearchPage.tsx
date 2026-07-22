@@ -1,4 +1,5 @@
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import { Clock3, Search, X } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { addSearchHistory, getProducts, getSearchHistory, type SearchHistory } from "../../api/products";
