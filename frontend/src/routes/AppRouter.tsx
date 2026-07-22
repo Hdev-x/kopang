@@ -71,6 +71,7 @@ import { AdminOrdersPage } from "../pages/admin/manage/AdminOrdersPage";
 import { AdminMembersPage } from "../pages/admin/manage/AdminMembersPage";
 import { AdminMembershipPage } from "../pages/admin/manage/AdminMembershipPage";
 import { AdminCouponsPage } from "../pages/admin/manage/AdminCouponsPage";
+import { AdminFaqPage } from "../pages/admin/manage/AdminFaqPage";
 // 통계·AI추천관리 페이지는 보류 — 파일은 유지하되 라우팅에서 제외 (over-scope 정리)
 // import { AdminStatsPage } from "../pages/admin/manage/AdminStatsPage";
 // import { AdminRecommendationsPage } from "../pages/admin/manage/AdminRecommendationsPage";
@@ -128,6 +129,7 @@ export function AppRouter() {
       <Route path="/qna/:id" element={<QnaDetailPage />} />
       <Route path="/qna/write" element={<QnaWritePage />} />
 
+
       {/* ---------- 관리자 ---------- */}
       <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
 
@@ -145,6 +147,7 @@ export function AppRouter() {
       <Route path="/admin/members" element={<AdminRoute><AdminMembersPage /></AdminRoute>} />
       <Route path="/admin/membership" element={<AdminRoute><AdminMembershipPage /></AdminRoute>} />
       <Route path="/admin/coupons" element={<AdminRoute><AdminCouponsPage /></AdminRoute>} />
+      <Route path="/admin/faqs" element={<AdminRoute><AdminFaqPage /></AdminRoute>} />
       {/* /admin/stats · /admin/recommendations : 보류 (파일 유지, 라우팅 제외) */}
     </Routes>
   );

@@ -43,9 +43,27 @@ export function AddressManagementPage() {
   };
 
   useEffect(() => {
-    fetchAddresses();
-  }, []);
+    let cancelled = false;
 
+    getUserAddresses()
+      .then((data) => {
+        if (!cancelled) {
+          setAddresses(data || []);
+        }
+      })
+      .catch((error) => {
+        console.error("배송지 목록 로드 실패:", error);
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const openAddModal = () => {
     setIsEditMode(false);
     setTargetId(null);
@@ -104,7 +122,7 @@ export function AddressManagementPage() {
     }
   };
 
-  const handleDelete = async (addressId: number, isDefaultAddr: boolean) => {
+  const handleDelete = async (addressId: number) => {
     if (!window.confirm("이 배송지를 삭제하시겠습니까?")) return;
     try {
       await deleteAddress(addressId);
@@ -164,7 +182,7 @@ export function AddressManagementPage() {
                   <button
                     type="button"
                     className={s.textBtn}
-                    onClick={() => handleDelete(addr.addressId, addr.isDefault)}
+                    onClick={() => handleDelete(addr.addressId)}
                   >
                     삭제
                   </button>

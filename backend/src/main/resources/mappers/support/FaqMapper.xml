@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kopang.app.domain.support.Faq.FaqMapper">
+    <select id="findAll"
+        resultType="com.kopang.app.domain.support.Faq.FaqDTO">
+
+
+SELECT
+     faq_id AS id,
+     question,
+     answer,
+     category,
+     created_at AS createdAt,
+     updated_at AS updatedAt
+FROM faqs
+ORDER BY faq_id ASC
+    </select>
+
+    <insert id="insert">
+    INSERT INTO faqs (
+        question,
+        answer,
+        category
+    )
+    VALUES (
+        #{question},
+        #{answer},
+        #{category}
+    )
+</insert>
+
+<update id="update">
+    UPDATE faqs
+    SET
+        question = #{request.question},
+        answer = #{request.answer},
+        category = #{request.category},
+        updated_at = CURRENT_TIMESTAMP
+    WHERE faq_id = #{id}
+</update>
+
+<delete id="deleteById">
+    DELETE FROM faqs
+    WHERE faq_id = #{id}
+</delete>
+
+</mapper>

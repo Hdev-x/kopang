@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, Home } from "lucide-react";
-import { logout } from "../lib/auth";
+
 import styles from "./AdminLayout.module.css";
 
 // 관리자 전용 셸 — 모바일 퍼스트. 가로 네비 대신 햄버거 드로어.
@@ -28,7 +28,10 @@ const GROUPS: { title: string; items: Item[] }[] = [
   },
   {
     title: "부가",
-    items: [{ to: "/admin/coupons", label: "쿠폰·이벤트" }],
+    items: [
+      { to: "/admin/coupons", label: "쿠폰·이벤트" },
+      { to: "/admin/faqs", label: "FAQ 관리" },
+    ],
   },
   {
     title: "바로가기",
