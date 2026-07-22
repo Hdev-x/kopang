@@ -16,6 +16,7 @@ export function WebProductListPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [editorialIndex, setEditorialIndex] = useState(0);
+  const [expandedCategoryId, setExpandedCategoryId] = useState<number | null | "auto">("auto");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const categoryId = Number(params.get("cat")) || undefined;
@@ -35,7 +36,7 @@ export function WebProductListPage() {
   const moveEditorial = (direction: number) => { if (products.length > 0) setEditorialIndex((current) => (current + direction + products.length) % products.length); };
 
   return <WebLayout><div className={styles.pageLayout}>
-    <aside className={styles.sidebar}><h1>{pageTitle}</h1><Link to="/web/products" className={!categoryId ? styles.active : ""}>전체 상품</Link>{categories.map((category) => <CategoryBranch key={`${category.id}-${categoryId ?? "all"}`} category={category} activeId={categoryId} />)}</aside>
+    <aside className={styles.sidebar}><h1>{pageTitle}</h1><Link to="/web/products" className={!categoryId ? styles.active : ""}>전체 상품</Link>{categories.map((category) => <CategoryBranch key={category.id} category={category} activeId={categoryId} expanded={expandedCategoryId === category.id || (expandedCategoryId === "auto" && containsCategory(category.children ?? [], categoryId))} onToggle={() => setExpandedCategoryId((current) => current === category.id ? null : category.id)} />)}</aside>
     <main className={styles.content}>
       <p className={styles.breadcrumb}>쇼핑 &gt; 카테고리 &gt; {pageTitle}</p>
       <section className={styles.editorial}><header><h2>{pageTitle}</h2><span>상품과 브랜드를 새로운 테마로 만나보세요.</span></header><div className={styles.editorialGrid}>{editorialProducts.map((product, index) => <Link key={`${product.id}-${index}`} to={`/web/products/${product.id}`}><img src={product.imageUrl} alt="" /><div><span>CURATION {index + 1}</span><h3>{["디테일로 완성하는 일상", "나에게 꼭 맞는 상품", "쉽게 시작하는 새로운 선택"][index]}</h3><p>{product.name}</p></div></Link>)}</div><div className={styles.carouselButtons}><button type="button" onClick={() => moveEditorial(-1)} aria-label="이전 기획전"><ChevronLeft /></button><button type="button" onClick={() => moveEditorial(1)} aria-label="다음 기획전"><ChevronRight /></button></div></section>
@@ -49,12 +50,10 @@ export function WebProductListPage() {
   </div></WebLayout>;
 }
 
-function CategoryBranch({ category, activeId }: { category: Category; activeId?: number }) {
-  const hasActiveChild = containsCategory(category.children ?? [], activeId);
-  const [expanded, setExpanded] = useState(hasActiveChild);
+function CategoryBranch({ category, activeId, expanded, onToggle }: { category: Category; activeId?: number; expanded: boolean; onToggle: () => void }) {
   const hasChildren = Boolean(category.children?.length);
 
-  return <div className={styles.categoryBranch}><div className={styles.categoryRow}><Link to={`/web/products?cat=${category.id}`} className={category.id === activeId ? styles.active : ""}>{category.name}</Link>{hasChildren && <button type="button" onClick={() => setExpanded((open) => !open)} aria-label={`${category.name} 하위 카테고리 ${expanded ? "접기" : "펼치기"}`} aria-expanded={expanded}><ChevronDown className={expanded ? styles.expandedIcon : ""} size={15} /></button>}</div>{hasChildren && expanded ? <div className={styles.categoryChildren}>{category.children?.slice(0, 8).map((child) => <Link key={child.id} to={`/web/products?cat=${child.id}`} className={child.id === activeId ? styles.active : ""}>{child.name}</Link>)}</div> : null}</div>;
+  return <div className={styles.categoryBranch}>{hasChildren ? <button type="button" className={`${styles.categoryRow} ${category.id === activeId ? styles.active : ""}`} onClick={onToggle} aria-expanded={expanded}><span>{category.name}</span><ChevronDown className={expanded ? styles.expandedIcon : ""} size={15} /></button> : <Link to={`/web/products?cat=${category.id}`} className={`${styles.categoryRow} ${category.id === activeId ? styles.active : ""}`}>{category.name}</Link>}{hasChildren && expanded ? <div className={styles.categoryChildren}>{category.children?.slice(0, 8).map((child) => <Link key={child.id} to={`/web/products?cat=${child.id}`} className={child.id === activeId ? styles.active : ""}>{child.name}</Link>)}</div> : null}</div>;
 }
 
 function flattenCategories(categories: Category[]): Category[] { return categories.flatMap((category) => [category, ...flattenCategories(category.children ?? [])]); }
