@@ -144,6 +144,8 @@ export function AppRouter() {
       <Route path="/web/my/coupons" element={<WebAccountPage kind="coupons" />} />
       <Route path="/web/my/inquiries" element={<WebAccountPage kind="inquiries" />} />
       <Route path="/web/my/inquiries/:id" element={<WebAccountPage kind="inquiry" />} />
+      <Route path="/web/my/reviews" element={<WebAccountPage kind="reviews" />} />
+      <Route path="/web/my/reviews/write" element={<WebAccountPage kind="review-write" />} />
       <Route path="/web/membership" element={<WebMembershipPage />} />
       <Route path="/web/membership/success" element={<WebMembershipSuccessPage />} />
       <Route path="/web/membership/fail" element={<WebMembershipFailPage />} />

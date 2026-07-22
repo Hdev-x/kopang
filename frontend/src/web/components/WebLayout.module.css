@@ -142,11 +142,49 @@
   border: 2px solid var(--color-border);
   border-radius: var(--radius-full);
   font-weight: var(--weight-bold);
-  text-decoration: none;
+  cursor: pointer;
 }
 
 .profile:hover {
   border-color: var(--color-primary);
+}
+
+.profileWrap {
+  position: relative;
+}
+
+.profileMenu {
+  position: absolute;
+  top: calc(100% + var(--space-3));
+  right: 0;
+  z-index: var(--z-header);
+  width: 210px;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2) 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+.profileMenu a,
+.profileMenu button {
+  width: 100%;
+  padding: var(--space-3) var(--space-5);
+  color: var(--color-text);
+  background: transparent;
+  border: 0;
+  font-size: var(--font-sm);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.profileMenu a:hover,
+.profileMenu button:hover {
+  color: var(--color-primary);
+  background: var(--gray-50);
 }
 
 .viewSwitch,
@@ -231,6 +269,16 @@
 .secondaryNav a:hover,
 .secondaryNav .secondaryActive {
   color: var(--color-primary);
+}
+
+.accountNav > div {
+  justify-content: center;
+  gap: 48px;
+}
+
+.accountNav a {
+  padding: var(--space-5) 0;
+  font-size: var(--font-md);
 }
 
 .main {
