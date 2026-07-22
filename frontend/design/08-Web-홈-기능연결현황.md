@@ -74,3 +74,27 @@ Hero                 → popular 상품 4개
 3. Web 알림에 기존 Notification API 연결
 4. Web FAQ·공지·문의에 기존 support API 연결
 5. Home 전용 banner·기획전·추천 기능은 팀 합의 후 별도 설계
+
+## 6. Web Category page
+
+`/web/products`는 쇼핑 레퍼런스의 정보 구조를 참고해 다음 영역으로 구성한다.
+
+- 쇼핑 전용 2차 Header navigation
+- 왼쪽 계층형 category navigation
+- 실제 상품 image를 활용한 기획 card carousel
+- `discountRate` 기반 할인 상품 영역
+- 정렬·filter UI와 전체 상품 grid
+
+현재 바로 사용 가능:
+
+- category 선택과 상품 API filter
+- 인기·최신·가격순 정렬
+- 상품 상세 이동
+- 기획 card 이전·다음 이동
+
+추가 작업 필요:
+
+- `오늘의딜`·`단독상품` 전용 server query와 운영 정책
+- 기획전 title·image·기간을 관리하는 CMS/API
+- 무료배송·할인·재고 filter button의 실제 query 연결
+- 상품 count를 위한 server의 `totalElements` 표시
