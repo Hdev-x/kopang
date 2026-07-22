@@ -57,6 +57,36 @@ export function WebProductDetailPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  useEffect(() => {
+    if (!product) return;
+
+    const sectionIds: DetailTab[] = ["product-info", "review", "qna", "delivery"];
+    const sections = sectionIds
+      .map((sectionId) => document.getElementById(sectionId))
+      .filter((section): section is HTMLElement => section !== null);
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible) setActiveTab(visible.target.id as DetailTab);
+      },
+      { rootMargin: "-150px 0px -55% 0px", threshold: [0, 0.1, 0.3, 0.6] },
+    );
+
+    sections.forEach((section) => observer.observe(section));
+
+    const initialTab = readDetailTab();
+    if (initialTab !== "product-info") {
+      window.requestAnimationFrame(() => {
+        document.getElementById(initialTab)?.scrollIntoView({ block: "start" });
+      });
+    }
+
+    return () => observer.disconnect();
+  }, [product]);
+
   if (loading) return <WebLayout><div className={styles.status}>상품을 불러오는 중이에요.</div></WebLayout>;
   if (error || !product) return <WebLayout><div className={styles.status}>상품을 불러오지 못했어요.</div></WebLayout>;
 
@@ -73,10 +103,7 @@ export function WebProductDetailPage() {
   const selectTab = (tab: DetailTab) => {
     setActiveTab(tab);
     window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#${tab}`);
-    const tabsElement = document.getElementById("web-detail-tabs");
-    if (tabsElement) {
-      window.scrollTo({ top: window.scrollY + tabsElement.getBoundingClientRect().top - 120, behavior: "smooth" });
-    }
+    document.getElementById(tab)?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   return (
@@ -142,7 +169,7 @@ export function WebProductDetailPage() {
 
       <div className={styles.detailWorkspace}>
         <div className={styles.tabContent}>
-      {activeTab === "product-info" && <section id="product-info" className={styles.detailSection}>
+      <section id="product-info" className={styles.detailSection}>
         <header className={styles.detailIntro}>
           <p>KOPANG PRODUCT STORY</p>
           <h2>일상에 자연스럽게 스며드는<br />{product.name}</h2>
@@ -184,9 +211,9 @@ export function WebProductDetailPage() {
             <dt>판매가</dt><dd>{salePrice.toLocaleString()}원</dd>
           </dl>
         </section>
-      </section>}
+      </section>
 
-      {activeTab === "review" && <section id="review" className={styles.communitySection}>
+      <section id="review" className={styles.communitySection}>
         <header className={styles.contentTitle}><p className={styles.sectionLabel}>REVIEW</p><h2>상품 리뷰 <span>{reviews.length}</span></h2></header>
         {reviews.length === 0 ? <div className={styles.placeholder}><strong>아직 작성된 리뷰가 없어요.</strong><p>첫 번째 구매 후기를 남겨주세요.</p></div> : (
           <div className={styles.reviewList}>
@@ -200,9 +227,9 @@ export function WebProductDetailPage() {
             ))}
           </div>
         )}
-      </section>}
+      </section>
 
-      {activeTab === "qna" && <section id="qna" className={styles.communitySection}>
+      <section id="qna" className={styles.communitySection}>
         <header className={styles.contentTitleRow}>
           <div><p className={styles.sectionLabel}>Q&amp;A</p><h2>상품 문의 <span>{productQna.length}</span></h2></div>
           <button type="button" onClick={() => navigate(`/qna/write?type=PRODUCT&productId=${product.id}`)}>상품 문의하기</button>
@@ -218,9 +245,9 @@ export function WebProductDetailPage() {
             ))}
           </div>
         )}
-      </section>}
+      </section>
 
-      {activeTab === "delivery" && <section id="delivery" className={styles.policySection}>
+      <section id="delivery" className={styles.policySection}>
         <header>
           <p className={styles.sectionLabel}>SHOPPING GUIDE</p>
           <h2>배송·교환·환불 안내</h2>
@@ -241,25 +268,31 @@ export function WebProductDetailPage() {
           </article>
         </div>
         <p className={styles.policyNotice}>상품별 판매자 정책이 우선 적용될 수 있으며, 정확한 조건은 주문 전에 상품 고지 내용을 확인해야 합니다.</p>
-      </section>}
+      </section>
         </div>
 
         <aside className={styles.stickyPurchase} aria-label="구매 옵션">
           <p className={styles.stickyName}>{product.name}</p>
-          <div className={styles.optionSelect}>옵션을 선택해 주세요<span>⌄</span></div>
-          <div className={styles.stickySelected}>
-            <span>기본 상품</span>
-            <div className={styles.quantity}>
-              <button type="button" onClick={() => setQuantity((value) => Math.max(1, value - 1))}><Minus size={16} /></button>
-              <span>{quantity}</span>
-              <button type="button" onClick={() => setQuantity((value) => value + 1)}><Plus size={16} /></button>
+          <div className={styles.stickyBody}>
+            <div className={styles.optionSelect}>옵션을 선택해 주세요<span>⌄</span></div>
+            <div className={styles.stickySelected}>
+              <span>기본 상품</span>
+              <div className={styles.quantity}>
+                <button type="button" onClick={() => setQuantity((value) => Math.max(1, value - 1))}><Minus size={16} /></button>
+                <span>{quantity}</span>
+                <button type="button" onClick={() => setQuantity((value) => value + 1)}><Plus size={16} /></button>
+              </div>
             </div>
+            <div className={styles.couponRow}><span>받지 않은 쿠폰이 더 있어요</span><button type="button">쿠폰 받기</button></div>
+            <div className={styles.bundleRow}><PackageCheck size={20} /><span>다른 상품과 함께 장바구니에 담기</span></div>
           </div>
-          <div className={styles.stickyTotal}><span>주문금액</span><strong>{(salePrice * quantity).toLocaleString()}원</strong></div>
-          <div className={styles.actions}>
-            <button type="button" className={styles.wish} aria-label="찜하기"><Heart size={22} /></button>
-            <button type="button" className={styles.cart} onClick={handleAddToCart}>장바구니</button>
-            <button type="button" className={styles.buy} onClick={() => navigate("/checkout")}>바로구매</button>
+          <div className={styles.stickyBottom}>
+            <div className={styles.stickyTotal}><span>주문금액</span><strong>{(salePrice * quantity).toLocaleString()}원</strong></div>
+            <div className={styles.actions}>
+              <button type="button" className={styles.wish} aria-label="찜하기"><Heart size={22} /></button>
+              <button type="button" className={styles.cart} onClick={handleAddToCart}>장바구니</button>
+              <button type="button" className={styles.buy} onClick={() => navigate("/checkout")}>바로구매</button>
+            </div>
           </div>
         </aside>
       </div>

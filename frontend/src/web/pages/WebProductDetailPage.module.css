@@ -261,6 +261,7 @@
 }
 
 .detailSection {
+  scroll-margin-top: 185px;
   padding: 96px 80px;
 }
 
@@ -406,8 +407,10 @@
 
 .communitySection,
 .policySection {
+  scroll-margin-top: 185px;
   min-height: 640px;
   padding: 72px 32px;
+  border-top: 1px solid var(--color-border);
 }
 
 .communitySection {
@@ -600,12 +603,14 @@
 
 .stickyPurchase {
   position: sticky;
-  top: 154px;
-  margin-top: var(--space-6);
-  padding: var(--space-5);
+  top: 184px;
+  height: calc(100vh - 184px);
+  min-height: 520px;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-5) 0 var(--space-4) var(--space-5);
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  border-left: 1px solid var(--color-border);
 }
 
 .stickyName {
@@ -615,6 +620,12 @@
   font-weight: var(--weight-bold);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.stickyBody {
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: var(--space-1);
 }
 
 .optionSelect {
@@ -645,7 +656,6 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: var(--space-5);
 }
 
 .stickyTotal span {
@@ -664,6 +674,48 @@
 .stickyPurchase .cart,
 .stickyPurchase .buy {
   padding: 0 var(--space-3);
+}
+
+.couponRow,
+.bundleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-xs);
+}
+
+.couponRow {
+  justify-content: space-between;
+  border: 1px solid var(--color-border);
+}
+
+.couponRow button {
+  padding: 0;
+  color: var(--color-sale);
+  background: transparent;
+  border: 0;
+  font-weight: var(--weight-bold);
+  cursor: pointer;
+}
+
+.bundleRow {
+  color: var(--color-text-muted);
+  background: var(--gray-50);
+}
+
+.bundleRow svg {
+  flex: 0 0 auto;
+  color: var(--color-primary);
+}
+
+.stickyBottom {
+  margin-top: auto;
+  padding-top: var(--space-4);
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
 }
 
 .status {
