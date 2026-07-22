@@ -143,5 +143,27 @@ Detail Workspace
 - sticky tab 아래에 하나의 활성 기준선을 둔다.
 - section 상단이 기준선을 통과하면 해당 tab을 활성화한다.
 - 다음 section이 기준선을 통과하기 전에는 현재 tab을 유지한다.
-- scroll 계산은 `requestAnimationFrame`당 한 번만 실행한다.
+- scroll 중에는 활성 tab을 다시 계산하지 않는다.
+- 마지막 scroll event 후 160ms 동안 추가 scroll이 없을 때 한 번만 계산한다.
+- 활성 underline은 border 교체가 아닌 pseudo-element의 opacity로 fade 전환한다.
 - scroll 중에는 URL hash를 반복 변경하지 않고, 사용자가 tab을 클릭할 때만 hash를 변경한다.
+
+## 9. ProductDetail 상단 주문 정보 1차 구성
+
+오늘의집의 상품 주문 정보 흐름과 사용자가 제공한 Gmarket 적립 카드 화면을 참고한 임시 UI다.
+
+```text
+브랜드·상품명·공유
+→ 상품평 요약
+→ 할인율·판매가·정가
+→ 쿠폰 받기
+→ 결제할인가 accordion
+→ 최대 적립 accordion
+→ 배송·판매자 정보
+→ 수량·주문금액·구매 CTA
+```
+
+- 결제할인가와 적립액은 현재 UI 검증용 계산값이다.
+- 카드사, 쿠폰, 포인트 API가 확정되면 서버 응답으로 교체해야 한다.
+- 결제할인과 적립 카드는 각각 독립적으로 접고 펼친다.
+- accordion은 높이와 opacity를 함께 전환하며 button에 `aria-expanded`를 제공한다.

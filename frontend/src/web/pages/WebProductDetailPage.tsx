@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Heart, Minus, PackageCheck, Plus, RotateCcw, Share2, ShieldCheck, Truck } from "lucide-react";
+import { ChevronDown, CreditCard, Heart, Minus, PackageCheck, Plus, RotateCcw, Share2, ShieldCheck, Star, Truck } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { addToCart } from "../../api/cart";
 import { getProduct } from "../../api/products";
@@ -37,6 +37,8 @@ export function WebProductDetailPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [productQna, setProductQna] = useState<QnaSummary[]>([]);
   const [activeTab, setActiveTab] = useState<DetailTab>(readDetailTab);
+  const [benefitOpen, setBenefitOpen] = useState(true);
+  const [cardOpen, setCardOpen] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -61,7 +63,7 @@ export function WebProductDetailPage() {
     if (!product) return;
 
     const sectionIds: DetailTab[] = ["product-info", "review", "qna", "delivery"];
-    let animationFrame = 0;
+    let scrollEndTimer = 0;
 
     const syncActiveTab = () => {
       const activationLine = 210;
@@ -75,12 +77,11 @@ export function WebProductDetailPage() {
       }
 
       setActiveTab((previous) => previous === currentTab ? previous : currentTab);
-      animationFrame = 0;
     };
 
     const handleScroll = () => {
-      if (animationFrame) return;
-      animationFrame = window.requestAnimationFrame(syncActiveTab);
+      window.clearTimeout(scrollEndTimer);
+      scrollEndTimer = window.setTimeout(syncActiveTab, 160);
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -95,7 +96,7 @@ export function WebProductDetailPage() {
 
     return () => {
       window.removeEventListener("scroll", handleScroll);
-      if (animationFrame) window.cancelAnimationFrame(animationFrame);
+      window.clearTimeout(scrollEndTimer);
     };
   }, [product]);
 
@@ -113,7 +114,6 @@ export function WebProductDetailPage() {
   };
 
   const selectTab = (tab: DetailTab) => {
-    setActiveTab(tab);
     window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#${tab}`);
     document.getElementById(tab)?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
@@ -142,15 +142,63 @@ export function WebProductDetailPage() {
             <button type="button" aria-label="공유하기"><Share2 size={22} /></button>
           </div>
 
+          <div className={styles.ratingSummary}>
+            <Star size={17} fill="currentColor" />
+            <strong>4.8</strong>
+            <button type="button" onClick={() => selectTab("review")}>상품평 {reviews.length}</button>
+          </div>
+
           <div className={styles.priceBlock}>
             {product.discountRate ? <span className={styles.discount}>{product.discountRate}%</span> : null}
             <strong>{salePrice.toLocaleString()}원</strong>
             {product.discountRate ? <del>{product.price.toLocaleString()}원</del> : null}
           </div>
 
+          <button type="button" className={styles.couponButton}>쿠폰 받기</button>
+
+          <section className={styles.orderBenefits} aria-label="결제 및 적립 혜택">
+            <button
+              type="button"
+              className={styles.benefitToggle}
+              aria-expanded={benefitOpen}
+              onClick={() => setBenefitOpen((open) => !open)}
+            >
+              <span><strong>{Math.round(salePrice * 0.85).toLocaleString()}원</strong> 결제할인가</span>
+              <ChevronDown className={benefitOpen ? styles.chevronOpen : ""} size={20} />
+            </button>
+            <div className={`${styles.accordionBody} ${benefitOpen ? styles.accordionOpen : ""}`}>
+              <div>
+                <p>제휴카드 결제 시 최대 15% 할인</p>
+                <span>카드사와 결제 조건에 따라 할인 금액이 달라질 수 있어요.</span>
+              </div>
+            </div>
+          </section>
+
+          <section className={styles.rewardCard} aria-label="적립 혜택">
+            <button
+              type="button"
+              className={styles.benefitToggle}
+              aria-expanded={cardOpen}
+              onClick={() => setCardOpen((open) => !open)}
+            >
+              <span><strong>최대 {Math.round(salePrice * 0.05).toLocaleString()}원 적립</strong></span>
+              <ChevronDown className={cardOpen ? styles.chevronOpen : ""} size={20} />
+            </button>
+            <div className={`${styles.accordionBody} ${cardOpen ? styles.accordionOpen : ""}`}>
+              <div className={styles.rewardDetail}>
+                <div><span>기본 구매 적립</span><strong>{Math.round(salePrice * 0.02).toLocaleString()}원</strong></div>
+                <div><span>간편결제 추가 적립</span><strong>{Math.round(salePrice * 0.01).toLocaleString()}원</strong></div>
+                <div className={styles.membershipReward}>
+                  <CreditCard size={20} />
+                  <span><strong>KOPANG 멤버십</strong> 가입 시 최대 5% 적립</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
           <dl className={styles.delivery}>
-            <dt>배송</dt><dd>무료배송 · 평균 2~3일 이내 도착</dd>
-            <dt>혜택</dt><dd>구매 금액의 최대 2% 적립</dd>
+            <dt>배송</dt><dd><strong>무료배송</strong><br />평균 2~3일 이내 도착 예정</dd>
+            <dt>판매자</dt><dd>{product.brand ?? "Kopang 입점 판매자"}</dd>
           </dl>
 
           <div className={styles.purchaseBox}>

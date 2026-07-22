@@ -84,6 +84,24 @@
   text-decoration: none;
 }
 
+.ratingSummary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: var(--space-4);
+  color: var(--color-primary);
+  font-size: var(--font-sm);
+}
+
+.ratingSummary button {
+  padding: 0;
+  color: var(--color-text);
+  background: transparent;
+  border: 0;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .priceBlock {
   display: flex;
   align-items: baseline;
@@ -106,6 +124,120 @@
   font-size: var(--font-sm);
 }
 
+.couponButton {
+  width: 100%;
+  height: 46px;
+  margin-top: var(--space-5);
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  font-size: var(--font-sm);
+  font-weight: var(--weight-bold);
+  cursor: pointer;
+}
+
+.orderBenefits,
+.rewardCard {
+  margin-top: var(--space-3);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.benefitToggle {
+  width: 100%;
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-4);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 0;
+  cursor: pointer;
+}
+
+.benefitToggle strong {
+  color: var(--color-sale);
+  font-size: var(--font-lg);
+}
+
+.rewardCard .benefitToggle strong {
+  color: var(--color-success);
+}
+
+.benefitToggle svg {
+  flex: 0 0 auto;
+  color: var(--color-text-muted);
+  transition: transform 180ms ease;
+}
+
+.benefitToggle .chevronOpen {
+  transform: rotate(180deg);
+}
+
+.accordionBody {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 220ms ease, opacity 180ms ease;
+}
+
+.accordionBody > div {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.accordionOpen {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.accordionBody > div:not(.rewardDetail) {
+  padding: 0 var(--space-4);
+}
+
+.accordionOpen > div:not(.rewardDetail) {
+  padding-bottom: var(--space-4);
+}
+
+.accordionBody p {
+  font-size: var(--font-sm);
+  font-weight: var(--weight-bold);
+}
+
+.accordionBody p + span {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-xs);
+}
+
+.rewardDetail {
+  border-top: 1px solid var(--color-border);
+}
+
+.rewardDetail > div:not(.membershipReward) {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4) 0;
+  font-size: var(--font-sm);
+}
+
+.membershipReward {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-4);
+  padding: var(--space-4);
+  color: var(--color-success);
+  background: var(--gray-50);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-sm);
+}
+
 .delivery {
   display: grid;
   grid-template-columns: 64px 1fr;
@@ -119,6 +251,14 @@
 
 .delivery dt {
   color: var(--color-text-muted);
+}
+
+.delivery dd {
+  line-height: 1.7;
+}
+
+.delivery dd strong {
+  color: var(--color-primary);
 }
 
 .purchaseBox {
@@ -230,14 +370,27 @@
 }
 
 .tabs button {
+  position: relative;
   padding: var(--space-5);
   color: var(--color-text);
   background: transparent;
   border: 0;
-  border-bottom: 2px solid transparent;
   font-size: var(--font-md);
   text-align: center;
   cursor: pointer;
+}
+
+.tabs button::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--color-primary);
+  content: "";
+  opacity: 0;
+  transform: scaleX(0.82);
+  transition: opacity 180ms ease, transform 180ms ease;
 }
 
 .tabs button:hover {
@@ -246,8 +399,12 @@
 
 .tabs .tabActive {
   color: var(--color-primary);
-  border-bottom: 2px solid var(--color-primary);
   font-weight: var(--weight-bold);
+}
+
+.tabs .tabActive::after {
+  opacity: 1;
+  transform: scaleX(1);
 }
 
 .detailWorkspace {
