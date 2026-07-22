@@ -26,7 +26,7 @@ export function WebLayout({ children }: Props) {
         <div className={styles.headerInner}>
           <Link to="/web" className={styles.logo}>Kopang</Link>
 
-          <Link to="/web/products" className={styles.search}>
+          <Link to="/web/search" className={styles.search}>
             <Search size={20} aria-hidden="true" />
             <span>상품을 검색해보세요</span>
           </Link>

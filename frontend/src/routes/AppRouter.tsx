@@ -36,6 +36,7 @@ import { WebProductDetailPage } from "../web/pages/WebProductDetailPage";
 import { WebLoginPage } from "../web/pages/WebLoginPage";
 import { WebSignupPage } from "../web/pages/WebSignupPage";
 import { WebFindPasswordPage } from "../web/pages/WebFindPasswordPage";
+import { WebSearchPage } from "../web/pages/WebSearchPage";
 
 // ===== 장바구니 (cart) — 담당 B =====
 import { CartPage } from "../pages/cart/CartPage";
@@ -120,6 +121,7 @@ export function AppRouter() {
       <Route path="/web/login" element={<WebLoginPage />} />
       <Route path="/web/signup" element={<WebSignupPage />} />
       <Route path="/web/find-password" element={<WebFindPasswordPage />} />
+      <Route path="/web/search" element={<WebSearchPage />} />
       <Route path="/web/oauth2/callback" element={<OAuth2CallbackPage />} />
       {/* 기존 사용자 화면을 mobile 기준으로 유지하는 임시 진입점 */}
       <Route path="/mobile" element={<HomePage />} />
