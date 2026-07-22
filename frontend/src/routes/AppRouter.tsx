@@ -136,6 +136,8 @@ export function AppRouter() {
       <Route path="/web/payment/fail" element={<WebPaymentFailPage />} />
       <Route path="/web/my" element={<WebAccountPage kind="home" />} />
       <Route path="/web/my/profile" element={<WebAccountPage kind="profile" />} />
+      <Route path="/web/my/notifications" element={<WebAccountPage kind="notifications" />} />
+      <Route path="/web/my/password" element={<WebAccountPage kind="password" />} />
       <Route path="/web/my/orders" element={<WebAccountPage kind="orders" />} />
       <Route path="/web/my/orders/:no" element={<WebAccountPage kind="order" />} />
       <Route path="/web/my/addresses" element={<WebAccountPage kind="addresses" />} />
