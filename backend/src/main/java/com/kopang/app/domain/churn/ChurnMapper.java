@@ -55,7 +55,7 @@ public interface ChurnMapper {
 
     // 알림 발송은 NotificationMapper로 분리 (NOTI-01)
 
-    // 발송 기록 (대조군 포함 전원)
-    void insertIntervention(InterventionDTO intervention);
+    // 발송 기록 (대조군 포함 전원) — 대상 리스트를 한 번의 INSERT로 bulk 기록
+    void insertInterventions(List<InterventionDTO> interventions);
 
 }
