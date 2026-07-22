@@ -1,6 +1,4 @@
 import { http, HttpResponse } from "msw";
-import { mockProducts, categoryTree } from "./categoryData";
-import { ensureRealImages } from "./dummyImages";
 import { qnaPosts } from "./qnaData";
 import { NOTICES } from "./supportData";
 
@@ -264,4 +262,3 @@ export const handlers = [
 
   }),
 ];
-

@@ -1,0 +1,79 @@
+.card {
+  min-width: 0;
+}
+
+.link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.imageWrap {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  margin-bottom: var(--space-3);
+  background: var(--gray-100);
+  border-radius: var(--radius-md);
+}
+
+.imageWrap > img,
+.imageWrap > div {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  transition: transform 180ms ease;
+}
+
+.link:hover .imageWrap > img {
+  transform: scale(1.04);
+}
+
+.wish {
+  position: absolute;
+  right: var(--space-3);
+  bottom: var(--space-3);
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.9);
+  border: 0;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+}
+
+.brand {
+  margin-bottom: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-xs);
+  font-weight: var(--weight-bold);
+}
+
+.card h3 {
+  min-height: 42px;
+  overflow: hidden;
+  display: -webkit-box;
+  font-size: var(--font-sm);
+  font-weight: var(--weight-regular);
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.priceRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.priceRow strong {
+  font-size: var(--font-md);
+}
+
+.discount {
+  color: var(--color-sale);
+  font-weight: var(--weight-bold);
+}

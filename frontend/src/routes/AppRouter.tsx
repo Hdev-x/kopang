@@ -29,6 +29,21 @@ import { ProductListPage } from "../pages/product/ProductListPage";
 import { ProductDetailPage } from "../pages/product/ProductDetailPage";
 import { SearchPage } from "../pages/product/SearchPage";
 
+// ===== Web 전용 사용자 화면 =====
+import { WebHomePage } from "../web/pages/WebHomePage";
+import { WebProductListPage } from "../web/pages/WebProductListPage";
+import { WebProductDetailPage } from "../web/pages/WebProductDetailPage";
+import { WebLoginPage } from "../web/pages/WebLoginPage";
+import { WebSignupPage } from "../web/pages/WebSignupPage";
+import { WebFindPasswordPage } from "../web/pages/WebFindPasswordPage";
+import { WebSearchPage } from "../web/pages/WebSearchPage";
+import { WebCartPage } from "../web/pages/WebCartPage";
+import { WebCheckoutPage, WebOrderCompletePage, WebPaymentFailPage, WebPaymentSuccessPage, WebResumeCheckoutPage } from "../web/pages/WebOrderSkeletonPages";
+import { WebAccountPage } from "../web/pages/WebAccountPages";
+import { WebFaqPage, WebNoticeDetailPage, WebNoticeListPage, WebNotificationsPage, WebQnaDetailPage, WebQnaListPage, WebQnaWritePage, WebSupportInquiryPage, WebSupportPage } from "../web/pages/WebServiceSkeletonPages";
+import { WebMembershipFailPage, WebMembershipPage, WebMembershipSuccessPage } from "../web/pages/WebMembershipPages";
+import { WebPointsPage } from "../web/pages/WebPointsPage";
+
 // ===== 장바구니 (cart) — 담당 B =====
 import { CartPage } from "../pages/cart/CartPage";
 
@@ -104,6 +119,48 @@ export function AppRouter() {
       <Route path="/products" element={<ProductListPage />} />
       <Route path="/products/:id" element={<ProductDetailPage />} />
       <Route path="/search" element={<SearchPage />} />
+
+      {/* ---------- Web 전용 사용자 화면 ---------- */}
+      <Route path="/web" element={<WebHomePage />} />
+      <Route path="/web/products" element={<WebProductListPage />} />
+      <Route path="/web/products/:id" element={<WebProductDetailPage />} />
+      <Route path="/web/login" element={<WebLoginPage />} />
+      <Route path="/web/signup" element={<WebSignupPage />} />
+      <Route path="/web/find-password" element={<WebFindPasswordPage />} />
+      <Route path="/web/search" element={<WebSearchPage />} />
+      <Route path="/web/cart" element={<WebCartPage />} />
+      <Route path="/web/checkout" element={<WebCheckoutPage />} />
+      <Route path="/web/checkout/resume/:orderId" element={<WebResumeCheckoutPage />} />
+      <Route path="/web/order/complete" element={<WebOrderCompletePage />} />
+      <Route path="/web/payment/success" element={<WebPaymentSuccessPage />} />
+      <Route path="/web/payment/fail" element={<WebPaymentFailPage />} />
+      <Route path="/web/my" element={<WebAccountPage kind="home" />} />
+      <Route path="/web/my/profile" element={<WebAccountPage kind="profile" />} />
+      <Route path="/web/my/orders" element={<WebAccountPage kind="orders" />} />
+      <Route path="/web/my/orders/:no" element={<WebAccountPage kind="order" />} />
+      <Route path="/web/my/addresses" element={<WebAccountPage kind="addresses" />} />
+      <Route path="/web/my/wishlist" element={<WebAccountPage kind="wishlist" />} />
+      <Route path="/web/my/points" element={<WebPointsPage />} />
+      <Route path="/web/my/coupons" element={<WebAccountPage kind="coupons" />} />
+      <Route path="/web/my/inquiries" element={<WebAccountPage kind="inquiries" />} />
+      <Route path="/web/my/inquiries/:id" element={<WebAccountPage kind="inquiry" />} />
+      <Route path="/web/my/reviews" element={<WebAccountPage kind="reviews" />} />
+      <Route path="/web/my/reviews/write" element={<WebAccountPage kind="review-write" />} />
+      <Route path="/web/membership" element={<WebMembershipPage />} />
+      <Route path="/web/membership/success" element={<WebMembershipSuccessPage />} />
+      <Route path="/web/membership/fail" element={<WebMembershipFailPage />} />
+      <Route path="/web/notifications" element={<WebNotificationsPage />} />
+      <Route path="/web/support" element={<WebSupportPage />} />
+      <Route path="/web/support/inquiry" element={<WebSupportInquiryPage />} />
+      <Route path="/web/support/notices" element={<WebNoticeListPage />} />
+      <Route path="/web/support/notices/:id" element={<WebNoticeDetailPage />} />
+      <Route path="/web/support/faq" element={<WebFaqPage />} />
+      <Route path="/web/qna" element={<WebQnaListPage />} />
+      <Route path="/web/qna/:id" element={<WebQnaDetailPage />} />
+      <Route path="/web/qna/write" element={<WebQnaWritePage />} />
+      <Route path="/web/oauth2/callback" element={<OAuth2CallbackPage />} />
+      {/* 기존 사용자 화면을 mobile 기준으로 유지하는 임시 진입점 */}
+      <Route path="/mobile" element={<HomePage />} />
 
       {/* ---------- 장바구니 · 주문/결제 ---------- */}
       <Route path="/cart" element={<CartPage />} />

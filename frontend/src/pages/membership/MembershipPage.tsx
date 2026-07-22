@@ -8,7 +8,6 @@ import { Card } from "../../components/Card";
 import { useAuth } from "../../hooks/useAuth";
 import {
   getMembershipStatus,
-  subscribeMembership,
   cancelMembership,
   keepMembership,
   getSavedShippingFee,
