@@ -53,7 +53,7 @@ QuickBar 장바구니 Modal은 요약 기능이며 전체 Cart 페이지를 대�
 - [x] Web MyPage — 화면 뼈대
 - [x] Web EditProfile — 화면 뼈대
 - [x] Web Wishlist — 화면 뼈대
-- [x] Web PointHistory — 화면 뼈대
+- [x] Web PointHistory — 잔액·변동 내역 API 연결
 - [x] Web Coupon — 화면 뼈대
 - [x] Web MyInquiries — 화면 뼈대
 - [x] Web MyInquiryDetail — 화면 뼈대
@@ -62,9 +62,9 @@ Web에서는 좌측 account navigation과 우측 content layout을 우선 검토
 
 ## 6. Web 미구현 — 멤버십
 
-- [x] Web Membership — 화면 뼈대
-- [x] Web MembershipSuccess — 화면 뼈대
-- [x] Web MembershipFail — 화면 뼈대
+- [x] Web Membership — 상태·가입 결제·해지·유지 API 연결
+- [x] Web MembershipSuccess — 결제 승인 API 연결
+- [x] Web MembershipFail — 결제 오류 정보 표시
 
 ## 7. Web 미구현 — 알림
 
