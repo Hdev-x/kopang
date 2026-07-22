@@ -1,0 +1,19 @@
+.root { position: fixed; right: var(--space-8); bottom: var(--space-8); z-index: calc(var(--z-modal) - 1); }
+.trigger { width: 56px; height: 56px; display: grid; place-items: center; margin-left: auto; color: var(--color-surface); background: var(--color-primary); border: 0; border-radius: var(--radius-full); box-shadow: var(--shadow-md); cursor: pointer; }
+.panel { width: 380px; height: 540px; display: flex; flex-direction: column; overflow: hidden; margin-bottom: var(--space-3); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); }
+.panel > header { min-height: 58px; display: flex; align-items: center; justify-content: space-between; padding: 0 var(--space-5); color: var(--color-surface); background: var(--color-primary); }
+.panel > header > div { display: flex; align-items: center; gap: var(--space-2); font-weight: var(--weight-bold); }
+.panel > header button { display: grid; place-items: center; padding: var(--space-1); color: inherit; background: transparent; border: 0; cursor: pointer; }
+.messages { min-height: 0; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4); background: var(--gray-50); }
+.messageGroup { display: flex; flex-direction: column; gap: var(--space-2); }
+.messageGroup p,.messages > p { max-width: 82%; padding: var(--space-3); border-radius: var(--radius-md); font-size: var(--font-sm); line-height: 1.5; }
+.bot { align-self: flex-start; color: var(--color-text); background: var(--color-surface); }
+.user { align-self: flex-end; color: var(--color-surface); background: var(--color-primary); }
+.suggestions,.quick { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.suggestions button,.quick button { padding: var(--space-1) var(--space-2); color: var(--color-primary); background: var(--color-surface); border: 1px solid var(--color-primary); border-radius: var(--radius-full); font-size: var(--font-xs); cursor: pointer; }
+.quick { padding: var(--space-3); border-top: 1px solid var(--color-border); }
+.panel form { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); padding: var(--space-3); border-top: 1px solid var(--color-border); }
+.panel form input { min-width: 0; padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); outline: 0; }
+.panel form input:focus { border-color: var(--color-primary); }
+.panel form button { width: 44px; display: grid; place-items: center; color: var(--color-surface); background: var(--color-primary); border: 0; border-radius: var(--radius-md); cursor: pointer; }
+.panel form button:disabled { background: var(--gray-300); }

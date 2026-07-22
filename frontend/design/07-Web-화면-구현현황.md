@@ -121,3 +121,12 @@ Web Wishlist
 - 페이지 JSX·CSS·navigation·interaction은 Web 전용으로 작성한다.
 - 기존 mobile 화면은 Web 구현 과정에서 수정하지 않는다.
 - 한 번에 전체 화면을 만들지 않고 기능 흐름 단위로 commit한다.
+
+## 11. Web 공통 보조 영역
+
+- [x] Header 고객센터 바로가기
+- [x] Web Footer — 쇼핑·고객지원·서비스 navigation과 프로젝트 고지
+- [x] Web AI 상담봇 — 기존 `/chatbot` API 공유
+- [x] 챗봇 API 실패 시 기존 규칙 기반 fallback 답변 사용
+
+Footer와 챗봇은 공통 `WebLayout`에서 제공하므로 Web 사용자 화면에 일괄 적용한다. 인증 전용 `WebAuthLayout`은 집중도를 위해 Footer와 QuickBar를 표시하지 않는다.

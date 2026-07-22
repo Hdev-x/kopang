@@ -3,6 +3,8 @@ import { Link, useLocation } from "react-router-dom";
 import { Search, ShoppingCart, User } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { WebQuickBar } from "./WebQuickBar";
+import { WebChatbot } from "./WebChatbot";
+import { WebFooter } from "./WebFooter";
 import styles from "./WebLayout.module.css";
 
 type Props = {
@@ -33,6 +35,7 @@ export function WebLayout({ children }: Props) {
 
           <div className={styles.accountLinks}>
             <Link to="/mobile" className={styles.viewSwitch}>모바일 화면</Link>
+            <Link to="/web/support" className={styles.viewSwitch}>고객센터</Link>
             {user ? (
               <Link to="/web/my" className={styles.accountButton}>
                 <User size={20} aria-hidden="true" />
@@ -64,7 +67,9 @@ export function WebLayout({ children }: Props) {
       </header>
 
       <main className={styles.main}>{children}</main>
+      <WebFooter />
       <WebQuickBar />
+      <WebChatbot />
     </div>
   );
 }
