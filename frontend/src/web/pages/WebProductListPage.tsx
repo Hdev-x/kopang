@@ -28,6 +28,7 @@ export function WebProductListPage() {
 
   const flatCategories = useMemo(() => flattenCategories(categories), [categories]);
   const activeCategory = flatCategories.find((category) => category.id === categoryId);
+  const categoryPath = useMemo(() => buildCategoryPath(flatCategories, categoryId), [flatCategories, categoryId]);
   const pageTitle = view === "deal" ? "오늘의딜" : view === "only" ? "단독상품" : activeCategory?.name ?? "전체 카테고리";
   const deals = products.filter((product) => Boolean(product.discountRate)).slice(0, 6);
   const editorialProducts = products.length > 0 ? Array.from({ length: Math.min(3, products.length) }, (_, offset) => products[(editorialIndex + offset) % products.length]) : [];
@@ -38,7 +39,7 @@ export function WebProductListPage() {
   return <WebLayout><div className={styles.pageLayout}>
     <aside className={styles.sidebar}><h1>{pageTitle}</h1><Link to="/web/products" className={!categoryId ? styles.active : ""}>전체 상품</Link>{categories.map((category) => <CategoryBranch key={category.id} category={category} activeId={categoryId} expanded={expandedCategoryId === category.id || (expandedCategoryId === "auto" && containsCategory(category.children ?? [], categoryId))} onToggle={() => setExpandedCategoryId((current) => current === category.id ? null : category.id)} />)}</aside>
     <main className={styles.content}>
-      <p className={styles.breadcrumb}>쇼핑 &gt; 카테고리 &gt; {pageTitle}</p>
+      <nav className={styles.breadcrumb} aria-label="카테고리 경로"><Link to="/web/products">전체</Link>{categoryPath.map((category) => <span key={category.id}><ChevronRight size={14} /><Link to={`/web/products?cat=${category.id}`} aria-current={category.id === categoryId ? "page" : undefined}>{category.name}</Link></span>)}</nav>
       <section className={styles.editorial}><header><h2>{pageTitle}</h2><span>상품과 브랜드를 새로운 테마로 만나보세요.</span></header><div className={styles.editorialGrid}>{editorialProducts.map((product, index) => <Link key={`${product.id}-${index}`} to={`/web/products/${product.id}`}><img src={product.imageUrl} alt="" /><div><span>CURATION {index + 1}</span><h3>{["디테일로 완성하는 일상", "나에게 꼭 맞는 상품", "쉽게 시작하는 새로운 선택"][index]}</h3><p>{product.name}</p></div></Link>)}</div><div className={styles.carouselButtons}><button type="button" onClick={() => moveEditorial(-1)} aria-label="이전 기획전"><ChevronLeft /></button><button type="button" onClick={() => moveEditorial(1)} aria-label="다음 기획전"><ChevronRight /></button></div></section>
 
       <section className={styles.dealSection}><header><div><h2>#지금은 할인 중</h2><p>현재 할인율이 적용된 상품이에요.</p></div><Link to="/web/products?view=deal">더보기 <ChevronRight size={17} /></Link></header>{deals.length > 0 ? <div className={styles.dealGrid}>{deals.map((product) => <WebProductCard key={product.id} product={product} />)}</div> : <div className={styles.status}>현재 표시할 할인 상품이 없어요.</div>}</section>
@@ -59,3 +60,14 @@ function CategoryBranch({ category, activeId, expanded, onToggle }: { category: 
 function flattenCategories(categories: Category[]): Category[] { return categories.flatMap((category) => [category, ...flattenCategories(category.children ?? [])]); }
 
 function containsCategory(categories: Category[], activeId?: number): boolean { return Boolean(activeId && categories.some((category) => category.id === activeId || containsCategory(category.children ?? [], activeId))); }
+
+function buildCategoryPath(categories: Category[], activeId?: number): Category[] {
+  if (!activeId) return [];
+  const path: Category[] = [];
+  let current = categories.find((category) => category.id === activeId);
+  while (current) {
+    path.unshift(current);
+    current = current.parentId == null ? undefined : categories.find((category) => category.id === current?.parentId);
+  }
+  return path;
+}
