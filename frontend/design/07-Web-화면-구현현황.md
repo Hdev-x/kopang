@@ -83,7 +83,7 @@ Web에서는 좌측 account navigation과 우측 content layout을 우선 검토
 - [ ] Web QnaDetail
 - [ ] Web QnaWrite
 
-Web ProductDetail의 리뷰·문의 영역도 현재 placeholder이므로 기존 Review·Q&A API 연결이 남아 있다.
+Web ProductDetail 안의 리뷰·상품 문의 목록은 기존 API에 연결됐다. 고객지원·Q&A의 독립 Web page 제작은 별도로 남아 있다.
 
 ## 9. 구현 우선순위 제안
 

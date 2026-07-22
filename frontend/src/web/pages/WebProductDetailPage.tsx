@@ -3,7 +3,10 @@ import { Heart, Minus, PackageCheck, Plus, RotateCcw, Share2, ShieldCheck, Truck
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { addToCart } from "../../api/cart";
 import { getProduct } from "../../api/products";
+import { getProductReviews, type Review } from "../../api/review";
+import { getProductQnaList } from "../../api/qna";
 import type { Product } from "../../types/product";
+import type { QnaSummary } from "../../types/qna";
 import { WebLayout } from "../components/WebLayout";
 import styles from "./WebProductDetailPage.module.css";
 
@@ -17,6 +20,13 @@ function saveRecentProduct(product: Product) {
   }
 }
 
+type DetailTab = "product-info" | "review" | "qna" | "delivery";
+
+function readDetailTab(): DetailTab {
+  const hash = window.location.hash.replace("#", "");
+  return hash === "review" || hash === "qna" || hash === "delivery" ? hash : "product-info";
+}
+
 export function WebProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -24,14 +34,24 @@ export function WebProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [productQna, setProductQna] = useState<QnaSummary[]>([]);
+  const [activeTab, setActiveTab] = useState<DetailTab>(readDetailTab);
 
   useEffect(() => {
     if (!id) return;
-    getProduct(Number(id))
-      .then((data) => {
-        setProduct(data);
+    const productId = Number(id);
+    Promise.all([
+      getProduct(productId),
+      getProductReviews(productId).catch(() => []),
+      getProductQnaList(productId).catch(() => []),
+    ])
+      .then(([productData, reviewData, qnaData]) => {
+        setProduct(productData);
+        setReviews(reviewData);
+        setProductQna(qnaData);
         setError(false);
-        saveRecentProduct(data);
+        saveRecentProduct(productData);
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
@@ -48,6 +68,15 @@ export function WebProductDetailPage() {
     addToCart(product.id, quantity)
       .then(() => window.alert("장바구니에 담았어요. 오른쪽 퀵바에서 확인해 보세요."))
       .catch(() => window.alert("장바구니 담기에 실패했어요."));
+  };
+
+  const selectTab = (tab: DetailTab) => {
+    setActiveTab(tab);
+    window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#${tab}`);
+    const tabsElement = document.getElementById("web-detail-tabs");
+    if (tabsElement) {
+      window.scrollTo({ top: window.scrollY + tabsElement.getBoundingClientRect().top - 120, behavior: "smooth" });
+    }
   };
 
   return (
@@ -104,13 +133,16 @@ export function WebProductDetailPage() {
         </div>
       </section>
 
-      <nav className={styles.tabs} aria-label="상품 상세 메뉴">
-        <a href="#product-info">상품정보</a>
-        <a href="#review">리뷰</a>
-        <a href="#qna">문의</a>
-        <a href="#delivery">배송/환불</a>
+      <nav id="web-detail-tabs" className={styles.tabs} aria-label="상품 상세 메뉴">
+        <button type="button" className={activeTab === "product-info" ? styles.tabActive : ""} onClick={() => selectTab("product-info")}>상품정보</button>
+        <button type="button" className={activeTab === "review" ? styles.tabActive : ""} onClick={() => selectTab("review")}>리뷰 {reviews.length}</button>
+        <button type="button" className={activeTab === "qna" ? styles.tabActive : ""} onClick={() => selectTab("qna")}>문의 {productQna.length}</button>
+        <button type="button" className={activeTab === "delivery" ? styles.tabActive : ""} onClick={() => selectTab("delivery")}>배송/환불</button>
       </nav>
-      <section id="product-info" className={styles.detailSection}>
+
+      <div className={styles.detailWorkspace}>
+        <div className={styles.tabContent}>
+      {activeTab === "product-info" && <section id="product-info" className={styles.detailSection}>
         <header className={styles.detailIntro}>
           <p>KOPANG PRODUCT STORY</p>
           <h2>일상에 자연스럽게 스며드는<br />{product.name}</h2>
@@ -152,19 +184,43 @@ export function WebProductDetailPage() {
             <dt>판매가</dt><dd>{salePrice.toLocaleString()}원</dd>
           </dl>
         </section>
-      </section>
+      </section>}
 
-      <section id="review" className={styles.communitySection}>
-        <div><p className={styles.sectionLabel}>REVIEW</p><h2>상품 리뷰</h2></div>
-        <div className={styles.placeholder}><strong>리뷰 영역</strong><p>기존 리뷰 API와 Web 디자인을 연결할 예정입니다.</p></div>
-      </section>
+      {activeTab === "review" && <section id="review" className={styles.communitySection}>
+        <header className={styles.contentTitle}><p className={styles.sectionLabel}>REVIEW</p><h2>상품 리뷰 <span>{reviews.length}</span></h2></header>
+        {reviews.length === 0 ? <div className={styles.placeholder}><strong>아직 작성된 리뷰가 없어요.</strong><p>첫 번째 구매 후기를 남겨주세요.</p></div> : (
+          <div className={styles.reviewList}>
+            {reviews.map((review) => (
+              <article key={review.reviewId} className={styles.reviewCard}>
+                <div className={styles.reviewMeta}><strong>{review.userName || "익명"}</strong><span>{review.createdAt?.slice(0, 10)}</span></div>
+                <p className={styles.rating}>{"★".repeat(Math.round(review.rating))}{"☆".repeat(5 - Math.round(review.rating))}</p>
+                <p className={styles.reviewText}>{review.content}</p>
+                {review.image && <img src={review.image} alt="구매자 리뷰" />}
+              </article>
+            ))}
+          </div>
+        )}
+      </section>}
 
-      <section id="qna" className={styles.communitySection}>
-        <div><p className={styles.sectionLabel}>Q&amp;A</p><h2>상품 문의</h2></div>
-        <div className={styles.placeholder}><strong>상품 문의 영역</strong><p>문의 목록과 작성 기능을 Web 화면에 맞게 연결할 예정입니다.</p></div>
-      </section>
+      {activeTab === "qna" && <section id="qna" className={styles.communitySection}>
+        <header className={styles.contentTitleRow}>
+          <div><p className={styles.sectionLabel}>Q&amp;A</p><h2>상품 문의 <span>{productQna.length}</span></h2></div>
+          <button type="button" onClick={() => navigate(`/qna/write?type=PRODUCT&productId=${product.id}`)}>상품 문의하기</button>
+        </header>
+        {productQna.length === 0 ? <div className={styles.placeholder}><strong>등록된 상품 문의가 없어요.</strong><p>상품에 대해 궁금한 점을 문의해 주세요.</p></div> : (
+          <div className={styles.qnaList}>
+            {productQna.map((item) => (
+              <article key={item.id} className={styles.qnaCard}>
+                <div><span className={item.status === "답변완료" ? styles.qnaDone : styles.qnaWaiting}>{item.status}</span><strong>Q. {item.title}</strong></div>
+                <p>{item.author} · {item.createdAt?.slice(0, 10)}</p>
+                {item.answerContent && <div className={styles.answer}>A. {item.answerContent}</div>}
+              </article>
+            ))}
+          </div>
+        )}
+      </section>}
 
-      <section id="delivery" className={styles.policySection}>
+      {activeTab === "delivery" && <section id="delivery" className={styles.policySection}>
         <header>
           <p className={styles.sectionLabel}>SHOPPING GUIDE</p>
           <h2>배송·교환·환불 안내</h2>
@@ -185,7 +241,28 @@ export function WebProductDetailPage() {
           </article>
         </div>
         <p className={styles.policyNotice}>상품별 판매자 정책이 우선 적용될 수 있으며, 정확한 조건은 주문 전에 상품 고지 내용을 확인해야 합니다.</p>
-      </section>
+      </section>}
+        </div>
+
+        <aside className={styles.stickyPurchase} aria-label="구매 옵션">
+          <p className={styles.stickyName}>{product.name}</p>
+          <div className={styles.optionSelect}>옵션을 선택해 주세요<span>⌄</span></div>
+          <div className={styles.stickySelected}>
+            <span>기본 상품</span>
+            <div className={styles.quantity}>
+              <button type="button" onClick={() => setQuantity((value) => Math.max(1, value - 1))}><Minus size={16} /></button>
+              <span>{quantity}</span>
+              <button type="button" onClick={() => setQuantity((value) => value + 1)}><Plus size={16} /></button>
+            </div>
+          </div>
+          <div className={styles.stickyTotal}><span>주문금액</span><strong>{(salePrice * quantity).toLocaleString()}원</strong></div>
+          <div className={styles.actions}>
+            <button type="button" className={styles.wish} aria-label="찜하기"><Heart size={22} /></button>
+            <button type="button" className={styles.cart} onClick={handleAddToCart}>장바구니</button>
+            <button type="button" className={styles.buy} onClick={() => navigate("/checkout")}>바로구매</button>
+          </div>
+        </aside>
+      </div>
     </WebLayout>
   );
 }

@@ -110,3 +110,26 @@ Modal이 콘텐츠를 지나치게 가리거나 목록 scroll이 답답하면 `o
 - 리뷰·문의: 기존 API 연결 전 placeholder
 - 배송·교환·환불: 공통 안내 뼈대이며 실제 판매자 정책 확인 필요
 - `#delivery`: 배송·교환·환불 영역으로 직접 이동
+
+## 8. ProductDetail 전환형 tab과 구매 panel
+
+2026-07-22 오늘의집 상세 화면을 다시 참고해 상세 tab 아래를 다음 구조로 변경했다.
+
+```text
+Sticky Detail Tab
+├─ 상품정보
+├─ 리뷰 count
+├─ 문의 count
+└─ 배송/환불
+
+Detail Workspace
+├─ 왼쪽: 선택된 tab content
+└─ 오른쪽: sticky 구매 option·수량·금액·CTA panel
+```
+
+- tab click은 세로 anchor 이동이 아니라 content 전환으로 동작한다.
+- URL hash도 함께 변경해 `#review`, `#qna`, `#delivery` 직접 접근을 지원한다.
+- 리뷰는 기존 상품 리뷰 API를 사용한다.
+- 문의는 기존 상품별 문의 API를 사용한다.
+- 오른쪽 구매 panel은 tab content를 읽는 동안 viewport에 유지된다.
+- 실제 option API가 없으므로 option select는 현재 layout 검증용이다.
