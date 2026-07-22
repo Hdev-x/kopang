@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Search, ShoppingCart, User } from "lucide-react";
+import { Bell, Search, ShoppingCart, User } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { WebQuickBar } from "./WebQuickBar";
 import { WebChatbot } from "./WebChatbot";
@@ -20,7 +20,9 @@ const NAV_ITEMS = [
 
 export function WebLayout({ children }: Props) {
   const user = useAuth();
-  const path = useLocation().pathname;
+  const location = useLocation();
+  const path = location.pathname;
+  const currentLocation = `${location.pathname}${location.search}`;
 
   return (
     <div className={styles.page}>
@@ -28,13 +30,18 @@ export function WebLayout({ children }: Props) {
         <div className={styles.headerInner}>
           <Link to="/web" className={styles.logo}>Kopang</Link>
 
+          <nav className={styles.nav} aria-label="웹 쇼핑 메뉴">
+            {NAV_ITEMS.slice(0, 3).map((item) => (
+              <Link key={item.label} to={item.to} className={`${styles.navItem} ${(item.to.includes("?") ? currentLocation === item.to : path === item.to) ? styles.navActive : ""}`}>{item.label}</Link>
+            ))}
+          </nav>
+
           <Link to="/web/search" className={styles.search}>
             <Search size={20} aria-hidden="true" />
             <span>상품을 검색해보세요</span>
           </Link>
 
           <div className={styles.accountLinks}>
-            <Link to="/mobile" className={styles.viewSwitch}>모바일 화면</Link>
             <Link to="/web/support" className={styles.viewSwitch}>고객센터</Link>
             {user ? (
               <Link to="/web/my" className={styles.accountButton}>
@@ -44,26 +51,13 @@ export function WebLayout({ children }: Props) {
             ) : (
               <Link to="/web/login" className={styles.accountButton}>로그인</Link>
             )}
+            <Link to="/web/notifications" className={styles.iconLink} aria-label="알림"><Bell size={21} /></Link>
             <Link to="/web/cart" className={styles.headerCart}>
               <ShoppingCart size={22} aria-hidden="true" />
               <span>장바구니</span>
             </Link>
           </div>
         </div>
-
-        <nav className={styles.nav} aria-label="웹 쇼핑 메뉴">
-          <div className={styles.navInner}>
-            {NAV_ITEMS.map((item) => (
-              <Link
-                key={item.label}
-                to={item.to}
-                className={`${styles.navItem} ${path === item.to ? styles.navActive : ""}`}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
-        </nav>
       </header>
 
       <main className={styles.main}>{children}</main>

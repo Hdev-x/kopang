@@ -14,7 +14,6 @@
 }
 
 .headerInner,
-.navInner,
 .main {
   width: min(calc(100% - (var(--web-page-padding) * 2)), var(--web-content-max-width));
   margin: 0 auto;
@@ -23,7 +22,7 @@
 .headerInner {
   min-height: var(--web-header-height);
   display: grid;
-  grid-template-columns: auto minmax(320px, 1fr) auto;
+  grid-template-columns: auto auto minmax(260px, 1fr) auto;
   align-items: center;
   gap: var(--space-8);
 }
@@ -58,6 +57,12 @@
   white-space: nowrap;
 }
 
+.iconLink {
+  display: grid;
+  place-items: center;
+  color: var(--color-text);
+}
+
 .viewSwitch,
 .accountButton,
 .headerCart {
@@ -82,22 +87,21 @@
 
 .viewSwitch:hover,
 .accountButton:hover,
-.headerCart:hover {
+.headerCart:hover,
+.iconLink:hover {
   color: var(--color-primary);
 }
 
 .nav {
-  border-top: 1px solid var(--gray-100);
-}
-
-.navInner {
   display: flex;
-  gap: var(--space-8);
+  align-items: center;
+  gap: var(--space-5);
+  white-space: nowrap;
 }
 
 .navItem {
   position: relative;
-  padding: var(--space-4) 0;
+  padding: var(--space-6) 0;
   font-size: var(--font-md);
   font-weight: var(--weight-medium);
   text-decoration: none;

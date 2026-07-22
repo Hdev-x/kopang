@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { Bot, MessageCircle, Send, X } from "lucide-react";
 import { askChatbot } from "../../api/chatbot";
@@ -12,6 +12,12 @@ export function WebChatbot() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [messages, setMessages] = useState<Message[]>([{ role: "bot", text: "안녕하세요. Kopang AI 상담봇이에요. 무엇을 도와드릴까요?" }]);
+
+  useEffect(() => {
+    const openChatbot = () => setOpen(true);
+    window.addEventListener("open-web-chatbot", openChatbot);
+    return () => window.removeEventListener("open-web-chatbot", openChatbot);
+  }, []);
 
   const ask = async (question: string) => {
     const value = question.trim();
