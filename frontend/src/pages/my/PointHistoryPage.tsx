@@ -4,7 +4,7 @@ import { Layout } from "../../components/Layout";
 import { PageHeader } from "../../components/PageHeader";
 import { Card } from "../../components/Card";
 import { Button } from "../../components/Button";
-import { getPointBalance, getPointHistory, earnPoint, spendPoint, type PointHistoryResponse } from "../../api/point";
+import { getPointBalance, getPointHistory, type PointHistoryResponse } from "../../api/point";
 import { useAuth } from "../../hooks/useAuth";
 import s from "../../styles/AccountPages.module.css";
 

@@ -42,6 +42,7 @@ import { WebCheckoutPage, WebOrderCompletePage, WebPaymentFailPage, WebPaymentSu
 import { WebAccountPage } from "../web/pages/WebAccountPages";
 import { WebFaqPage, WebNoticeDetailPage, WebNoticeListPage, WebNotificationsPage, WebQnaDetailPage, WebQnaListPage, WebQnaWritePage, WebSupportInquiryPage, WebSupportPage } from "../web/pages/WebServiceSkeletonPages";
 import { WebMembershipFailPage, WebMembershipPage, WebMembershipSuccessPage } from "../web/pages/WebMembershipPages";
+import { WebPointsPage } from "../web/pages/WebPointsPage";
 
 // ===== 장바구니 (cart) — 담당 B =====
 import { CartPage } from "../pages/cart/CartPage";
@@ -139,7 +140,7 @@ export function AppRouter() {
       <Route path="/web/my/orders/:no" element={<WebAccountPage kind="order" />} />
       <Route path="/web/my/addresses" element={<WebAccountPage kind="addresses" />} />
       <Route path="/web/my/wishlist" element={<WebAccountPage kind="wishlist" />} />
-      <Route path="/web/my/points" element={<WebAccountPage kind="points" />} />
+      <Route path="/web/my/points" element={<WebPointsPage />} />
       <Route path="/web/my/coupons" element={<WebAccountPage kind="coupons" />} />
       <Route path="/web/my/inquiries" element={<WebAccountPage kind="inquiries" />} />
       <Route path="/web/my/inquiries/:id" element={<WebAccountPage kind="inquiry" />} />
