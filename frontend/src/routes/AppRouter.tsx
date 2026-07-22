@@ -39,6 +39,7 @@ import { WebFindPasswordPage } from "../web/pages/WebFindPasswordPage";
 import { WebSearchPage } from "../web/pages/WebSearchPage";
 import { WebCartPage } from "../web/pages/WebCartPage";
 import { WebCheckoutPage, WebOrderCompletePage, WebPaymentFailPage, WebPaymentSuccessPage, WebResumeCheckoutPage } from "../web/pages/WebOrderSkeletonPages";
+import { WebAccountPage } from "../web/pages/WebAccountPages";
 
 // ===== 장바구니 (cart) — 담당 B =====
 import { CartPage } from "../pages/cart/CartPage";
@@ -130,6 +131,16 @@ export function AppRouter() {
       <Route path="/web/order/complete" element={<WebOrderCompletePage />} />
       <Route path="/web/payment/success" element={<WebPaymentSuccessPage />} />
       <Route path="/web/payment/fail" element={<WebPaymentFailPage />} />
+      <Route path="/web/my" element={<WebAccountPage kind="home" />} />
+      <Route path="/web/my/profile" element={<WebAccountPage kind="profile" />} />
+      <Route path="/web/my/orders" element={<WebAccountPage kind="orders" />} />
+      <Route path="/web/my/orders/:no" element={<WebAccountPage kind="order" />} />
+      <Route path="/web/my/addresses" element={<WebAccountPage kind="addresses" />} />
+      <Route path="/web/my/wishlist" element={<WebAccountPage kind="wishlist" />} />
+      <Route path="/web/my/points" element={<WebAccountPage kind="points" />} />
+      <Route path="/web/my/coupons" element={<WebAccountPage kind="coupons" />} />
+      <Route path="/web/my/inquiries" element={<WebAccountPage kind="inquiries" />} />
+      <Route path="/web/my/inquiries/:id" element={<WebAccountPage kind="inquiry" />} />
       <Route path="/web/oauth2/callback" element={<OAuth2CallbackPage />} />
       {/* 기존 사용자 화면을 mobile 기준으로 유지하는 임시 진입점 */}
       <Route path="/mobile" element={<HomePage />} />
