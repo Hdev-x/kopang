@@ -61,21 +61,30 @@ export function WebProductDetailPage() {
     if (!product) return;
 
     const sectionIds: DetailTab[] = ["product-info", "review", "qna", "delivery"];
-    const sections = sectionIds
-      .map((sectionId) => document.getElementById(sectionId))
-      .filter((section): section is HTMLElement => section !== null);
+    let animationFrame = 0;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (visible) setActiveTab(visible.target.id as DetailTab);
-      },
-      { rootMargin: "-150px 0px -55% 0px", threshold: [0, 0.1, 0.3, 0.6] },
-    );
+    const syncActiveTab = () => {
+      const activationLine = 210;
+      let currentTab: DetailTab = "product-info";
 
-    sections.forEach((section) => observer.observe(section));
+      for (const sectionId of sectionIds) {
+        const section = document.getElementById(sectionId);
+        if (section && section.getBoundingClientRect().top <= activationLine) {
+          currentTab = sectionId;
+        }
+      }
+
+      setActiveTab((previous) => previous === currentTab ? previous : currentTab);
+      animationFrame = 0;
+    };
+
+    const handleScroll = () => {
+      if (animationFrame) return;
+      animationFrame = window.requestAnimationFrame(syncActiveTab);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    syncActiveTab();
 
     const initialTab = readDetailTab();
     if (initialTab !== "product-info") {
@@ -84,7 +93,10 @@ export function WebProductDetailPage() {
       });
     }
 
-    return () => observer.disconnect();
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (animationFrame) window.cancelAnimationFrame(animationFrame);
+    };
   }, [product]);
 
   if (loading) return <WebLayout><div className={styles.status}>상품을 불러오는 중이에요.</div></WebLayout>;

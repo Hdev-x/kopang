@@ -136,3 +136,12 @@ Detail Workspace
 - 오른쪽 구매 panel은 상세 tab 아래부터 viewport 하단까지 높이를 채운다.
 - 왼쪽 전체 상세 내용을 scroll하는 동안 오른쪽 구매 panel의 option·금액·CTA는 유지된다.
 - 실제 option API가 없으므로 option select는 현재 layout 검증용이다.
+
+### Scroll Spy 안정화 기준
+
+- 여러 section의 노출 비율을 비교하지 않는다.
+- sticky tab 아래에 하나의 활성 기준선을 둔다.
+- section 상단이 기준선을 통과하면 해당 tab을 활성화한다.
+- 다음 section이 기준선을 통과하기 전에는 현재 tab을 유지한다.
+- scroll 계산은 `requestAnimationFrame`당 한 번만 실행한다.
+- scroll 중에는 URL hash를 반복 변경하지 않고, 사용자가 tab을 클릭할 때만 hash를 변경한다.
