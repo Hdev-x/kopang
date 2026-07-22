@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Search } from "lucide-react";
 import { AdminLayout } from "../../../components/AdminLayout";
 import { Card } from "../../../components/Card";
@@ -20,6 +20,9 @@ export function AdminMembershipPage() {
   const [stats, setStats] = useState<AdminMembershipStatsResponse | null>(null);
   const [q, setQ] = useState("");
   const [sortBy, setSortBy] = useState("score_desc");
+  const [visibleCount, setVisibleCount] = useState(20);
+
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const loadData = async () => {
     try {
@@ -35,6 +38,28 @@ export function AdminMembershipPage() {
   useEffect(() => {
     loadData();
   }, []);
+
+  // 검색이나 정렬 조건 변경 시 무한 스크롤 초기화
+  useEffect(() => {
+    setVisibleCount(20);
+  }, [q, sortBy]);
+
+  // 무한 스크롤 감시자 등록
+  useEffect(() => {
+    if (loading || !stats) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount((prev) => prev + 20);
+        }
+      },
+      { rootMargin: "100px" }
+    );
+    if (sentinelRef.current) {
+      observer.observe(sentinelRef.current);
+    }
+    return () => observer.disconnect();
+  }, [loading, stats, q, sortBy]);
 
   if (loading || !stats) {
     return (
@@ -59,6 +84,8 @@ export function AdminMembershipPage() {
     }
     return 0;
   });
+
+  const displayedMembers = sortedMembers.slice(0, visibleCount);
 
   const kpis = [
     { label: "멤버십 회원", value: `${stats.membershipCount.toLocaleString()}명` },
@@ -126,12 +153,12 @@ export function AdminMembershipPage() {
       </div>
 
       <div className={sh.list}>
-        {sortedMembers.length === 0 ? (
+        {displayedMembers.length === 0 ? (
           <div className={sh.empty} style={{ border: "1px solid var(--color-border, #eee)", borderRadius: "var(--radius-md, 8px)" }}>
             감지된 해지 위험 멤버십 회원이 없습니다.
           </div>
         ) : (
-          sortedMembers.map((m, idx) => (
+          displayedMembers.map((m, idx) => (
             <Card key={idx}>
               <div className={sh.itemHead}>
                 <span className={sh.itemTitle}>{m.name}</span>
@@ -146,6 +173,11 @@ export function AdminMembershipPage() {
               </div>
             </Card>
           ))
+        )}
+        {visibleCount < sortedMembers.length && (
+          <div ref={sentinelRef} style={{ height: "60px", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--color-text-muted)", fontSize: "13px" }}>
+            목록 불러오는 중...
+          </div>
         )}
       </div>
 

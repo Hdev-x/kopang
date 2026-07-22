@@ -4,6 +4,11 @@ import com.kopang.app.domain.cart.CartMapper;
 import com.kopang.app.domain.cart.CartItemDTO;
 import com.kopang.app.domain.product.ProductMapper;
 import com.kopang.app.domain.product.ProductDTO;
+import com.kopang.app.domain.point.PointMapper;
+import com.kopang.app.domain.point.PointHistoryDTO;
+import com.kopang.app.domain.membership.MembershipMapper;
+import com.kopang.app.domain.membership.UserMembershipDTO;
+import com.kopang.app.domain.coupon.CouponMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -24,6 +29,9 @@ public class OrderService {
     private final OrderMapper orderMapper;
     private final ProductMapper productMapper;
     private final CartMapper cartMapper;
+    private final PointMapper pointMapper;
+    private final MembershipMapper membershipMapper;
+    private final CouponMapper couponMapper;
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Value("${toss.secret-key}")
@@ -36,10 +44,12 @@ public class OrderService {
         order.setUserId(userId);
         order.setTotalPrice(request.getTotalPrice());
         order.setPaymentStatus("PENDING");
+        order.setUsedPoint(request.getUsedPoint());
+        order.setUserCouponId(request.getUserCouponId());
         orderMapper.insertOrder(order);
-        
+
         Long orderId = order.getOrderId();
-        
+
         // 2. 주문 상세 저장 (재고 차감 및 장바구니 비우기는 결제 승인 시점으로 위임)
         for (OrderRequestDTO.OrderItemRequest reqItem : request.getItems()) {
             OrderItemDTO orderItem = new OrderItemDTO();
@@ -49,7 +59,7 @@ public class OrderService {
             orderItem.setPrice(reqItem.getPrice());
             orderMapper.insertOrderItem(orderItem);
         }
-        
+
         return orderId;
     }
 
@@ -70,6 +80,9 @@ public class OrderService {
         }
         if (order.getTotalPrice() != amount) {
             throw new IllegalArgumentException("결제 요청 금액과 주문 금액이 일치하지 않습니다. (금액 위변조 의심)");
+        }
+        if ("PAID".equals(order.getPaymentStatus())) {
+            return; // 이미 결제 승인 완료된 주문인 경우 중복 적립 및 처리 방지
         }
 
         // 3. 토스페이먼츠 승인 API 통신
@@ -99,6 +112,21 @@ public class OrderService {
         orderMapper.updateOrderStatus(orderId, "PAID");
         orderMapper.updatePaymentKey(orderId, paymentKey);
 
+        // 사용한 쿠폰 처리
+        if (order.getUserCouponId() != null && order.getUserCouponId() > 0) {
+            couponMapper.useUserCoupon(order.getUserCouponId(), new java.util.Date());
+        }
+
+        // 사용한 포인트 차감 처리
+        if (order.getUsedPoint() > 0) {
+            PointHistoryDTO useHistory = new PointHistoryDTO();
+            useHistory.setUserId(userId);
+            useHistory.setAmount(-order.getUsedPoint());
+            useHistory.setType("USED");
+            useHistory.setDescription("주문 결제 포인트 사용 (주문 ID: " + orderId + ")");
+            pointMapper.insertPointHistory(useHistory);
+        }
+
         // 5. 상품 재고 감축
         List<OrderItemDTO> items = orderMapper.findOrderItemsByOrderId(orderId);
         for (OrderItemDTO item : items) {
@@ -112,12 +140,11 @@ public class OrderService {
             productMapper.updateStock(item.getProductId(), product.getStock() - item.getQuantity());
         }
 
-        // 6. 장바구니 비우기
+        // 6. 구매한 상품들만 장바구니에서 선택적 삭제
         Long cartId = cartMapper.findCartIdByUserId(userId);
         if (cartId != null) {
-            List<CartItemDTO> cartItems = cartMapper.findCartItemsByCartId(cartId);
-            for (CartItemDTO ci : cartItems) {
-                cartMapper.deleteCartItem(ci.getItemId());
+            for (OrderItemDTO item : items) {
+                cartMapper.deleteCartItemByProduct(cartId, item.getProductId());
             }
         }
     }
@@ -170,11 +197,11 @@ public class OrderService {
             }
         }
     }
-    
+
     public List<OrderDTO> getOrders(Long userId) {
         return orderMapper.findOrdersByUserId(userId);
     }
-    
+
     public OrderDTO getOrderDetails(Long orderId) {
         OrderDTO order = orderMapper.findOrderById(orderId);
         if (order != null) {
@@ -231,5 +258,25 @@ public class OrderService {
             throw new IllegalStateException("배송이 완료된 주문만 구매확정이 가능합니다.");
         }
         orderMapper.updateOrderStatus(orderId, "CONFIRMED");
+
+        // 구매확정 완료 시 포인트 자동 적립 (일반 1% / 멤버십 5%)
+        Long userId = order.getUserId();
+        UserMembershipDTO activeMembership = membershipMapper.findActiveMembershipByUserId(userId);
+        double rate = 0.01;
+        int ratePercent = 1;
+        if (activeMembership != null && "ACTIVE".equals(activeMembership.getStatus())) {
+            rate = 0.05; // 멤버십 회원은 5% 적립
+            ratePercent = 5;
+        }
+
+        int pointReward = (int) Math.floor(order.getTotalPrice() * rate);
+        if (pointReward > 0) {
+            PointHistoryDTO rewardHistory = new PointHistoryDTO();
+            rewardHistory.setUserId(userId);
+            rewardHistory.setAmount(pointReward);
+            rewardHistory.setType("SAVED");
+            rewardHistory.setDescription("구매확정 포인트 적립 (" + ratePercent + "% 적립, 주문 ID: " + orderId + ")");
+            pointMapper.insertPointHistory(rewardHistory);
+        }
     }
 }

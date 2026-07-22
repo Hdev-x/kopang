@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 
 
+
 @RestController
 @RequiredArgsConstructor
 public class ChurnController {
@@ -19,4 +20,11 @@ public class ChurnController {
         churnScoreService.runAllRules();
     }
 
+
+    // [임시] 대응 자동 발송 수동 실행 — 검증 후 06 스케줄러에 편입
+    @PostMapping("/api/admin/churn/intervene")
+    public void runInterventions() {
+        churnScoreService.runInterventions();
+    }
+    
 }

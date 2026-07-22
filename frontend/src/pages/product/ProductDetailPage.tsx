@@ -5,7 +5,7 @@ import { Layout } from "../../components/Layout";
 import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
 import { AddToCartModal } from "../../components/AddToCartModal";
-import { getProduct } from "../../api/products";
+import { getProduct, getAIRecommendations } from "../../api/products";
 import { addToCart } from "../../api/cart";
 import { checkWishlist, addWishlist, deleteWishlist } from "../../api/wishlist";
 import { getProductReviews } from "../../api/review";
@@ -23,6 +23,9 @@ export function ProductDetailPage() {
   const navigate = useNavigate();
   const user = useAuth();
   const [product, setProduct] = useState<Product | null>(null);
+  const [similarProducts, setSimilarProducts] = useState<Product[]>([]);
+  const [togetherProducts, setTogetherProducts] = useState<Product[]>([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(true);
   const [wished, setWished] = useState(false);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
@@ -32,7 +35,15 @@ export function ProductDetailPage() {
   useEffect(() => {
     if (id) {
       const prodId = Number(id);
+      setLoadingRecommendations(true);
       getProduct(prodId).then(setProduct).catch(console.error);
+      getAIRecommendations(prodId)
+        .then((data) => {
+          setSimilarProducts(data.similarProducts || []);
+          setTogetherProducts(data.frequentlyBoughtTogether || []);
+        })
+        .catch(console.error)
+        .finally(() => setLoadingRecommendations(false));
       getProductReviews(prodId).then(setReviews).catch(console.error);
       getProductQnaList(prodId)
         .then(setProductQna)
@@ -137,16 +148,73 @@ export function ProductDetailPage() {
         </Button>
       </div>
 
-      {/* 비슷한 상품 (content-based 추천 자리) */}
-      <h2 className={styles.section}>비슷한 상품</h2>
-      <div className={styles.similarRow}>
-        {[1, 2, 3, 4, 5, 6].map((n) => (
-          <Card key={n} className={styles.similarCard}>
-            <div className={styles.similarThumb} />
-            <p className={styles.similarName}>추천 상품 {n}</p>
-          </Card>
-        ))}
-      </div>
+      {/* 비슷한 상품 */}
+      {(loadingRecommendations || similarProducts.length > 0) && (
+        <>
+          <h2 className={styles.section}>비슷한 상품</h2>
+          <div className={styles.similarRow}>
+            {loadingRecommendations ? (
+              [1, 2, 3, 4].map((n) => (
+                <Card key={n} className={styles.similarCard}>
+                  <div className={styles.skeletonThumb} />
+                  <div className={styles.skeletonLine} />
+                  <div className={styles.skeletonLineShort} />
+                </Card>
+              ))
+            ) : (
+              similarProducts.map((sim, idx) => (
+                <Card
+                  key={sim.id ? `sim-${sim.id}-${idx}` : `sim-${idx}`}
+                  className={styles.similarCard}
+                  onClick={() => sim.id && navigate(`/products/${sim.id}`)}
+                >
+                  {sim.imageUrl ? (
+                    <img src={sim.imageUrl} alt={sim.name || "상품 이미지"} className={styles.similarThumb} />
+                  ) : (
+                    <div className={styles.similarThumb} />
+                  )}
+                  <p className={styles.similarName}>{sim.name || "상품명 없음"}</p>
+                  <p className={styles.similarPrice}>{(sim.price ?? 0).toLocaleString()}원</p>
+                </Card>
+              ))
+            )}
+          </div>
+        </>
+      )}
+
+      {/* 함께 구매하면 좋은 상품 */}
+      {(loadingRecommendations || togetherProducts.length > 0) && (
+        <>
+          <h2 className={styles.section}>함께 구매하면 좋은 상품</h2>
+          <div className={styles.similarRow}>
+            {loadingRecommendations ? (
+              [1, 2, 3, 4].map((n) => (
+                <Card key={n} className={styles.similarCard}>
+                  <div className={styles.skeletonThumb} />
+                  <div className={styles.skeletonLine} />
+                  <div className={styles.skeletonLineShort} />
+                </Card>
+              ))
+            ) : (
+              togetherProducts.map((item, idx) => (
+                <Card
+                  key={item.id ? `tog-${item.id}-${idx}` : `tog-${idx}`}
+                  className={styles.similarCard}
+                  onClick={() => item.id && navigate(`/products/${item.id}`)}
+                >
+                  {item.imageUrl ? (
+                    <img src={item.imageUrl} alt={item.name || "상품 이미지"} className={styles.similarThumb} />
+                  ) : (
+                    <div className={styles.similarThumb} />
+                  )}
+                  <p className={styles.similarName}>{item.name || "상품명 없음"}</p>
+                  <p className={styles.similarPrice}>{(item.price ?? 0).toLocaleString()}원</p>
+                </Card>
+              ))
+            )}
+          </div>
+        </>
+      )}
 
       {/* 리뷰 / 상품문의 탭 */}
       <div className={styles.tabs}>

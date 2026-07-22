@@ -2,7 +2,7 @@ package com.kopang.app.domain.churn;
 
 public interface ChurnScoreService {
 
-    // 각 룰: 대상 감지 → 판정 → churn_score 저장
+    // ===== 감지 (룰별: 대상 감지 → 판정 → churn_score 저장) =====
 
     // 룰1) 장바구니 방치
     void detectCartAbandon();
@@ -30,6 +30,11 @@ public interface ChurnScoreService {
 
     // 룰 8종 전체 실행 — 수동(/run)과 스케줄러(CHURN-06)가 공유
     void runAllRules();
-    
+
+
+    // ===== 대응 (intervention) =====
+
+    // 대응 발송 — 오늘자 ④⑧ 대상에 대조군 분리 후 알림 발송 + 전원 기록
+    void runInterventions();
 
 }

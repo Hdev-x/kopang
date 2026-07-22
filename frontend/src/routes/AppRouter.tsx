@@ -17,8 +17,11 @@ import { MyInquiriesPage } from "../pages/my/MyInquiriesPage";
 import { MyInquiryDetailPage } from "../pages/my/MyInquiryDetailPage";
 import { AddressManagementPage } from "../pages/my/AddressManagementPage";
 
+
 // ===== 멤버십 (membership) — 담당 A =====
 import { MembershipPage } from "../pages/membership/MembershipPage";
+import { MembershipSuccessPage } from "../pages/membership/MembershipSuccessPage";
+import { MembershipFailPage } from "../pages/membership/MembershipFailPage";
 
 // ===== 상품 (product) — 담당 B =====
 import { HomePage } from "../pages/product/HomePage";
@@ -53,7 +56,6 @@ import { QnaWritePage } from "../pages/support/QnaWritePage";
 
 // ===== 관리자 공통 (admin) =====
 import { AdminRoute } from "../components/AdminRoute";
-import { AdminLoginPage } from "../pages/admin/AdminLoginPage";
 import { AdminPage } from "../pages/admin/AdminPage";
 
 // ===== 관리자 · 이탈방지 (admin/churn) — 담당 C =====
@@ -86,7 +88,6 @@ export function AppRouter() {
       {/* ---------- 마이페이지 ---------- */}
       <Route path="/my" element={<MyPage />} />
       <Route path="/my/profile" element={<EditProfilePage />} />
-      <Route path="/my/addresses" element={<AddressManagementPage />} />
       <Route path="/my/wishlist" element={<WishlistPage />} />
       <Route path="/my/points" element={<PointHistoryPage />} />
       <Route path="/my/coupons" element={<CouponPage />} />
@@ -95,6 +96,8 @@ export function AppRouter() {
 
       {/* ---------- 멤버십 ---------- */}
       <Route path="/membership" element={<MembershipPage />} />
+      <Route path="/membership/success" element={<MembershipSuccessPage />} />
+      <Route path="/membership/fail" element={<MembershipFailPage />} />
 
       {/* ---------- 상품 ---------- */}
       <Route path="/" element={<HomePage />} />
@@ -111,6 +114,7 @@ export function AppRouter() {
       <Route path="/payment/fail" element={<PaymentFailPage />} />
       <Route path="/my/orders" element={<OrderHistoryPage />} />
       <Route path="/my/orders/:no" element={<OrderDetailPage />} />
+      <Route path="/my/addresses" element={<AddressManagementPage />} />
 
       {/* ---------- 알림 ---------- */}
       <Route path="/notifications" element={<NotificationsPage />} />
@@ -122,12 +126,11 @@ export function AppRouter() {
       <Route path="/my/support/notices/:id" element={<NoticeDetailPage />} />
       <Route path="/my/support/faq" element={<FaqPage />} />
       <Route path="/qna" element={<QnaListPage />} />
-      <Route path="/qna/write" element={<QnaWritePage />} />
       <Route path="/qna/:id" element={<QnaDetailPage />} />
+      <Route path="/qna/write" element={<QnaWritePage />} />
 
 
       {/* ---------- 관리자 ---------- */}
-      <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
 
       {/* 관리자 · 이탈방지 */}
