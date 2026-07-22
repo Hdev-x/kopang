@@ -27,9 +27,8 @@ function readRecentProducts(): Product[] {
 export function WebQuickBar() {
   const user = useAuth();
   const [panel, setPanel] = useState<Panel | null>(null);
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [recentProducts, setRecentProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [cartItems, setCartItems] = useState<CartItem[] | null>(null);
+  const recentProducts = panel === "recent" ? readRecentProducts() : [];
 
   useEffect(() => {
     const trigger = document.querySelector<HTMLButtonElement>("[data-quickbar-cart-trigger]");
@@ -39,14 +38,11 @@ export function WebQuickBar() {
   }, []);
 
   useEffect(() => {
-    if (panel === "recent") setRecentProducts(readRecentProducts());
     if (panel !== "cart" || !user) return;
 
-    setLoading(true);
     getCart()
       .then(setCartItems)
-      .catch(() => setCartItems([]))
-      .finally(() => setLoading(false));
+      .catch(() => setCartItems([]));
   }, [panel, user]);
 
   useEffect(() => {
@@ -94,7 +90,7 @@ export function WebQuickBar() {
               {panel === "cart" && (
                 !user ? (
                   <EmptyState message="로그인하면 장바구니를 확인할 수 있어요." action="로그인" to="/login" />
-                ) : loading ? (
+                ) : cartItems === null ? (
                   <p className={styles.status}>장바구니를 불러오는 중이에요.</p>
                 ) : cartItems.length === 0 ? (
                   <EmptyState message="장바구니에 담긴 상품이 없어요." action="상품 보러 가기" to="/web/products" />

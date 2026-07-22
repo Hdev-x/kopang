@@ -1,0 +1,110 @@
+.breadcrumb {
+  margin-bottom: var(--space-6);
+  color: var(--color-text-muted);
+  font-size: var(--font-sm);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  gap: 48px;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-1);
+}
+
+.sidebar h2 {
+  margin-bottom: var(--space-3);
+  font-size: var(--font-lg);
+}
+
+.sidebar button {
+  padding: var(--space-3);
+  color: var(--color-text-muted);
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.sidebar button:hover,
+.sidebar .active {
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  font-weight: var(--weight-bold);
+}
+
+.content {
+  min-width: 0;
+}
+
+.contentHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.eyebrow {
+  color: var(--color-primary);
+  font-size: var(--font-xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.08em;
+}
+
+.contentHeader h1 {
+  margin-top: var(--space-1);
+  font-size: var(--font-2xl);
+}
+
+.contentHeader select {
+  min-width: 144px;
+  height: 42px;
+  padding: 0 var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.filterBar {
+  display: flex;
+  gap: var(--space-2);
+  margin: var(--space-6) 0 var(--space-8);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.filterBar button {
+  padding: var(--space-2) var(--space-4);
+  color: var(--color-text-muted);
+  background: var(--gray-50);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+}
+
+.filterBar .filterActive {
+  color: var(--color-surface);
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.productGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 40px var(--web-grid-gap);
+}
+
+.status {
+  min-height: 360px;
+  display: grid;
+  place-items: center;
+  color: var(--color-text-muted);
+  background: var(--gray-50);
+  border-radius: var(--radius-md);
+}

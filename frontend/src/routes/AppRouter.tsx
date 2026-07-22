@@ -29,6 +29,11 @@ import { ProductListPage } from "../pages/product/ProductListPage";
 import { ProductDetailPage } from "../pages/product/ProductDetailPage";
 import { SearchPage } from "../pages/product/SearchPage";
 
+// ===== Web 전용 사용자 화면 =====
+import { WebHomePage } from "../web/pages/WebHomePage";
+import { WebProductListPage } from "../web/pages/WebProductListPage";
+import { WebProductDetailPage } from "../web/pages/WebProductDetailPage";
+
 // ===== 장바구니 (cart) — 담당 B =====
 import { CartPage } from "../pages/cart/CartPage";
 
@@ -104,6 +109,13 @@ export function AppRouter() {
       <Route path="/products" element={<ProductListPage />} />
       <Route path="/products/:id" element={<ProductDetailPage />} />
       <Route path="/search" element={<SearchPage />} />
+
+      {/* ---------- Web 전용 사용자 화면 ---------- */}
+      <Route path="/web" element={<WebHomePage />} />
+      <Route path="/web/products" element={<WebProductListPage />} />
+      <Route path="/web/products/:id" element={<WebProductDetailPage />} />
+      {/* 기존 사용자 화면을 mobile 기준으로 유지하는 임시 진입점 */}
+      <Route path="/mobile" element={<HomePage />} />
 
       {/* ---------- 장바구니 · 주문/결제 ---------- */}
       <Route path="/cart" element={<CartPage />} />
