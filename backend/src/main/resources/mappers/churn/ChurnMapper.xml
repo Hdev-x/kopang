@@ -194,8 +194,8 @@
 
     <!-- 알림 INSERT는 notification/NotificationMapper.xml로 분리 (NOTI-01) -->
 
-    <!-- 로그 -->
-    <insert id="insertIntervention">
+    <!-- 로그 (bulk) : 대상 리스트를 한 번의 INSERT로 기록 (대조군 포함 전원) -->
+    <insert id="insertInterventions">
         INSERT INTO retention_intervention
         (
             user_id,
@@ -206,14 +206,16 @@
             channel
         )
         VALUES
+        <foreach collection="list" item="i" separator=",">
         (
-            #{userId},
-            #{churnScoreId},
-            #{riskType},
-            #{actionType},
-            #{isControl},
-            #{channel}
+            #{i.userId},
+            #{i.churnScoreId},
+            #{i.riskType},
+            #{i.actionType},
+            #{i.isControl},
+            #{i.channel}
         )
+        </foreach>
     </insert>
 
 </mapper>

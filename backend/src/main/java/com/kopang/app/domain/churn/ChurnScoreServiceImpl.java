@@ -1,6 +1,9 @@
 package com.kopang.app.domain.churn;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.kopang.app.domain.intervention.InterventionRequest;
 import com.kopang.app.domain.intervention.InterventionService;
@@ -152,34 +155,37 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
     public void runInterventions() {
         // 조회
         List<ChurnScoreDTO> targets = churnMapper.findInterventionTargets();
+
+        // ① 판정 + 로그 (전원, bulk 1번) — 반환 = 발송해야 할 처치군 userId
+        List<InterventionRequest> reqs = new ArrayList<>();
         for (ChurnScoreDTO target : targets) {
-            Long userId = target.getUserId();
+            reqs.add(toRequest(target));
+        }
+        Set<Long> toSend = new HashSet<>(interventionService.recordAndCheckControl(reqs));
 
-            // ① 판정 + 로그 (전원) — 공통 메서드에 위임, 반환 = 대조군 여부
-            InterventionRequest req = toRequest(target);
-            boolean isControl = interventionService.recordAndCheckControl(req);
-
-            // ② 발송 (처치군만) — riskType별 알림 만들어 notifications INSERT
-            if (!isControl) {
-                String type;
-                String message;
-                switch (target.getRiskType()) {
-                    case "WISHLIST_IDLE" -> {
-                        type = "WISHLIST";
-                        message = "찜하신 상품이 기다려요";
-                    }
-                    case "SPENDING_DROP" -> {
-                        type = "REBUY";
-                        message = "요즘 뜸하셨네요, 특가 준비했어요";
-                    }
-                    default -> throw new IllegalArgumentException("모르는 유형: " + target.getRiskType());
-                }
-                NotificationDTO noti = new NotificationDTO();
-                noti.setUserId(userId);
-                noti.setType(type);
-                noti.setMessage(message);
-                notificationMapper.insertNotification(noti);
+        // ② 발송 (처치군만) — riskType별 알림 만들어 notifications INSERT
+        for (ChurnScoreDTO target : targets) {
+            if (!toSend.contains(target.getUserId())) {
+                continue; // 대조군 → 발송 스킵
             }
+            String type;
+            String message;
+            switch (target.getRiskType()) {
+                case "WISHLIST_IDLE" -> {
+                    type = "WISHLIST";
+                    message = "찜하신 상품이 기다려요";
+                }
+                case "SPENDING_DROP" -> {
+                    type = "REBUY";
+                    message = "요즘 뜸하셨네요, 특가 준비했어요";
+                }
+                default -> throw new IllegalArgumentException("모르는 유형: " + target.getRiskType());
+            }
+            NotificationDTO noti = new NotificationDTO();
+            noti.setUserId(target.getUserId());
+            noti.setType(type);
+            noti.setMessage(message);
+            notificationMapper.insertNotification(noti);
         }
     }
 
