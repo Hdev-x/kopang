@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kopang.app.domain.churn.ChurnReportMapper">
+
+    <!-- 기간 필터 (from/to 있을 때만 붙음). to는 당일 포함(< to+1일) -->
+    <sql id="dateFilter">
+        <if test="from != null">
+            AND ri.created_at &gt;= #{from}
+        </if>
+        <if test="to != null">
+            AND ri.created_at &lt; (CAST(#{to} AS date) + INTERVAL '1 day')
+        </if>
+    </sql>
+
+    <!-- KPI : 처치군(is_control=false) 기준 -->
+    <select id="selectKpi"
+            resultType="com.kopang.app.domain.churn.ChurnReportResponse$Kpi">
+        SELECT
+            COUNT(*) FILTER (WHERE NOT ri.is_control) AS treated,
+            COUNT(*) FILTER (WHERE NOT ri.is_control AND io.converted) AS conversions,
+            COALESCE(SUM(io.revenue_amount) FILTER (WHERE NOT ri.is_control AND io.converted), 0) AS revenue,
+            COUNT(*) FILTER (WHERE NOT ri.is_control AND io.retained) AS defended
+        FROM retention_intervention ri
+        LEFT JOIN intervention_outcome io ON io.intervention_id = ri.intervention_id
+        <where>
+            <include refid="dateFilter"/>
+        </where>
+    </select>
+
+    <!-- 액션별 순효과 : 처치 vs 대조 전환율 + 처치군 전환 명수 + 매출 -->
+    <select id="selectEffect"
+            resultType="com.kopang.app.domain.churn.ChurnReportResponse$EffectRow">
+        SELECT
+            ri.action_type AS actionType,
+            ROUND(100.0 * COUNT(*) FILTER (WHERE NOT ri.is_control AND io.converted)
+                  / NULLIF(COUNT(*) FILTER (WHERE NOT ri.is_control), 0), 1) AS treatPct,
+            ROUND(100.0 * COUNT(*) FILTER (WHERE ri.is_control AND io.converted)
+                  / NULLIF(COUNT(*) FILTER (WHERE ri.is_control), 0), 1) AS controlPct,
+            COUNT(*) FILTER (WHERE NOT ri.is_control AND io.converted) AS conv,
+            COALESCE(SUM(io.revenue_amount) FILTER (WHERE NOT ri.is_control AND io.converted), 0) AS revenue
+        FROM retention_intervention ri
+        LEFT JOIN intervention_outcome io ON io.intervention_id = ri.intervention_id
+        <where>
+            <include refid="dateFilter"/>
+        </where>
+        GROUP BY ri.action_type
+        ORDER BY revenue DESC
+    </select>
+
+</mapper>
