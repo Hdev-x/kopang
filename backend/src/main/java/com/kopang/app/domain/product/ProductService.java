@@ -24,13 +24,6 @@ public class ProductService {
                 .map(ProductResponseDTO::from)
                 .collect(Collectors.toList());
 
-        // 백그라운드 AI 추천 예열 (상위 5개 상품)
-        List<Long> topIds = products.stream()
-                .limit(5)
-                .map(p -> (long) p.getProductId())
-                .collect(Collectors.toList());
-        aiSimilarProductService.warmupRecommendationsAsync(topIds);
-
         return new PageResponse<>(content, page, size, totalCount);
     }
 
@@ -40,6 +33,10 @@ public class ProductService {
             throw new IllegalArgumentException("존재하지 않는 상품입니다. ID: " + id);
         }
         dto.setImageUrls(productMapper.findImageUrlsByProductId(id.intValue()));
+
+        // 상세 페이지 진입 시 해당 상품 1개만 비동기 예열
+        aiSimilarProductService.warmupRecommendationsAsync(List.of(id));
+
         return ProductResponseDTO.from(dto);
     }
 

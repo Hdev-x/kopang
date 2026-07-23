@@ -125,10 +125,22 @@
   white-space: nowrap;
 }
 
+.similarPriceArea {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.similarDiscount {
+  font-size: var(--font-xs);
+  font-weight: var(--weight-bold);
+  color: var(--color-sale, #e53e3e);
+}
+
 .similarPrice {
   font-size: var(--font-sm);
   font-weight: var(--weight-bold);
-  margin-top: 2px;
 }
 
 @keyframes pulse {

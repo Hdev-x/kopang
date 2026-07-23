@@ -42,4 +42,15 @@ public interface ProductMapper {
         @Param("price") int price,
         @Param("limit") int limit
     );
+
+    List<ProductDTO> findFrequentlyBoughtTogether(
+        @Param("productId") Long productId,
+        @Param("limit") int limit
+    );
+
+    List<ProductDTO> findRelatedCategoryProducts(
+        @Param("productId") Long productId,
+        @Param("categoryId") Long categoryId,
+        @Param("limit") int limit
+    );
 }
