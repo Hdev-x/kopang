@@ -22,3 +22,11 @@ export async function getRecommendations() {
   const response = await client.get<ApiResponse<RecommendationList>>("/recommendations");
   return response.data.data;
 }
+
+export async function markRecommendationShown(recommendId: number) {
+  await client.post(`/recommendations/${recommendId}/shown`);
+}
+
+export async function markRecommendationClicked(recommendId: number) {
+  await client.post(`/recommendations/${recommendId}/click`);
+}

@@ -19,4 +19,14 @@ public interface RecommendationMapper {
     int insertRecommendations(
             @Param("userId") Long userId,
             @Param("items") List<RecommendationResponse> items);
+
+    int markShown(
+            @Param("recommendId") Long recommendId,
+            @Param("userId") Long userId);
+
+    int markClicked(
+            @Param("recommendId") Long recommendId,
+            @Param("userId") Long userId);
+
+    int attributeConversions();
 }

@@ -4,6 +4,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -36,5 +38,30 @@ public class RecommendationController {
                 recommendationService.getRecommendations(userId));
         return ResponseEntity.ok(
                 ApiResponse.success(response));
+    }
+
+    @PostMapping("/{id}/shown")
+    public ResponseEntity<ApiResponse<Void>> markShown(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable("id") Long recommendId) {
+        Long userId = authenticatedUserId(userDetails);
+        recommendationService.markShown(recommendId, userId);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @PostMapping("/{id}/click")
+    public ResponseEntity<ApiResponse<Void>> markClicked(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable("id") Long recommendId) {
+        Long userId = authenticatedUserId(userDetails);
+        recommendationService.markClicked(recommendId, userId);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    private Long authenticatedUserId(CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            throw new IllegalArgumentException("인증되지 않은 사용자입니다");
+        }
+        return userService.detailByEmail(userDetails.getEmail()).getUserId();
     }
 }

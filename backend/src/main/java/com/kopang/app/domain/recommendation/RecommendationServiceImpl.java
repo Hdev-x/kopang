@@ -36,4 +36,26 @@ public class RecommendationServiceImpl implements RecommendationService {
         recommendationMapper.insertRecommendations(userId, candidates);
         return recommendationMapper.findTodayRecommendations(userId);
     }
+
+    @Override
+    @Transactional
+    public void markShown(Long recommendId, Long userId) {
+        if (recommendationMapper.markShown(recommendId, userId) == 0) {
+            throw new IllegalArgumentException("추천 기록을 찾을 수 없습니다");
+        }
+    }
+
+    @Override
+    @Transactional
+    public void markClicked(Long recommendId, Long userId) {
+        if (recommendationMapper.markClicked(recommendId, userId) == 0) {
+            throw new IllegalArgumentException("추천 기록을 찾을 수 없습니다");
+        }
+    }
+
+    @Override
+    @Transactional
+    public int attributeConversions() {
+        return recommendationMapper.attributeConversions();
+    }
 }

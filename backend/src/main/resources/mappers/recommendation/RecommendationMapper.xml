@@ -129,4 +129,45 @@
         </foreach>
     </insert>
 
+    <update id="markShown">
+        UPDATE recommendation_history
+        SET shown = TRUE
+        WHERE recommend_id = #{recommendId}
+          AND user_id = #{userId}
+    </update>
+
+    <update id="markClicked">
+        UPDATE recommendation_history
+        SET clicked = TRUE,
+            shown = TRUE
+        WHERE recommend_id = #{recommendId}
+          AND user_id = #{userId}
+    </update>
+
+    <!-- 클릭 뒤 7일 이내 동일 상품을 주문한 가장 최근 클릭에 전환을 귀속한다. -->
+    <update id="attributeConversions">
+        WITH attribution AS (
+            SELECT DISTINCT ON (o.order_id, oi.product_id)
+                rh.recommend_id,
+                o.order_id
+            FROM orders o
+            JOIN orders_item oi ON oi.order_id = o.order_id
+            JOIN recommendation_history rh
+              ON rh.user_id = o.user_id
+             AND rh.product_id = oi.product_id
+             AND rh.clicked = TRUE
+             AND rh.created_at &lt;= o.ordered_at
+             AND rh.created_at &gt;= o.ordered_at - INTERVAL '7 days'
+            WHERE o.payment_status = 'PAID'
+              AND o.order_status NOT IN ('CANCELLED', 'RETURNED')
+            ORDER BY o.order_id, oi.product_id, rh.created_at DESC
+        )
+        UPDATE recommendation_history rh
+        SET converted = TRUE,
+            order_id = attribution.order_id
+        FROM attribution
+        WHERE rh.recommend_id = attribution.recommend_id
+          AND (rh.converted = FALSE OR rh.order_id IS DISTINCT FROM attribution.order_id)
+    </update>
+
 </mapper>
