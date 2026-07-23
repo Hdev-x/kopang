@@ -21,8 +21,8 @@ public class ChurnReportController {
     // 대응 효과 리포트 (CHURN-08/10). from/to=기간 필터(옵션). /api/admin/** 는 ADMIN만 통과.
     @GetMapping("/api/admin/churn/report")
     public ResponseEntity<ApiResponse<ChurnReportResponse>> report(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+            @RequestParam(name = "from", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(name = "to", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         return ResponseEntity.ok(ApiResponse.success(churnReportService.getReport(from, to)));
     }
 }
