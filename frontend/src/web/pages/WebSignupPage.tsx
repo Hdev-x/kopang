@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 import { checkEmail, signup } from "../../api/auth";
 import { WebAuthLayout } from "../components/WebAuthLayout";
 import styles from "./WebAuthPages.module.css";
@@ -22,6 +23,7 @@ export function WebSignupPage() {
   const [marketingAgreed, setMarketingAgreed] = useState(false);
   const [openTerm, setOpenTerm] = useState<Term | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const allAgreed = serviceAgreed && privacyAgreed && marketingAgreed;
   const requiredAgreed = serviceAgreed && privacyAgreed;
 
@@ -79,7 +81,39 @@ export function WebSignupPage() {
           <button type="button" className={styles.secondaryButton} onClick={handleEmailCheck}>중복확인</button>
         </div>
         {checkedEmail === email && <p className={styles.message}>사용 가능한 이메일입니다.</p>}
-        <div className={styles.field}><label htmlFor="web-signup-password">비밀번호</label><input id="web-signup-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="비밀번호 입력" autoComplete="new-password" /></div>
+        <div className={styles.field}>
+          <label htmlFor="web-signup-password">비밀번호</label>
+          <div style={{ position: "relative", display: "flex", alignItems: "center", width: "100%" }}>
+            <input
+              id="web-signup-password"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="비밀번호 입력"
+              autoComplete="new-password"
+              style={{ paddingRight: "40px", width: "100%" }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: "absolute",
+                right: "12px",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 0,
+                color: "#888",
+                zIndex: 2,
+              }}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+        </div>
         <div className={styles.field}><label htmlFor="web-signup-name">이름</label><input id="web-signup-name" value={name} onChange={(event) => setName(event.target.value)} placeholder="이름 입력" autoComplete="name" /></div>
 
         <div className={styles.terms}>

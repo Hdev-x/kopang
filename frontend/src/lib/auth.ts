@@ -6,7 +6,7 @@ export type AuthUser = { name: string; role?: "USER" | "ADMIN" };
 
 export function getAuth(): AuthUser | null {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = sessionStorage.getItem(KEY) || localStorage.getItem(KEY);
     return raw ? (JSON.parse(raw) as AuthUser) : null;
   } catch {
     return null;
@@ -22,7 +22,12 @@ export function isAdmin(): boolean {
 }
 
 export function login(user: AuthUser, accessToken?: string, refreshToken?: string, rememberMe?: boolean): void {
-  localStorage.setItem(KEY, JSON.stringify(user));
+  if (rememberMe) {
+    localStorage.setItem(KEY, JSON.stringify(user));
+  } else {
+    sessionStorage.setItem(KEY, JSON.stringify(user));
+  }
+
   if (accessToken) {
     if (rememberMe) {
       localStorage.setItem("accessToken", accessToken);
@@ -40,8 +45,8 @@ export function login(user: AuthUser, accessToken?: string, refreshToken?: strin
   window.dispatchEvent(new Event("auth-change"));
 }
 
-
 export function logout(): void {
+  sessionStorage.removeItem(KEY);
   localStorage.removeItem(KEY);
   sessionStorage.removeItem("accessToken");
   sessionStorage.removeItem("refreshToken");

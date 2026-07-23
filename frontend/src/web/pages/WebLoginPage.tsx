@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 import { login as apiLogin } from "../../api/auth";
 import { login as saveAuth } from "../../lib/auth";
 import { WebAuthLayout } from "../components/WebAuthLayout";
@@ -11,6 +12,7 @@ export function WebLoginPage() {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -38,7 +40,39 @@ export function WebLoginPage() {
       <div className={styles.heading}><h2>로그인</h2><p>Kopang 계정 정보를 입력해 주세요.</p></div>
       <form className={styles.form} onSubmit={handleSubmit}>
         <div className={styles.field}><label htmlFor="web-login-email">이메일</label><input id="web-login-email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="email@example.com" autoComplete="email" /></div>
-        <div className={styles.field}><label htmlFor="web-login-password">비밀번호</label><input id="web-login-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="비밀번호 입력" autoComplete="current-password" /></div>
+        <div className={styles.field}>
+          <label htmlFor="web-login-password">비밀번호</label>
+          <div style={{ position: "relative", display: "flex", alignItems: "center", width: "100%" }}>
+            <input
+              id="web-login-password"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="비밀번호 입력"
+              autoComplete="current-password"
+              style={{ paddingRight: "40px", width: "100%" }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: "absolute",
+                right: "12px",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 0,
+                color: "#888",
+                zIndex: 2,
+              }}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+        </div>
         <div className={styles.formOptions}>
           <label className={styles.remember}><input type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} />자동 로그인</label>
           <Link to="/web/find-password">비밀번호 찾기</Link>
