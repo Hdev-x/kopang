@@ -17,3 +17,8 @@ export async function getNotifications() {
   const res = await client.get<ApiResponse<{ items: NotificationItem[] }>>("/notifications");
   return res.data.data.items;
 }
+
+// 알림 읽음 처리 (PATCH /api/notifications/{id}/read) — 본인 알림만
+export async function markNotificationRead(id: number) {
+  await client.patch(`/notifications/${id}/read`);
+}
