@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kopang.app.domain.admin.SalesStatsMapper">
+
+    <!-- 오늘 결제완료 매출 합계 -->
+    <select id="selectTodaySales" resultType="long">
+        SELECT COALESCE(SUM(total_price), 0)
+        FROM orders
+        WHERE ordered_at::date = CURRENT_DATE
+            AND payment_status = 'PAID'
+    </select>
+
+    <!-- 오늘 주문 건수 -->
+    <select id="selectTodayOrders" resultType="int">
+        SELECT COUNT(*)
+        FROM orders
+        WHERE ordered_at::date = CURRENT_DATE
+            AND payment_status = 'PAID'
+    </select>
+
+    <!-- 오늘 신규 가입 수 -->
+    <select id="selectNewMembers" resultType="int">
+        SELECT COUNT(*)
+        FROM users
+        WHERE created_at::date = CURRENT_DATE
+    </select>
+
+    <!-- 최근 7일 일별 매출 (주문 있는 날만, 과거→오늘) -->
+    <select id="selectWeeklySales"
+            resultType="com.kopang.app.domain.admin.SalesStatsResponse$DailySales">
+        SELECT
+            ordered_at::date AS date,
+            COALESCE(SUM(total_price), 0) AS amount
+        FROM orders
+        WHERE payment_status = 'PAID'
+            AND ordered_at::date &gt; CURRENT_DATE - 7
+        GROUP BY ordered_at::date
+        ORDER BY ordered_at::date
+    </select>
+
+</mapper>
