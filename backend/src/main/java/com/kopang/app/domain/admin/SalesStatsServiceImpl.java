@@ -16,6 +16,8 @@ public class SalesStatsServiceImpl implements SalesStatsService {
         res.setTodaySales(salesStatsMapper.selectTodaySales());
         res.setTodayOrders(salesStatsMapper.selectTodayOrders());
         res.setNewMembers(salesStatsMapper.selectNewMembers());
+        res.setTotalSales(salesStatsMapper.selectTotalSales());
+        res.setMonthSales(salesStatsMapper.selectMonthSales());
         res.setWeeklySales(salesStatsMapper.selectWeeklySales());
         return res;
     }
