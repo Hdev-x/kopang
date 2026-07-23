@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kopang.app.domain.recommendation.RecommendationMapper">
+
+    <select id="findTodayRecommendations"
+            resultType="com.kopang.app.domain.recommendation.RecommendationResponse">
+        SELECT
+            rh.recommend_id AS recommendId,
+            p.product_id AS productId,
+            p.category_id AS categoryId,
+            p.name,
+            p.price,
+            p.discount_price AS discountPrice,
+            p.image_url AS imageUrl,
+            rh.score,
+            rh.reason
+        FROM recommendation_history rh
+        JOIN products p ON p.product_id = rh.product_id
+        WHERE rh.user_id = #{userId}
+          AND rh.created_at::date = CURRENT_DATE
+          AND p.status = 'ACTIVE'
+          AND p.stock &gt; 0
+        ORDER BY rh.score DESC, rh.recommend_id
+    </select>
+
+    <!--
+      Item-CF: 대상 회원이 산 각 상품과 함께 구매한 회원 집합을 기준으로
+      후보 상품의 공통 구매자 수를 합산한다.
+    -->
+    <select id="findItemCfCandidates"
+            resultType="com.kopang.app.domain.recommendation.RecommendationResponse">
+        WITH valid_purchase AS (
+            SELECT DISTINCT o.user_id, oi.product_id
+            FROM orders o
+            JOIN orders_item oi ON oi.order_id = o.order_id
+            WHERE o.payment_status = 'PAID'
+              AND o.order_status NOT IN ('CANCELLED', 'RETURNED')
+        ),
+        target_items AS (
+            SELECT product_id
+            FROM valid_purchase
+            WHERE user_id = #{userId}
+        ),
+        similarity AS (
+            SELECT
+                candidate.product_id,
+                COUNT(DISTINCT seed.user_id)::double precision AS score
+            FROM target_items target
+            JOIN valid_purchase seed ON seed.product_id = target.product_id
+            JOIN valid_purchase candidate ON candidate.user_id = seed.user_id
+            WHERE candidate.product_id != target.product_id
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM target_items bought
+                  WHERE bought.product_id = candidate.product_id
+              )
+            GROUP BY candidate.product_id
+        )
+        SELECT
+            p.product_id AS productId,
+            p.category_id AS categoryId,
+            p.name,
+            p.price,
+            p.discount_price AS discountPrice,
+            p.image_url AS imageUrl,
+            s.score,
+            '구매 패턴이 비슷한 회원들이 함께 선택했어요' AS reason
+        FROM similarity s
+        JOIN products p ON p.product_id = s.product_id
+        WHERE p.status = 'ACTIVE'
+          AND p.stock &gt; 0
+        ORDER BY s.score DESC, p.product_id DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="findPopularCandidates"
+            resultType="com.kopang.app.domain.recommendation.RecommendationResponse">
+        SELECT
+            p.product_id AS productId,
+            p.category_id AS categoryId,
+            p.name,
+            p.price,
+            p.discount_price AS discountPrice,
+            p.image_url AS imageUrl,
+            COALESCE(
+                SUM(oi.quantity) FILTER (WHERE o.order_id IS NOT NULL),
+                0
+            )::double precision AS score,
+            '지금 많이 선택하는 인기 상품이에요' AS reason
+        FROM products p
+        LEFT JOIN orders_item oi ON oi.product_id = p.product_id
+        LEFT JOIN orders o
+               ON o.order_id = oi.order_id
+              AND o.payment_status = 'PAID'
+              AND o.order_status NOT IN ('CANCELLED', 'RETURNED')
+        WHERE p.status = 'ACTIVE'
+          AND p.stock &gt; 0
+          AND NOT EXISTS (
+              SELECT 1
+              FROM orders bought_order
+              JOIN orders_item bought_item ON bought_item.order_id = bought_order.order_id
+              WHERE bought_order.user_id = #{userId}
+                AND bought_order.payment_status = 'PAID'
+                AND bought_order.order_status NOT IN ('CANCELLED', 'RETURNED')
+                AND bought_item.product_id = p.product_id
+          )
+        GROUP BY p.product_id, p.category_id, p.name, p.price, p.discount_price, p.image_url
+        ORDER BY score DESC, p.product_id DESC
+        LIMIT #{limit}
+    </select>
+
+    <insert id="insertRecommendations">
+        INSERT INTO recommendation_history (
+            user_id, product_id, reason, score, shown, clicked, converted
+        ) VALUES
+        <foreach collection="items" item="item" separator=",">
+            (
+                #{userId},
+                #{item.productId},
+                #{item.reason},
+                #{item.score},
+                FALSE,
+                FALSE,
+                FALSE
+            )
+        </foreach>
+    </insert>
+
+</mapper>
