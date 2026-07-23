@@ -57,13 +57,18 @@ def undo(conn):
                 "(SELECT order_id FROM orders WHERE payment_key = 'DEMO_SEED')")
     oi = cur.rowcount
     cur.execute("DELETE FROM orders WHERE payment_key = 'DEMO_SEED'"); od = cur.rowcount
-    # 2) 데모 유저 (주문이 위에서 지워졌으니 FK 안전)
-    cur.execute("DELETE FROM users WHERE email LIKE %s", (f"%@{DEMO_DOMAIN}",)); us = cur.rowcount
+    # 2) 데모 유저 참조 정리 (ml-run이 남긴 churn_score 등) 후 유저 삭제 (FK 순서)
+    cur.execute("SELECT user_id FROM users WHERE email LIKE %s", (f"%@{DEMO_DOMAIN}",))
+    demo_ids = [r[0] for r in cur.fetchall()]
+    us = 0
+    if demo_ids:
+        cur.execute("DELETE FROM churn_score WHERE user_id = ANY(%s)", (demo_ids,))
+        cur.execute("DELETE FROM users WHERE user_id = ANY(%s)", (demo_ids,)); us = cur.rowcount
     conn.commit()
     print(f"되돌리기 완료: users {us} · orders {od} · orders_item {oi} 삭제")
 
 
-def generate(conn):
+def generate(conn, backfill_days=0):
     cur = conn.cursor()
 
     # 1) 참조만 — 기존 상품(가격 포함) / 기존 유저 id
@@ -87,36 +92,41 @@ def generate(conn):
         )
         new_user_ids.append(cur.fetchone()[0])
 
-    # 3) 주문 INSERT — 오늘 시각 안에서 분산, 기존+신규 유저 섞어서
+    # 3) 주문 INSERT — backfill_days 일 전까지 각 날짜에 N_ORDERS건씩 (주간 추이 채움)
     order_pool = existing_users + new_user_ids * 2  # 신규 유저 가중(방금 가입해 첫 주문)
     made = 0
-    for _ in range(N_ORDERS):
-        uid = random.choice(order_pool)
-        n_items = random.randint(1, 3)
-        picks = random.sample(products, min(n_items, len(products)))
-        total = 0
-        # 주문 헤더 (오늘 안에서 랜덤 시각, 결제·배송 완료)
-        cur.execute(
-            "INSERT INTO orders (user_id, total_price, payment_status, order_status, payment_key, ordered_at) "
-            "VALUES (%s, %s, 'PAID', 'DELIVERED', 'DEMO_SEED', "
-            "  date_trunc('day', NOW()) + random() * (NOW() - date_trunc('day', NOW()))) "  # 오늘 0시~지금 랜덤
-            "RETURNING order_id",
-            (uid, 0),
-        )
-        oid = cur.fetchone()[0]
-        for pid, price in picks:
-            qty = random.randint(1, 3)
-            total += price * qty
+    for d in range(backfill_days + 1):
+        # d일 전 날짜의 랜덤 시각: 오늘은 0시~지금, 과거일은 그 날 종일
+        if d == 0:
+            ts_expr = "date_trunc('day', NOW()) + random() * (NOW() - date_trunc('day', NOW()))"
+        else:
+            ts_expr = f"date_trunc('day', NOW() - INTERVAL '{d} days') + random() * INTERVAL '24 hours'"
+        for _ in range(N_ORDERS):
+            uid = random.choice(order_pool)
+            n_items = random.randint(1, 3)
+            picks = random.sample(products, min(n_items, len(products)))
+            total = 0
             cur.execute(
-                "INSERT INTO orders_item (order_id, product_id, quantity, price) VALUES (%s, %s, %s, %s)",
-                (oid, pid, qty, price),
+                "INSERT INTO orders (user_id, total_price, payment_status, order_status, payment_key, ordered_at) "
+                f"VALUES (%s, %s, 'PAID', 'DELIVERED', 'DEMO_SEED', {ts_expr}) "
+                "RETURNING order_id",
+                (uid, 0),
             )
-        # 합계 확정 (헤더 total_price 갱신 — 방금 만든 내 주문만)
-        cur.execute("UPDATE orders SET total_price = %s WHERE order_id = %s", (total, oid))
-        made += 1
+            oid = cur.fetchone()[0]
+            for pid, price in picks:
+                qty = random.randint(1, 3)
+                total += price * qty
+                cur.execute(
+                    "INSERT INTO orders_item (order_id, product_id, quantity, price) VALUES (%s, %s, %s, %s)",
+                    (oid, pid, qty, price),
+                )
+            # 합계 확정 (방금 만든 내 주문만)
+            cur.execute("UPDATE orders SET total_price = %s WHERE order_id = %s", (total, oid))
+            made += 1
 
     conn.commit()
-    print(f"생성 완료: 신규 유저 {len(new_user_ids)}명 · 주문 {made}건 (오늘자)")
+    span = "오늘자" if backfill_days == 0 else f"최근 {backfill_days + 1}일"
+    print(f"생성 완료: 신규 유저 {len(new_user_ids)}명 · 주문 {made}건 ({span})")
 
 
 def main():
@@ -125,7 +135,13 @@ def main():
         if "--undo" in sys.argv:
             undo(conn)
         else:
-            generate(conn)
+            # --backfill N : 오늘 포함 최근 N일치 주문도 생성 (주간 추이 채움용). 기본 0=오늘만
+            backfill = 0
+            if "--backfill" in sys.argv:
+                idx = sys.argv.index("--backfill")
+                if idx + 1 < len(sys.argv):
+                    backfill = int(sys.argv[idx + 1])
+            generate(conn, backfill)
     finally:
         conn.close()
 
