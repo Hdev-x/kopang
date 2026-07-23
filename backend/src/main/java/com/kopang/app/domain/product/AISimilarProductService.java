@@ -112,19 +112,46 @@ public class AISimilarProductService {
                 .limit(6)
                 .collect(Collectors.toList());
 
-        // 2. Frequently Bought Together Products (AI가 추천한 보완재/연관 용품 키워드로 검색)
-        List<ProductDTO> togetherRaw = productMapper.findProducts(null, togetherKeyword, "popular", 12, 0);
-        List<ProductResponseDTO> togetherList = togetherRaw.stream()
-                .filter(p -> (long) p.getProductId() != productId)
-                .map(ProductResponseDTO::from)
-                .limit(6)
-                .collect(Collectors.toList());
+        // 2. Frequently Bought Together Products (함께 구매하면 좋은 상품 - 4단계 추천)
+        List<ProductResponseDTO> togetherList = new ArrayList<>();
 
-        // 보완재 검색 결과가 6개 미만이면 전체 인기상품으로 채우기
+        // 1단계: 실제 주문 내역(orders_item) 기반 함께 결제된 상품 조회 (최우선)
+        List<ProductDTO> coPurchased = productMapper.findFrequentlyBoughtTogether(productId, 6);
+        for (ProductDTO p : coPurchased) {
+            togetherList.add(ProductResponseDTO.from(p));
+        }
+
+        // 2단계: Gemini AI 또는 키워드 연관 상품 조회 (모자랄 경우)
+        if (togetherList.size() < 6 && togetherKeyword != null && !togetherKeyword.isBlank()) {
+            List<ProductDTO> togetherRaw = productMapper.findProducts(null, togetherKeyword, "latest", 12, 0);
+            for (ProductDTO p : togetherRaw) {
+                if ((long) p.getProductId() != productId 
+                        && togetherList.stream().noneMatch(t -> t.getId().equals((long) p.getProductId()))) {
+                    togetherList.add(ProductResponseDTO.from(p));
+                    if (togetherList.size() >= 6) break;
+                }
+            }
+        }
+
+        // 3단계: 같은 상위/형제 카테고리(Related Category) 상품으로 연관성 높은 보완재 추천 (모자랄 경우)
         if (togetherList.size() < 6) {
-            List<ProductDTO> popRaw = productMapper.findProducts(null, null, "popular", 12, 0);
+            List<ProductDTO> relatedCatRaw = productMapper.findRelatedCategoryProducts(productId, (long) current.getCategoryId(), 12);
+            for (ProductDTO p : relatedCatRaw) {
+                if ((long) p.getProductId() != productId 
+                        && togetherList.stream().noneMatch(t -> t.getId().equals((long) p.getProductId()))) {
+                    togetherList.add(ProductResponseDTO.from(p));
+                    if (togetherList.size() >= 6) break;
+                }
+            }
+        }
+
+        // 4단계: 여전히 모자랄 경우 동적 offset으로 상품 채우기
+        if (togetherList.size() < 6) {
+            int dynamicOffset = (int) Math.abs((productId * 7) % 15);
+            List<ProductDTO> popRaw = productMapper.findProducts(null, null, "latest", 20, dynamicOffset);
             for (ProductDTO p : popRaw) {
-                if ((long) p.getProductId() != productId && togetherList.stream().noneMatch(t -> t.getId().equals((long) p.getProductId()))) {
+                if ((long) p.getProductId() != productId 
+                        && togetherList.stream().noneMatch(t -> t.getId().equals((long) p.getProductId()))) {
                     togetherList.add(ProductResponseDTO.from(p));
                     if (togetherList.size() >= 6) break;
                 }
@@ -187,6 +214,7 @@ public class AISimilarProductService {
         if (categoryName.contains("가전") || categoryName.contains("디지털")) return "케이블";
         if (categoryName.contains("패션")) return "양말";
         if (categoryName.contains("뷰티")) return "크림";
-        return "용품";
+        if (categoryName.contains("식품") || categoryName.contains("건강") || categoryName.contains("헬스")) return "단백질";
+        return null;
     }
 }

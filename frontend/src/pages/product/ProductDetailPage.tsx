@@ -162,21 +162,34 @@ export function ProductDetailPage() {
                 </Card>
               ))
             ) : (
-              similarProducts.map((sim, idx) => (
-                <Card
-                  key={sim.id ? `sim-${sim.id}-${idx}` : `sim-${idx}`}
-                  className={styles.similarCard}
-                  onClick={() => sim.id && navigate(`/products/${sim.id}`)}
-                >
-                  {sim.imageUrl ? (
-                    <img src={sim.imageUrl} alt={sim.name || "상품 이미지"} className={styles.similarThumb} />
-                  ) : (
-                    <div className={styles.similarThumb} />
-                  )}
-                  <p className={styles.similarName}>{sim.name || "상품명 없음"}</p>
-                  <p className={styles.similarPrice}>{(sim.price ?? 0).toLocaleString()}원</p>
-                </Card>
-              ))
+              similarProducts.map((sim, idx) => {
+                const hasDiscount = Boolean(sim.discountRate && sim.discountRate > 0);
+                const discountedPrice = hasDiscount
+                  ? Math.round((sim.price * (100 - (sim.discountRate || 0))) / 100)
+                  : sim.price;
+                return (
+                  <Card
+                    key={sim.id ? `sim-${sim.id}-${idx}` : `sim-${idx}`}
+                    className={styles.similarCard}
+                    onClick={() => sim.id && navigate(`/products/${sim.id}`)}
+                  >
+                    {sim.imageUrl ? (
+                      <img src={sim.imageUrl} alt={sim.name || "상품 이미지"} className={styles.similarThumb} />
+                    ) : (
+                      <div className={styles.similarThumb} />
+                    )}
+                    <p className={styles.similarName}>{sim.name || "상품명 없음"}</p>
+                    {hasDiscount ? (
+                      <div className={styles.similarPriceArea}>
+                        <span className={styles.similarDiscount}>{sim.discountRate}%</span>
+                        <span className={styles.similarPrice}>{discountedPrice.toLocaleString()}원</span>
+                      </div>
+                    ) : (
+                      <p className={styles.similarPrice}>{(sim.price ?? 0).toLocaleString()}원</p>
+                    )}
+                  </Card>
+                );
+              })
             )}
           </div>
         </>
@@ -196,21 +209,34 @@ export function ProductDetailPage() {
                 </Card>
               ))
             ) : (
-              togetherProducts.map((item, idx) => (
-                <Card
-                  key={item.id ? `tog-${item.id}-${idx}` : `tog-${idx}`}
-                  className={styles.similarCard}
-                  onClick={() => item.id && navigate(`/products/${item.id}`)}
-                >
-                  {item.imageUrl ? (
-                    <img src={item.imageUrl} alt={item.name || "상품 이미지"} className={styles.similarThumb} />
-                  ) : (
-                    <div className={styles.similarThumb} />
-                  )}
-                  <p className={styles.similarName}>{item.name || "상품명 없음"}</p>
-                  <p className={styles.similarPrice}>{(item.price ?? 0).toLocaleString()}원</p>
-                </Card>
-              ))
+              togetherProducts.map((item, idx) => {
+                const hasDiscount = Boolean(item.discountRate && item.discountRate > 0);
+                const discountedPrice = hasDiscount
+                  ? Math.round((item.price * (100 - (item.discountRate || 0))) / 100)
+                  : item.price;
+                return (
+                  <Card
+                    key={item.id ? `tog-${item.id}-${idx}` : `tog-${idx}`}
+                    className={styles.similarCard}
+                    onClick={() => item.id && navigate(`/products/${item.id}`)}
+                  >
+                    {item.imageUrl ? (
+                      <img src={item.imageUrl} alt={item.name || "상품 이미지"} className={styles.similarThumb} />
+                    ) : (
+                      <div className={styles.similarThumb} />
+                    )}
+                    <p className={styles.similarName}>{item.name || "상품명 없음"}</p>
+                    {hasDiscount ? (
+                      <div className={styles.similarPriceArea}>
+                        <span className={styles.similarDiscount}>{item.discountRate}%</span>
+                        <span className={styles.similarPrice}>{discountedPrice.toLocaleString()}원</span>
+                      </div>
+                    ) : (
+                      <p className={styles.similarPrice}>{(item.price ?? 0).toLocaleString()}원</p>
+                    )}
+                  </Card>
+                );
+              })
             )}
           </div>
         </>
