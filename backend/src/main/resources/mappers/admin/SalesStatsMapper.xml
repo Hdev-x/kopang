@@ -28,17 +28,19 @@
         WHERE created_at::date = CURRENT_DATE
     </select>
 
-    <!-- 최근 7일 일별 매출 (주문 있는 날만, 과거→오늘) -->
+    <!-- 최근 7일 일별 매출 : generate_series로 7일을 만들고 매출을 LEFT JOIN
+         → 주문 없는 날도 0으로 채워 막대 7개가 다 나옴 (과거→오늘) -->
     <select id="selectWeeklySales"
             resultType="com.kopang.app.domain.admin.SalesStatsResponse$DailySales">
         SELECT
-            ordered_at::date AS date,
-            COALESCE(SUM(total_price), 0) AS amount
-        FROM orders
-        WHERE payment_status = 'PAID'
-            AND ordered_at::date &gt; CURRENT_DATE - 7
-        GROUP BY ordered_at::date
-        ORDER BY ordered_at::date
+            d::date AS date,
+            COALESCE(SUM(o.total_price), 0) AS amount
+        FROM generate_series(CURRENT_DATE - 6, CURRENT_DATE, INTERVAL '1 day') d
+        LEFT JOIN orders o
+            ON o.ordered_at::date = d::date
+            AND o.payment_status = 'PAID'
+        GROUP BY d
+        ORDER BY d
     </select>
 
 </mapper>
