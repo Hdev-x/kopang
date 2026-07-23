@@ -131,7 +131,17 @@ export function CartPage() {
                   )}
                   <div className={styles.info}>
                     <p className={styles.name}>{it.name}</p>
-                    <p className={styles.price}>{it.price.toLocaleString()}원</p>
+                    {it.originalPrice && it.originalPrice > it.price ? (
+                      <div className={styles.priceRow}>
+                        <span className={styles.discount}>
+                          {Math.round(((it.originalPrice - it.price) / it.originalPrice) * 100)}%
+                        </span>
+                        <span className={styles.price}>{it.price.toLocaleString()}원</span>
+                        <span className={styles.originalPrice}>{it.originalPrice.toLocaleString()}원</span>
+                      </div>
+                    ) : (
+                      <p className={styles.price}>{it.price.toLocaleString()}원</p>
+                    )}
                     {it.addedAt && <p className={styles.dateTag}>{formatDate(it.addedAt)}</p>}
                   </div>
                 </Link>

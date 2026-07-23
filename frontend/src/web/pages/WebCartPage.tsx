@@ -57,7 +57,23 @@ export function WebCartPage() {
               <article key={item.itemId} className={styles.cartItem}>
                 <input type="checkbox" checked={selected.has(item.itemId)} onChange={() => toggle(item.itemId)} aria-label={`${item.name} 선택`} />
                 <Link to={`/web/products/${item.productId}`}><img src={item.imageUrl} alt="" /></Link>
-                <div className={styles.itemInfo}><Link to={`/web/products/${item.productId}`}>{item.name}</Link><span>무료배송</span><strong>{item.price.toLocaleString()}원</strong></div>
+                <div className={styles.itemInfo}>
+                  <Link to={`/web/products/${item.productId}`}>{item.name}</Link>
+                  <span>무료배송</span>
+                  {item.originalPrice && item.originalPrice > item.price ? (
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap', whiteSpace: 'nowrap' }}>
+                      <span style={{ color: '#e53e3e', fontWeight: 700, fontSize: '13px', whiteSpace: 'nowrap' }}>
+                        {Math.round(((item.originalPrice - item.price) / item.originalPrice) * 100)}%
+                      </span>
+                      <strong style={{ whiteSpace: 'nowrap' }}>{item.price.toLocaleString()}원</strong>
+                      <span style={{ color: '#9ca3af', fontSize: '12px', textDecoration: 'line-through', whiteSpace: 'nowrap' }}>
+                        {item.originalPrice.toLocaleString()}원
+                      </span>
+                    </div>
+                  ) : (
+                    <strong style={{ whiteSpace: 'nowrap' }}>{item.price.toLocaleString()}원</strong>
+                  )}
+                </div>
                 <div className={styles.itemActions}>
                   <button type="button" onClick={() => remove(item.itemId)} aria-label="삭제"><Trash2 size={18} /></button>
                   <div><button type="button" onClick={() => changeQuantity(item, item.quantity - 1)}><Minus size={15} /></button><span>{item.quantity}</span><button type="button" onClick={() => changeQuantity(item, item.quantity + 1)}><Plus size={15} /></button></div>

@@ -20,7 +20,12 @@
             ci.quantity AS quantity,
             ci.added_at AS addedAt,
             p.name AS name,
-            p.price AS price,
+            CASE 
+                WHEN p.discount_price > 0 AND p.discount_price &lt; p.price THEN p.discount_price 
+                ELSE p.price 
+            END AS price,
+            p.price AS originalPrice,
+            p.discount_price AS discountPrice,
             p.image_url AS imageUrl
         FROM cart_item ci
         INNER JOIN products p ON ci.product_id = p.product_id
@@ -56,7 +61,12 @@
             ci.product_id AS productId,
             ci.quantity AS quantity,
             p.name AS name,
-            p.price AS price,
+            CASE 
+                WHEN p.discount_price > 0 AND p.discount_price &lt; p.price THEN p.discount_price 
+                ELSE p.price 
+            END AS price,
+            p.price AS originalPrice,
+            p.discount_price AS discountPrice,
             p.stock AS stock
         FROM cart_item ci
         INNER JOIN products p ON ci.product_id = p.product_id

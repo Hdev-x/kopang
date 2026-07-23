@@ -40,9 +40,32 @@
   font-weight: var(--weight-medium);
 }
 
+.priceRow {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.discount {
+  font-size: var(--font-sm);
+  font-weight: var(--weight-bold);
+  color: var(--color-sale, #e53e3e);
+  white-space: nowrap;
+}
+
 .price {
   font-size: var(--font-md);
   font-weight: var(--weight-bold);
+  white-space: nowrap;
+}
+
+.originalPrice {
+  font-size: var(--font-xs);
+  color: var(--gray-400, #9ca3af);
+  text-decoration: line-through;
+  white-space: nowrap;
 }
 
 .itemMain {
