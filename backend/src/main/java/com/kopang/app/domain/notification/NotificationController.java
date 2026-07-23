@@ -35,7 +35,7 @@ public class NotificationController {
     // 알림 읽음 처리 (NOTI M3). 본인 알림만 — 남의 id면 404. (= 대응 클릭 추적)
     @PatchMapping("/{id}/read")
     public ResponseEntity<ApiResponse<Void>> markRead(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         if (userDetails == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
