@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kopang.app.domain.churn.ChurnBlindSpotMapper">
+
+    <select id="findTargets"
+            resultType="com.kopang.app.domain.churn.ChurnBlindSpotTarget">
+        WITH latest_ml AS (
+            SELECT DISTINCT ON (user_id)
+                churn_score_id,
+                user_id,
+                score,
+                risk_level,
+                scored_at
+            FROM churn_score
+            WHERE source = 'ML'
+            ORDER BY user_id, scored_at DESC
+        )
+        SELECT
+            ml.user_id AS userId,
+            ml.churn_score_id AS churnScoreId,
+            ml.score
+        FROM latest_ml ml
+        JOIN users u ON u.user_id = ml.user_id
+        WHERE ml.risk_level = 'HIGH'
+          AND u.status = 'ACTIVE'
+          AND u.role = 'ROLE_USER'
+          AND NOT EXISTS (
+              SELECT 1
+              FROM churn_score rule_score
+              WHERE rule_score.user_id = ml.user_id
+                AND rule_score.source = 'RULE'
+                AND rule_score.scored_at::date = CURRENT_DATE
+                AND rule_score.risk_type IS NOT NULL
+          )
+          AND NOT EXISTS (
+              SELECT 1
+              FROM retention_intervention intervention
+              WHERE intervention.user_id = ml.user_id
+                AND intervention.created_at &gt; NOW() - INTERVAL '7 days'
+          )
+        ORDER BY ml.score DESC, ml.user_id
+        LIMIT #{limit}
+    </select>
+
+</mapper>
