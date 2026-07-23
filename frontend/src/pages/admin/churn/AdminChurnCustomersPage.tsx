@@ -57,7 +57,8 @@ function scoreColor(s: number) {
 }
 
 export function AdminChurnCustomersPage() {
-  const [type, setType] = useState("전체");
+  const [memberType, setMemberType] = useState("전체");
+  const [riskType, setRiskType] = useState("");
   const [level, setLevel] = useState("전체");
   const [rows, setRows] = useState<RiskCustomer[]>([]);
   const [total, setTotal] = useState(0);
@@ -66,11 +67,16 @@ export function AdminChurnCustomersPage() {
 
   // 필터가 바뀔 때마다 서버 재조회
   useEffect(() => {
-    const memberType = TYPE_TABS.find((t) => t.label === type)?.value;
+    const memberTypeValue = TYPE_TABS.find((t) => t.label === memberType)?.value;
     const levelValue = LEVEL_TABS.find((l) => l.label === level)?.value;
     setLoading(true);
     setError(false);
-    getRiskCustomers({ memberType, level: levelValue, size: 100 })
+    getRiskCustomers({
+      type: riskType || undefined,
+      memberType: memberTypeValue,
+      level: levelValue,
+      size: 100,
+    })
       .then((data) => {
         setRows(data.content);
         setTotal(data.totalElements);
@@ -80,7 +86,7 @@ export function AdminChurnCustomersPage() {
         setError(true);
       })
       .finally(() => setLoading(false));
-  }, [type, level]);
+  }, [memberType, riskType, level]);
 
   return (
     <AdminLayout title="위험 고객 목록">
@@ -91,13 +97,24 @@ export function AdminChurnCustomersPage() {
           {TYPE_TABS.map((t) => (
             <button
               key={t.label}
-              className={`${sh.chip} ${type === t.label ? sh.chipActive : ""}`}
-              onClick={() => setType(t.label)}
+              className={`${sh.chip} ${memberType === t.label ? sh.chipActive : ""}`}
+              onClick={() => setMemberType(t.label)}
             >
               {t.label}
             </button>
           ))}
         </div>
+        <select
+          className={sh.search}
+          value={riskType}
+          onChange={(event) => setRiskType(event.target.value)}
+          aria-label="위험 유형"
+        >
+          <option value="">위험 유형 전체</option>
+          {Object.entries(RISK_TYPE_LABEL).map(([value, label]) => (
+            <option key={value} value={value}>{label}</option>
+          ))}
+        </select>
         <div className={sh.filters}>
           {LEVEL_TABS.map((l) => (
             <button

@@ -20,6 +20,7 @@ export type RiskCustomerList = {
 
 // 위험 고객 목록 (GET /api/admin/churn/customers). 필터·페이징 옵션
 export async function getRiskCustomers(params: {
+  type?: string; // 위험 유형 8종 / ML_HIGH
   memberType?: string; // MEMBER / NORMAL
   level?: string; // HIGH / MID / LOW
   page?: number;
