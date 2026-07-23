@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kopang.app.domain.satisfaction.SatisfactionMapper">
+
+    <!-- 만족도 저장 -->
+    <insert id="insertSatisfaction">
+        INSERT INTO satisfaction_survey (user_id, score, context)
+        VALUES (#{userId}, #{req.score}, #{req.context})
+    </insert>
+
+</mapper>
