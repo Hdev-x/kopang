@@ -87,9 +87,9 @@ import { AdminMembersPage } from "../pages/admin/manage/AdminMembersPage";
 import { AdminMembershipPage } from "../pages/admin/manage/AdminMembershipPage";
 import { AdminCouponsPage } from "../pages/admin/manage/AdminCouponsPage";
 import { AdminFaqPage } from "../pages/admin/manage/AdminFaqPage";
-// 통계·AI추천관리 페이지는 보류 — 파일은 유지하되 라우팅에서 제외 (over-scope 정리)
+// 구매 통계는 후속 브랜치에서 활성화
 // import { AdminStatsPage } from "../pages/admin/manage/AdminStatsPage";
-// import { AdminRecommendationsPage } from "../pages/admin/manage/AdminRecommendationsPage";
+import { AdminRecommendationsPage } from "../pages/admin/manage/AdminRecommendationsPage";
 
 export function AppRouter() {
   return (
@@ -207,7 +207,8 @@ export function AppRouter() {
       <Route path="/admin/membership" element={<AdminRoute><AdminMembershipPage /></AdminRoute>} />
       <Route path="/admin/coupons" element={<AdminRoute><AdminCouponsPage /></AdminRoute>} />
       <Route path="/admin/faqs" element={<AdminRoute><AdminFaqPage /></AdminRoute>} />
-      {/* /admin/stats · /admin/recommendations : 보류 (파일 유지, 라우팅 제외) */}
+      <Route path="/admin/recommendations" element={<AdminRoute><AdminRecommendationsPage /></AdminRoute>} />
+      {/* /admin/stats : ADMIN-06 브랜치에서 활성화 */}
     </Routes>
   );
 }
