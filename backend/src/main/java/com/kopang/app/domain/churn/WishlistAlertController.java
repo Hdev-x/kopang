@@ -21,7 +21,7 @@ public class WishlistAlertController {
     // /api/admin/** 는 Security에서 ADMIN만 통과.
     @PostMapping("/api/admin/churn/wishlist-alert")
     public ResponseEntity<ApiResponse<Map<String, Integer>>> sendWishlistAlert(
-            @RequestParam int limit) {
+            @RequestParam(name = "limit") int limit) {
         int sent = wishlistAlertService.sendDiscountAlerts(limit);
         return ResponseEntity.ok(ApiResponse.success(Map.of("sent", sent)));
     }
