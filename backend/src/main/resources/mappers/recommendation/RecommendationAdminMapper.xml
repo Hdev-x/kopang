@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kopang.app.domain.recommendation.RecommendationAdminMapper">
+
+    <select id="findSummary"
+            resultType="com.kopang.app.domain.recommendation.RecommendationPerformanceResponse">
+        SELECT
+            COUNT(*) AS recommendationCount,
+            COUNT(*) FILTER (WHERE rh.shown) AS shownCount,
+            COUNT(*) FILTER (WHERE rh.clicked) AS clickCount,
+            COUNT(*) FILTER (WHERE rh.converted) AS conversionCount,
+            ROUND(
+                COUNT(*) FILTER (WHERE rh.clicked) * 100.0
+                / NULLIF(COUNT(*) FILTER (WHERE rh.shown), 0),
+                1
+            ) AS clickRate,
+            ROUND(
+                COUNT(*) FILTER (WHERE rh.converted) * 100.0
+                / NULLIF(COUNT(*) FILTER (WHERE rh.clicked), 0),
+                1
+            ) AS conversionRate,
+            COALESCE(SUM(o.total_price) FILTER (WHERE rh.converted), 0) AS revenue
+        FROM recommendation_history rh
+        LEFT JOIN orders o ON o.order_id = rh.order_id
+        WHERE rh.created_at &gt;= CURRENT_DATE - INTERVAL '6 days'
+    </select>
+
+    <select id="findRecentResults"
+            resultType="com.kopang.app.domain.recommendation.RecommendationPerformanceResponse$ResultItem">
+        SELECT
+            rh.recommend_id AS recommendId,
+            u.name AS userName,
+            p.name AS productName,
+            rh.score,
+            rh.reason,
+            rh.shown,
+            rh.clicked,
+            rh.converted
+        FROM recommendation_history rh
+        JOIN users u ON u.user_id = rh.user_id
+        JOIN products p ON p.product_id = rh.product_id
+        ORDER BY rh.created_at DESC, rh.recommend_id DESC
+        LIMIT 100
+    </select>
+
+</mapper>
