@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "../../components/Layout";
 import { PageHeader } from "../../components/PageHeader";
-import { getNotifications, type NotificationItem } from "../../api/notifications";
+import { getNotifications, markNotificationRead, type NotificationItem } from "../../api/notifications";
 import s from "./NotificationsPage.module.css";
 
 // 서버 type enum → 화면 표시(라벨·이모지). 모르는 값은 fallback.
@@ -64,6 +64,12 @@ export function NotificationsPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  // 알림 클릭 시 읽음 처리 — UI 먼저 반영(낙관적), API 실패해도 이동은 유지
+  const handleRead = (id: number) => {
+    setItems((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    markNotificationRead(id).catch(() => {});
+  };
+
   return (
     <Layout>
       <PageHeader title="알림" />
@@ -91,11 +97,11 @@ export function NotificationsPage() {
               </>
             );
             return to ? (
-              <Link key={n.id} to={to} className={cls}>
+              <Link key={n.id} to={to} className={cls} onClick={() => !n.read && handleRead(n.id)}>
                 {inner}
               </Link>
             ) : (
-              <div key={n.id} className={cls}>
+              <div key={n.id} className={cls} onClick={() => !n.read && handleRead(n.id)}>
                 {inner}
               </div>
             );

@@ -31,4 +31,22 @@ public class NotificationController {
         List<NotificationDTO> list = notificationService.getNotifications(userId);
         return ResponseEntity.ok(ApiResponse.success(NotificationListResponse.from(list)));
     }
+
+    // 알림 읽음 처리 (NOTI M3). 본인 알림만 — 남의 id면 404. (= 대응 클릭 추적)
+    @PatchMapping("/{id}/read")
+    public ResponseEntity<ApiResponse<Void>> markRead(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.fail("인증되지 않은 사용자입니다"));
+        }
+        Long userId = userService.detailByEmail(userDetails.getEmail()).getUserId();
+        boolean ok = notificationService.markAsRead(id, userId);
+        if (!ok) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.fail("알림이 없거나 접근 권한이 없습니다"));
+        }
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
 }

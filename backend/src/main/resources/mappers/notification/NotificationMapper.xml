@@ -40,4 +40,13 @@
         ORDER BY created_at DESC
     </select>
 
+    <!-- 읽음 처리 : user_id 조건 필수 (남의 알림 보호). clicked도 함께 true(대응 반응 추적) -->
+    <update id="markAsRead">
+        UPDATE notifications
+        SET is_read = true,
+            clicked = true
+        WHERE notification_id = #{notificationId}
+            AND user_id = #{userId}
+    </update>
+
 </mapper>
