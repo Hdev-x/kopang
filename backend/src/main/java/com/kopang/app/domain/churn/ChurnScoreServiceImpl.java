@@ -9,6 +9,9 @@ import com.kopang.app.domain.intervention.InterventionRequest;
 import com.kopang.app.domain.intervention.InterventionService;
 import com.kopang.app.domain.notification.NotificationDTO;
 import com.kopang.app.domain.notification.NotificationMapper;
+import com.kopang.app.domain.coupon.CouponMapper;
+import com.kopang.app.domain.coupon.CouponDTO;
+import com.kopang.app.domain.coupon.UserCouponDTO;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +25,7 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
     private final ChurnMapper churnMapper;
     private final NotificationMapper notificationMapper;
     private final InterventionService interventionService;
+    private final CouponMapper couponMapper;
 
     // ============================================
     // 감지 (룰별 → churn_score 저장)
@@ -149,7 +153,32 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
                 "IN_APP");
     }
 
-    // 대응 발송 — 오늘자 ④⑧ 대상에 대조군 분리 후 알림 발송 + 전원 기록
+    // 쿠폰 자동 지급 헬퍼 메서드
+    private void autoIssueCoupon(Long userId, Long couponId) {
+        try {
+            int existingCount = couponMapper.countUserCouponByCouponId(userId, couponId);
+            if (existingCount > 0) {
+                return; // 이미 발급받았으면 패스
+            }
+            CouponDTO coupon = couponMapper.findCouponById(couponId);
+            if (coupon == null || coupon.getQuantity() <= 0) {
+                return; // 쿠폰이 없거나 품절이면 패스
+            }
+            couponMapper.decreaseCouponQuantity(couponId);
+            UserCouponDTO userCoupon = UserCouponDTO.builder()
+                    .userId(userId)
+                    .couponId(couponId)
+                    .used(false)
+                    .issuedAt(new java.util.Date())
+                    .expiresAt(coupon.getEndDate())
+                    .build();
+            couponMapper.insertUserCoupon(userCoupon);
+        } catch (Exception e) {
+            System.err.println("[자동 쿠폰 발급 오류] userId: " + userId + ", couponId: " + couponId + " - " + e.getMessage());
+        }
+    }
+
+    // 대응 발송 — 오늘자 감지 위험 대상에 대조군 분리 후 알림 발송 + 전원 기록
     @Transactional
     @Override
     public void runInterventions() {
