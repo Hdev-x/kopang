@@ -197,7 +197,7 @@ export function WebProductDetailPage() {
           </section>
 
           <dl className={styles.delivery}>
-            <dt>배송</dt><dd><strong>무료배송</strong><br />평균 2~3일 이내 도착 예정</dd>
+            <dt>배송</dt><dd><strong>3,000원</strong> (제주/도서 4,500원 · 멤버십 회원 0원)<br />평균 1~2일 이내 도착 예정</dd>
             <dt>판매자</dt><dd>{product.brand ?? "Kopang 입점 판매자"}</dd>
           </dl>
 

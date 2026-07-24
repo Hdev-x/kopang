@@ -9,6 +9,8 @@ import { getUserAddress, getUserAddresses, addAddress, type UserAddressResponse 
 import { createOrder } from "../../api/order";
 import { getPointBalance } from "../../api/point";
 import { getMyCoupons } from "../../api/coupon";
+import { getMembershipStatus } from "../../api/membership";
+import { calculateShippingFee } from "../../utils/shipping";
 import type { CartItem } from "../../types/cart";
 import styles from "./CheckoutPage.module.css";
 
@@ -120,6 +122,8 @@ export function CheckoutPage() {
       .catch(console.error);
   };
 
+  const [isMembership, setIsMembership] = useState(false);
+
   useEffect(() => {
     if (stateSelectedItems && stateSelectedItems.length > 0) {
       setItems(stateSelectedItems);
@@ -128,6 +132,9 @@ export function CheckoutPage() {
     }
     loadDefaultAddress();
     getPointBalance().then((d) => setAvailablePoint(d.balance)).catch(console.error);
+    getMembershipStatus()
+      .then((status) => setIsMembership(status?.status === "ACTIVE"))
+      .catch(() => setIsMembership(false));
     getMyCoupons()
       .then((list) => {
         const available = list.filter((c) => !c.used);
@@ -155,10 +162,18 @@ export function CheckoutPage() {
     }
   }
 
+  const shippingInfo = calculateShippingFee({
+    isMembership,
+    zipcode: selectedAddress?.zipcode,
+    address: selectedAddress?.address,
+  });
+  const shippingFee = shippingInfo.fee;
+
   const afterCoupon = Math.max(0, total - couponDiscount);
-  const maxPoint = Math.min(availablePoint, afterCoupon);
+  const totalBeforePoint = afterCoupon + shippingFee;
+  const maxPoint = Math.min(availablePoint, totalBeforePoint);
   const pointUsed = Math.min(Math.max(0, Number(pointInput) || 0), maxPoint);
-  const finalPrice = afterCoupon - pointUsed;
+  const finalPrice = totalBeforePoint - pointUsed;
 
   const handleOpenSelectModal = () => {
     getUserAddresses()
@@ -348,7 +363,22 @@ export function CheckoutPage() {
           )}
           <div className={styles.amountRow}>
             <span>배송비</span>
-            <span>무료</span>
+            <span>
+              {shippingFee === 0 ? (
+                <span style={{ color: "var(--color-primary)", fontWeight: "bold" }}>
+                  0원 {isMembership ? "(멤버십 혜택 👑)" : "(무료배송)"}
+                </span>
+              ) : (
+                <>
+                  +{shippingFee.toLocaleString()}원
+                  {shippingInfo.isRemote && (
+                    <span style={{ fontSize: "12px", color: "#e53e3e", marginLeft: "4px" }}>
+                      ({shippingInfo.isJeju ? "제주" : "도서산간"})
+                    </span>
+                  )}
+                </>
+              )}
+            </span>
           </div>
           <hr className={styles.divider} />
           <div className={styles.amountTotal}>

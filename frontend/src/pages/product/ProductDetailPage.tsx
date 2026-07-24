@@ -12,11 +12,14 @@ import { getProductReviews } from "../../api/review";
 import { getProductQnaList } from "../../api/qna";
 import { useAuth } from "../../hooks/useAuth";
 import { recordProductView } from "../../api/productViews";
+import { getMembershipStatus } from "../../api/membership";
+import { calculateShippingFee } from "../../utils/shipping";
 import type { Product } from "../../types/product";
 import type { CartItem } from "../../types/cart";
 import type { Review } from "../../api/review";
 import styles from "./ProductDetailPage.module.css";
 import type { QnaSummary } from "../../types/qna";
+import { Link } from "react-router-dom";
 
 
 
@@ -33,6 +36,7 @@ export function ProductDetailPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [tab, setTab] = useState<"review" | "qna">("review");
   const [productQna, setProductQna] = useState<QnaSummary[]>([]);
+  const [isMembership, setIsMembership] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -54,8 +58,12 @@ export function ProductDetailPage() {
       if (user) {
         checkWishlist(prodId).then(setWished).catch(console.error);
         recordProductView(prodId).catch(console.error);
+        getMembershipStatus()
+          .then((status) => setIsMembership(status?.status === "ACTIVE"))
+          .catch(() => setIsMembership(false));
       } else {
         setWished(false);
+        setIsMembership(false);
       }
     }
   }, [id, user]);
@@ -146,6 +154,30 @@ export function ProductDetailPage() {
       )}
 
       {product.description && <p className={styles.desc}>{product.description}</p>}
+
+      {/* 배송비 안내 */}
+      {(() => {
+        const ship = calculateShippingFee({ isMembership });
+        return (
+          <div className={styles.shippingBox}>
+            <div className={styles.shippingRow}>
+              <span className={styles.shippingTitle}>🚚 배송비</span>
+              <strong className={styles.shippingFeeText}>
+                {ship.fee === 0 ? "무료배송" : `${ship.fee.toLocaleString()}원`}
+              </strong>
+              {ship.badge && <span className={styles.shippingBadge}>{ship.badge}</span>}
+            </div>
+            {!isMembership && (
+              <p className={styles.shippingSubText}>
+                기본 3,000원 (제주/도서산간 4,500원) ·{" "}
+                <Link to="/membership" className={styles.membershipLink}>
+                  멤버십 가입 시 어디든 무료배송
+                </Link>
+              </p>
+            )}
+          </div>
+        );
+      })()}
 
       <div className={styles.ctaRow}>
         <button
