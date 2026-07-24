@@ -9,9 +9,10 @@ import styles from "./ProductCard.module.css";
 type Props = { 
   product: Product;
   onWishChange?: (productId: number, isWished: boolean) => void;
+  onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
 };
 
-export function ProductCard({ product, onWishChange }: Props) {
+export function ProductCard({ product, onWishChange, onClick }: Props) {
   const user = useAuth();
   const navigate = useNavigate();
   const [wished, setWished] = useState(false);
@@ -55,7 +56,7 @@ export function ProductCard({ product, onWishChange }: Props) {
   };
 
   return (
-    <Link to={`/products/${product.id}`} className={styles.card}>
+    <Link to={`/products/${product.id}`} className={styles.card} onClick={onClick}>
       <div className={styles.imageWrap}>
         {product.imageUrl ? (
           <img
