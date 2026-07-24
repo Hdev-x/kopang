@@ -12,6 +12,8 @@ export type SalesStats = {
   todaySales: number;
   todayOrders: number;
   newMembers: number;
+  totalSales: number; // 전체 누적 매출
+  monthSales: number; // 이번 달 매출
   weeklySales: DailySales[];
 };
 

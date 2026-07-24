@@ -15,6 +15,8 @@ public class SalesStatsResponse {
     private Long todaySales;    // 오늘 결제완료 매출 합계
     private Integer todayOrders; // 오늘 주문 건수
     private Integer newMembers;  // 오늘 신규 가입 수
+    private Long totalSales;      // 전체 누적 매출
+    private Long monthSales;      // 이번 달 매출
     private List<DailySales> weeklySales; // 최근 7일 일별 매출 (과거→오늘)
 
     /** 일별 매출 1점 */

@@ -28,6 +28,21 @@
         WHERE created_at::date = CURRENT_DATE
     </select>
 
+    <!-- 전체 누적 매출 -->
+    <select id="selectTotalSales" resultType="long">
+        SELECT COALESCE(SUM(total_price), 0)
+        FROM orders
+        WHERE payment_status = 'PAID'
+    </select>
+
+    <!-- 이번 달 매출 -->
+    <select id="selectMonthSales" resultType="long">
+        SELECT COALESCE(SUM(total_price), 0)
+        FROM orders
+        WHERE payment_status = 'PAID'
+            AND date_trunc('month', ordered_at) = date_trunc('month', NOW())
+    </select>
+
     <!-- 최근 7일 일별 매출 : generate_series로 7일을 만들고 매출을 LEFT JOIN
          → 주문 없는 날도 0으로 채워 막대 7개가 다 나옴 (과거→오늘) -->
     <select id="selectWeeklySales"

@@ -19,6 +19,12 @@ public interface SalesStatsMapper {
     // 오늘 신규 가입 수 (users)
     int selectNewMembers();
 
+    // 전체 누적 매출 (orders)
+    long selectTotalSales();
+
+    // 이번 달 매출 (orders)
+    long selectMonthSales();
+
     // 최근 7일 일별 매출 (과거→오늘)
     List<DailySales> selectWeeklySales();
 }
