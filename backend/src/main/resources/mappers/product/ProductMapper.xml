@@ -56,6 +56,11 @@
             <when test="sort == 'latest'">
                 products.product_id DESC
             </when>
+            <when test="sort == 'discount'">
+                (CASE WHEN products.discount_price > 0 AND products.discount_price &lt; products.price
+                      THEN (products.price - products.discount_price) * 100.0 / products.price
+                      ELSE 0 END) DESC, products.product_id DESC
+            </when>
             <otherwise>
                 COALESCE(pop.popular_score, 0) DESC, products.product_id DESC
             </otherwise>
