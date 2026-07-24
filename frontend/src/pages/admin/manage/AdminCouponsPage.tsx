@@ -66,8 +66,10 @@ export function AdminCouponsPage() {
       setQuantity("1000");
       setEndDate("");
       loadData(); // 재로드
-    } catch {
-      alert("쿠폰 생성에 실패했습니다.");
+    } catch (error: unknown) {
+      const message =
+        (error as { response?: { data?: { message?: string } } }).response?.data?.message;
+      alert(message ?? "쿠폰 생성에 실패했습니다.");
     }
   };
 
@@ -196,6 +198,8 @@ export function AdminCouponsPage() {
                 </label>
                 <input
                   type="number"
+                  min={1}
+                  max={discountType === "RATE" ? 100 : undefined}
                   placeholder={discountType === "AMOUNT" ? "예: 3000" : "예: 10"}
                   value={discountValue}
                   onChange={(e) => setDiscountValue(e.target.value)}
@@ -207,6 +211,7 @@ export function AdminCouponsPage() {
                 <label style={{ fontSize: "13px", fontWeight: 600, color: "var(--color-text-muted)" }}>발급 수량 (선착순 재고)</label>
                 <input
                   type="number"
+                  min={1}
                   placeholder="예: 1000"
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
