@@ -70,6 +70,9 @@ import { AdminMembersPage } from "../pages/admin/manage/AdminMembersPage";
 import { AdminMembershipPage } from "../pages/admin/manage/AdminMembershipPage";
 import { AdminCouponsPage } from "../pages/admin/manage/AdminCouponsPage";
 import { AdminFaqPage } from "../pages/admin/manage/AdminFaqPage";
+import { AdminInquiriesPage } from "../pages/admin/manage/AdminInquiriesPage";
+import { AdminInquiryDetailPage } from "../pages/admin/manage/AdminInquiryDetailPage";
+
 // 통계·AI추천관리 페이지는 보류 — 파일은 유지하되 라우팅에서 제외 (over-scope 정리)
 // import { AdminStatsPage } from "../pages/admin/manage/AdminStatsPage";
 // import { AdminRecommendationsPage } from "../pages/admin/manage/AdminRecommendationsPage";
@@ -129,6 +132,8 @@ export function AppRouter() {
       {/* ---------- 관리자 ---------- */}
       <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
+      <Route path="/admin/inquiries/:id" element={<AdminRoute><AdminInquiryDetailPage /></AdminRoute>} />
+      <Route path="/admin/inquiries" element={<AdminRoute><AdminInquiriesPage /></AdminRoute>} />
 
       {/* 관리자 · 이탈방지 */}
       <Route path="/admin/churn" element={<AdminRoute><AdminChurnPage /></AdminRoute>} />

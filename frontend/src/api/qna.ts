@@ -10,6 +10,24 @@ export async function getQnaList(type?: "PRODUCT" | "GENERAL") {
   return res.data.data;
 }
 
+// 관리자 전체 문의 목록
+export async function getAdminQnaList() {
+  const res =
+    await client.get<ApiResponse<QnaSummary[]>>("/admin/inquiries");
+
+  return res.data.data;
+
+}
+
+// 관리자 문의 상세 조회
+export async function getAdminQna(id: number) {
+  const res = await client.get<ApiResponse<QnaPost>>(
+    `/admin/inquiries/${id}`
+  );
+
+  return res.data.data;
+}
+
 // 상품별 문의 목록
 export async function getProductQnaList(productId: number) {
   const res = await client.get<ApiResponse<QnaSummary[]>>(

@@ -22,6 +22,7 @@ const GROUPS: { title: string; items: Item[] }[] = [
     items: [
       { to: "/admin/products", label: "상품 관리" },
       { to: "/admin/orders", label: "주문·배송" },
+      { to: "/admin/inquiries", label: "문의 관리" },
       { to: "/admin/members", label: "회원 관리" },
       { to: "/admin/membership", label: "멤버십 관리" },
     ],
