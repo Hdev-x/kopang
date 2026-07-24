@@ -155,12 +155,17 @@
     <!-- ============================================= -->
 
     <!-- 조회 -->
-    <!-- 오늘 감지된 찜 방치, 구매액 감소 중, 최근 7일 안에 같은 대응을 안 받은 사람은 누구인가? -->
+    <!-- 통합 발송 대상 조회 (최근 7일 내 같은 대응 미수신자만)
+         2026-07-24 회의 반영으로 발송 유형 축소:
+         - WISHLIST_IDLE: 일반 독촉 제거, 찜 할인 알림(CHURN-13) 경로만 유지
+         - SPENDING_DROP: 재구매 유도는 CHURN-04(구매주기)가 담당 — 분석·ML 피처용으로 전환
+         - BAD_EXPERIENCE: 발송 제외, 만족도 사유 수집·분석용으로 전환
+         - CART_ABANDON: 홈 배너 실시간 노출로 대응 (의도적 미포함) -->
     <select id="findInterventionTargets">
         SELECT churn_score_id, user_id, risk_type
         FROM churn_score cs
         WHERE scored_at::date = CURRENT_DATE
-            AND risk_type IN ('WISHLIST_IDLE','SPENDING_DROP','FIRST_ORDER_ONLY','BAD_EXPERIENCE')
+            AND risk_type IN ('FIRST_ORDER_ONLY')
             AND source = 'RULE'
             AND NOT EXISTS
             (
