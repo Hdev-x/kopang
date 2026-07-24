@@ -68,7 +68,7 @@ const STATUS_LABEL: Record<string, string> = {
   DELIVERED: "배송완료",
   CONFIRMED: "구매확정",
   CANCELLED: "주문취소",
-  RETURNED:  "반품",
+  RETURNED:  "환불/반품 완료",
 };
 
 export function formatOrderStatus(status: string): string {

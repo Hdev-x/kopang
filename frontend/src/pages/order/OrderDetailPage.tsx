@@ -116,7 +116,7 @@ export function OrderDetailPage() {
         </div>
         <div className={s.row}>
           <span className={s.muted}>결제상태</span>
-          <span>{formatOrderStatus(order.paymentStatus)}</span>
+          <span>{formatOrderStatus(order.orderStatus === "RETURNED" ? order.orderStatus : order.paymentStatus)}</span>
         </div>
         {order.paymentStatus === "PENDING" && (
           <div className={s.row} style={{ marginTop: "12px", justifyContent: "flex-end", gap: "8px" }}>
@@ -155,14 +155,24 @@ export function OrderDetailPage() {
       {/* 배송현황 */}
       <h2 className={s.section}>배송현황</h2>
       <Card>
-        <div className={s.track}>
-          {dummyTracking.map((t) => (
-            <div key={t.step} className={`${s.trackStep} ${t.done ? s.trackDone : ""}`}>
-              <span className={s.dot} />
-              <span>{t.step}</span>
-            </div>
-          ))}
-        </div>
+        {order.orderStatus === "RETURNED" ? (
+          <div style={{ textAlign: "center", padding: "16px 0", color: "#d97706", fontWeight: 600, fontSize: "15px" }}>
+            🔄 환불/반품 신청이 완료되었습니다.
+          </div>
+        ) : order.orderStatus === "CANCELLED" || order.paymentStatus === "CANCELLED" ? (
+          <div style={{ textAlign: "center", padding: "16px 0", color: "#dc2626", fontWeight: 600, fontSize: "15px" }}>
+            ❌ 주문이 취소되었습니다.
+          </div>
+        ) : (
+          <div className={s.track}>
+            {dummyTracking.map((t) => (
+              <div key={t.step} className={`${s.trackStep} ${t.done ? s.trackDone : ""}`}>
+                <span className={s.dot} />
+                <span>{t.step}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </Card>
 
       {/* 주문 상품 (상품 누르면 상세로) */}
