@@ -112,6 +112,53 @@
         LIMIT #{limit}
     </select>
 
+    <select id="findRecentViewCandidates"
+            resultType="com.kopang.app.domain.recommendation.RecommendationResponse">
+        WITH recent_views AS (
+            SELECT target_id AS product_id, MAX(created_at) AS max_viewed_at
+            FROM user_behavior_log
+            WHERE user_id = #{userId}
+              AND action = 'VIEW'
+            GROUP BY target_id
+        ),
+        target_categories AS (
+            SELECT p.category_id, MAX(rv.max_viewed_at) AS category_viewed_at
+            FROM recent_views rv
+            JOIN products p ON p.product_id = rv.product_id
+            GROUP BY p.category_id
+        )
+        SELECT
+            p.product_id AS productId,
+            p.category_id AS categoryId,
+            p.name,
+            p.price,
+            p.discount_price AS discountPrice,
+            p.image_url AS imageUrl,
+            EXTRACT(EPOCH FROM tc.category_viewed_at)::double precision AS score,
+            '최근 관심 있게 본 상품과 연관된 추천이에요' AS reason
+        FROM target_categories tc
+        JOIN products p ON p.category_id = tc.category_id
+        WHERE p.status = 'ACTIVE'
+          AND p.stock &gt; 0
+          AND NOT EXISTS (
+              SELECT 1
+              FROM orders bought_order
+              JOIN orders_item bought_item ON bought_item.order_id = bought_order.order_id
+              WHERE bought_order.user_id = #{userId}
+                AND bought_order.payment_status = 'PAID'
+                AND bought_order.order_status NOT IN ('CANCELLED', 'RETURNED')
+                AND bought_item.product_id = p.product_id
+          )
+        ORDER BY tc.category_viewed_at DESC, p.product_id DESC
+        LIMIT #{limit}
+    </select>
+
+    <delete id="deleteTodayRecommendations">
+        DELETE FROM recommendation_history
+        WHERE user_id = #{userId}
+          AND created_at::date = CURRENT_DATE
+    </delete>
+
     <insert id="insertRecommendations">
         INSERT INTO recommendation_history (
             user_id, product_id, reason, score, shown, clicked, converted
