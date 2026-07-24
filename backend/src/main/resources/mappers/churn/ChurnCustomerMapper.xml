@@ -5,8 +5,11 @@
 
 <mapper namespace="com.kopang.app.domain.churn.ChurnCustomerMapper">
 
-    <!-- 공통 필터: 등급 + 멤버십 여부 (있을 때만 붙음) -->
+    <!-- 공통 필터: 위험유형 + 등급 + 멤버십 여부 (있을 때만 붙음) -->
     <sql id="customerFilter">
+        <if test="type != null and type != ''">
+            AND l.risk_type = #{type}
+        </if>
         <if test="level != null and level != ''">
             AND l.risk_level = #{level}
         </if>
@@ -60,7 +63,7 @@
     <!-- 같은 필터의 총 건수 (목록엔 없는 users/발송상태 조인 생략) -->
     <select id="countRiskCustomers" resultType="long">
         WITH latest AS (
-            SELECT DISTINCT ON (user_id) user_id, risk_level
+            SELECT DISTINCT ON (user_id) user_id, risk_level, risk_type
             FROM churn_score
             ORDER BY user_id, scored_at DESC
         )

@@ -13,10 +13,12 @@ public class ChurnCustomerServiceImpl implements ChurnCustomerService {
     private final ChurnCustomerMapper customerMapper;
 
     @Override
-    public RiskCustomerListResponse getRiskCustomers(String memberType, String level, int page, int size) {
+    public RiskCustomerListResponse getRiskCustomers(
+            String type, String memberType, String level, int page, int size) {
         int offset = page * size; // page(0부터) → 건너뛸 개수
-        List<RiskCustomerResponse> content = customerMapper.findRiskCustomers(memberType, level, size, offset);
-        long total = customerMapper.countRiskCustomers(memberType, level);
+        List<RiskCustomerResponse> content =
+                customerMapper.findRiskCustomers(type, memberType, level, size, offset);
+        long total = customerMapper.countRiskCustomers(type, memberType, level);
         return new RiskCustomerListResponse(content, total);
     }
 }

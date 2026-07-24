@@ -15,14 +15,15 @@ public class ChurnCustomerController {
 
     private final ChurnCustomerService churnCustomerService;
 
-    // 위험 고객 목록 (FR-ADMIN-08). memberType/level 필터 옵션. /api/admin/** 는 ADMIN만 통과.
+    // 위험 고객 목록 (FR-ADMIN-08). type/memberType/level 필터 옵션.
     @GetMapping("/api/admin/churn/customers")
     public ResponseEntity<ApiResponse<RiskCustomerListResponse>> customers(
+            @RequestParam(name = "type", required = false) String type,
             @RequestParam(name = "memberType", required = false) String memberType,
             @RequestParam(name = "level", required = false) String level,
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "50") int size) {
         return ResponseEntity.ok(
-                ApiResponse.success(churnCustomerService.getRiskCustomers(memberType, level, page, size)));
+                ApiResponse.success(churnCustomerService.getRiskCustomers(type, memberType, level, page, size)));
     }
 }
