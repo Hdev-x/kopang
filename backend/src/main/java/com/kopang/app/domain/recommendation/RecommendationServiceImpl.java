@@ -21,11 +21,32 @@ public class RecommendationServiceImpl implements RecommendationService {
         List<RecommendationResponse> saved =
                 recommendationMapper.findTodayRecommendations(userId);
         if (!saved.isEmpty()) {
+            boolean isPopularFallback = saved.stream()
+                    .allMatch(r -> "지금 많이 선택하는 인기 상품이에요".equals(r.getReason()));
+            if (isPopularFallback) {
+                List<RecommendationResponse> itemCf =
+                        recommendationMapper.findItemCfCandidates(userId, DEFAULT_LIMIT);
+                if (!itemCf.isEmpty()) {
+                    recommendationMapper.deleteTodayRecommendations(userId);
+                    recommendationMapper.insertRecommendations(userId, itemCf);
+                    return recommendationMapper.findTodayRecommendations(userId);
+                }
+                List<RecommendationResponse> viewCandidates =
+                        recommendationMapper.findRecentViewCandidates(userId, DEFAULT_LIMIT);
+                if (!viewCandidates.isEmpty()) {
+                    recommendationMapper.deleteTodayRecommendations(userId);
+                    recommendationMapper.insertRecommendations(userId, viewCandidates);
+                    return recommendationMapper.findTodayRecommendations(userId);
+                }
+            }
             return saved;
         }
 
         List<RecommendationResponse> candidates =
                 recommendationMapper.findItemCfCandidates(userId, DEFAULT_LIMIT);
+        if (candidates.isEmpty()) {
+            candidates = recommendationMapper.findRecentViewCandidates(userId, DEFAULT_LIMIT);
+        }
         if (candidates.isEmpty()) {
             candidates = recommendationMapper.findPopularCandidates(userId, DEFAULT_LIMIT);
         }

@@ -6,6 +6,7 @@ import { ProductCard } from "../../components/ProductCard";
 import { useAuth } from "../../hooks/useAuth";
 import { getCategories } from "../../api/categories";
 import { getProducts } from "../../api/products";
+import { getMembershipStatus } from "../../api/membership";
 import { CATEGORY_EMOJIS } from "../../types/category";
 import type { Category } from "../../types/category";
 import type { Product } from "../../types/product";
@@ -36,7 +37,10 @@ function RecommendedProductCard({ item }: { item: RecommendedProduct }) {
 
 export function HomePage() {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [popularProducts, setPopularProducts] = useState<Product[]>([]);
+  const [dealProducts, setDealProducts] = useState<Product[]>([]);
+  const [latestProducts, setLatestProducts] = useState<Product[]>([]);
+  const [isMember, setIsMember] = useState(false);
   const [bannerOpen, setBannerOpen] = useState(true); // 이탈위험①: 장바구니 방치 리마인더
   const [rebuyOpen, setRebuyOpen] = useState(true); // 이탈위험⑧: 재구매 주기 알림
   const [reco, setReco] = useState<RecommendationList | null>(null);
@@ -46,9 +50,18 @@ export function HomePage() {
     getCategories()
       .then(setCategories)
       .catch((err) => console.error("카테고리 불러오기 실패:", err));
-    getProducts(undefined, 0, 20, undefined, "latest")
-      .then((page) => setProducts(page.content))
-      .catch((err) => console.error("상품 불러오기 실패:", err));
+
+    getProducts(undefined, 0, 12, undefined, "popular")
+      .then((page) => setPopularProducts(page.content))
+      .catch((err) => console.error("인기 상품 불러오기 실패:", err));
+
+    getProducts(undefined, 0, 12, undefined, "discount")
+      .then((page) => setDealProducts(page.content))
+      .catch((err) => console.error("특가 상품 불러오기 실패:", err));
+
+    getProducts(undefined, 0, 12, undefined, "latest")
+      .then((page) => setLatestProducts(page.content))
+      .catch((err) => console.error("신상품 불러오기 실패:", err));
   }, []);
 
   useEffect(() => {
@@ -56,17 +69,29 @@ export function HomePage() {
       getRecommendations()
         .then(setReco)
         .catch((err) => console.error("추천 불러오기 실패:", err));
+
+      getMembershipStatus()
+        .then((statusData) => {
+          if (statusData && (statusData.status === "ACTIVE" || statusData.status === "CANCELLED")) {
+            setIsMember(true);
+          } else {
+            setIsMember(false);
+          }
+        })
+        .catch((err) => {
+          console.error("멤버십 상태 조회 실패:", err);
+          setIsMember(false);
+        });
     } else {
       setReco(null);
+      setIsMember(false);
     }
   }, [user]);
 
-  // mock 8개를 순서만 돌려 섹션별로 다양하게 (실제론 각 섹션 전용 API)
-  const rotate = (arr: Product[], n: number) => [...arr.slice(n), ...arr.slice(0, n)];
   const sections = [
-    { title: "🔥 지금 뜨는 상품", items: products },
-    { title: "⚡ 오늘의 특가", items: rotate(products, 3) },
-    { title: "🆕 신상품", items: rotate(products, 5) },
+    { title: "🔥 지금 뜨는 상품", items: popularProducts },
+    { title: "⚡ 오늘의 특가", items: dealProducts },
+    { title: "🆕 신상품", items: latestProducts },
   ];
 
   return (
@@ -134,14 +159,16 @@ export function HomePage() {
         ))}
       </div>
 
-      {/* 멤버십 전환 유도(업셀) — 일반 고객 대상. 실제론 비회원에게만 노출 */}
-      <Link to="/membership" className={styles.upsell}>
-        <div>
-          <p className={styles.upsellTitle}>⭐ WOW 멤버십 무료배송 + 2% 적립</p>
-          <p className={styles.upsellSub}>첫 달 무료로 혜택 받아보기</p>
-        </div>
-        <span className={styles.upsellArrow}>→</span>
-      </Link>
+      {/* 멤버십 전환 유도(업셀) — 비멤버십 회원에게만 노출 */}
+      {!isMember && (
+        <Link to="/membership" className={styles.upsell}>
+          <div>
+            <p className={styles.upsellTitle}>⭐ WOW 멤버십 무료배송 + 2% 적립</p>
+            <p className={styles.upsellSub}>첫 달 무료로 혜택 받아보기</p>
+          </div>
+          <span className={styles.upsellArrow}>→</span>
+        </Link>
+      )}
 
       {/* 맞춤 추천 (추천 ML: item-CF 결과 자리. 콜드스타트는 인기상품으로 대체) */}
       {reco && reco.items.length > 0 && (

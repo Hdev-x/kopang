@@ -16,6 +16,11 @@ public interface RecommendationMapper {
     List<RecommendationResponse> findPopularCandidates(
             @Param("userId") Long userId, @Param("limit") int limit);
 
+    List<RecommendationResponse> findRecentViewCandidates(
+            @Param("userId") Long userId, @Param("limit") int limit);
+
+    int deleteTodayRecommendations(@Param("userId") Long userId);
+
     int insertRecommendations(
             @Param("userId") Long userId,
             @Param("items") List<RecommendationResponse> items);
