@@ -69,7 +69,7 @@ export function LoginPage() {
           </Button>
         </form>
         <p className={styles.switch}>
-          아직 회원이 아니신가요? <Link to="/signup">회원가입</Link> | <Link to="/find-password">비밀번호 찾기</Link>
+          아직 회원이 아니신가요? <Link to="/signup">회원가입</Link> | <Link to="/find-email">아이디 찾기</Link> | <Link to="/find-password">비밀번호 찾기</Link>
         </p>
 
         <div style={{ display: "flex", alignItems: "center", margin: "20px 0", color: "var(--color-text-muted, #888)" }}>

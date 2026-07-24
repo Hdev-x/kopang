@@ -53,6 +53,9 @@ public class UserServiceImpl implements UserService {
         if (checkEmailDuplicate(request.getEmail())) {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다");
         }
+        if (request.getPhone() != null && checkPhoneDuplicate(request.getPhone())) {
+            throw new IllegalArgumentException("이미 등록된 전화번호입니다");
+        }
 
         // 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(request.getPassword());
@@ -291,5 +294,31 @@ public class UserServiceImpl implements UserService {
         // 새 비밀번호 암호화 후 업데이트
         user.setPassword(passwordEncoder.encode(newPassword));
         userMapper.update(user);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String findEmailByNameAndPhone(String name, String phone) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("이름을 입력해 주세요.");
+        }
+        if (phone == null || phone.trim().isEmpty()) {
+            throw new IllegalArgumentException("연락처를 입력해 주세요.");
+        }
+
+        UserDTO user = userMapper.findByNameAndPhone(name.trim(), phone.trim());
+        if (user == null) {
+            throw new IllegalArgumentException("입력하신 정보와 일치하는 회원이 존재하지 않습니다.");
+        }
+        return user.getEmail();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean checkPhoneDuplicate(String phone) {
+        if (phone == null || phone.trim().isEmpty()) {
+            return false;
+        }
+        return userMapper.findByPhone(phone.trim()) != null;
     }
 }
