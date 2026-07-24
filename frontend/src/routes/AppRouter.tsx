@@ -87,8 +87,7 @@ import { AdminMembersPage } from "../pages/admin/manage/AdminMembersPage";
 import { AdminMembershipPage } from "../pages/admin/manage/AdminMembershipPage";
 import { AdminCouponsPage } from "../pages/admin/manage/AdminCouponsPage";
 import { AdminFaqPage } from "../pages/admin/manage/AdminFaqPage";
-// 구매 통계는 후속 브랜치에서 활성화
-// import { AdminStatsPage } from "../pages/admin/manage/AdminStatsPage";
+import { AdminStatsPage } from "../pages/admin/manage/AdminStatsPage";
 import { AdminRecommendationsPage } from "../pages/admin/manage/AdminRecommendationsPage";
 
 export function AppRouter() {
@@ -208,7 +207,7 @@ export function AppRouter() {
       <Route path="/admin/coupons" element={<AdminRoute><AdminCouponsPage /></AdminRoute>} />
       <Route path="/admin/faqs" element={<AdminRoute><AdminFaqPage /></AdminRoute>} />
       <Route path="/admin/recommendations" element={<AdminRoute><AdminRecommendationsPage /></AdminRoute>} />
-      {/* /admin/stats : ADMIN-06 브랜치에서 활성화 */}
+      <Route path="/admin/stats" element={<AdminRoute><AdminStatsPage /></AdminRoute>} />
     </Routes>
   );
 }
