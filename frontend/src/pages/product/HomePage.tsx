@@ -7,6 +7,9 @@ import { useAuth } from "../../hooks/useAuth";
 import { getCategories } from "../../api/categories";
 import { getProducts } from "../../api/products";
 import { getMembershipStatus } from "../../api/membership";
+import { getHomeBanners } from "../../api/homeBanners";
+import type { HomeBanners } from "../../api/homeBanners";
+import { downloadCoupon } from "../../api/coupon";
 import { CATEGORY_EMOJIS } from "../../types/category";
 import type { Category } from "../../types/category";
 import type { Product } from "../../types/product";
@@ -43,6 +46,7 @@ export function HomePage() {
   const [isMember, setIsMember] = useState(false);
   const [bannerOpen, setBannerOpen] = useState(true); // 이탈위험①: 장바구니 방치 리마인더
   const [rebuyOpen, setRebuyOpen] = useState(true); // 이탈위험⑧: 재구매 주기 알림
+  const [banners, setBanners] = useState<HomeBanners | null>(null);
   const [reco, setReco] = useState<RecommendationList | null>(null);
   const user = useAuth();
 
@@ -82,11 +86,21 @@ export function HomePage() {
           console.error("멤버십 상태 조회 실패:", err);
           setIsMember(false);
         });
+
+      getHomeBanners()
+        .then(setBanners)
+        .catch(console.error);
     } else {
       setReco(null);
       setIsMember(false);
+      setBanners(null);
     }
   }, [user]);
+
+  const handleAbandonBannerClick = () => {
+    // 5% 장바구니 방치 할인 쿠폰(couponId=3) 발급 시도 (중복 발급 시 백엔드 오류는 에러 표시 없이 차단)
+    downloadCoupon(3).catch(() => {});
+  };
 
   const sections = [
     { title: "🔥 지금 뜨는 상품", items: popularProducts },
@@ -96,9 +110,9 @@ export function HomePage() {
 
   return (
     <Layout>
-      {/* 이탈방지① 장바구니 방치 리마인더 (목업: 항상 노출, 실제론 백엔드가 방치 감지 시) */}
-      {bannerOpen && (
-        <Link to="/cart" className={styles.abandonBanner}>
+      {/* 이탈방지① 장바구니 방치 리마인더 */}
+      {user && bannerOpen && banners?.cartAbandon && (
+        <Link to="/cart" className={styles.abandonBanner} onClick={handleAbandonBannerClick}>
           <span className={styles.abandonText}>
             🛒 장바구니에 담아둔 상품이 기다려요 · 지금 구매 시 <b>5% 추가할인</b>
           </span>
@@ -108,6 +122,7 @@ export function HomePage() {
             aria-label="닫기"
             onClick={(e) => {
               e.preventDefault();
+              e.stopPropagation();
               setBannerOpen(false);
             }}
           >
@@ -116,11 +131,11 @@ export function HomePage() {
         </Link>
       )}
 
-      {/* 이탈방지⑧ 재구매 주기 알림 (목업: 항상 노출, 실제론 구매주기 도달 감지 시) */}
-      {rebuyOpen && (
-        <Link to="/products/2" className={`${styles.abandonBanner} ${styles.rebuyBanner}`}>
+      {/* 이탈방지⑧ 재구매 주기 알림 */}
+      {user && rebuyOpen && banners?.rebuy && (
+        <Link to={`/products/${banners.rebuy.productId}`} className={`${styles.abandonBanner} ${styles.rebuyBanner}`}>
           <span className={styles.abandonText}>
-            🔁 자주 사시던 <b>제주 삼다수</b> 다시 살 때가 됐어요 · 지금 재주문
+            🔁 자주 사시던 <b>{banners.rebuy.productName}</b> 다시 살 때가 됐어요 · 지금 재주문
           </span>
           <button
             type="button"
