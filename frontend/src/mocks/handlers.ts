@@ -114,6 +114,35 @@ export const handlers = [
     }),
   ),
 
+  // 관리자 전체 문의 목록
+  http.get("/api/admin/inquiries", () =>
+    HttpResponse.json({
+      success: true,
+      data: qnaPosts.map((q) => ({
+        id: q.id,
+        type: q.type,
+        productId: q.productId,
+        title: q.title,
+        author: q.author,
+        status: q.status,
+        createdAt: q.createdAt,
+        answerContent: q.answerContent,
+      })),
+      message: null,
+    }),
+  ),
+
+  // 관리자 문의 상세
+  http.get("/api/admin/inquiries/:id", ({ params }) => {
+    const post = qnaPosts.find((q) => q.id === Number(params.id));
+
+    return HttpResponse.json({
+      success: !!post,
+      data: post ?? null,
+      message: post ? null : "NOT_FOUND",
+    });
+  }),
+
   // 1:1 문의 목록 - API 명세서 주소
   http.get("/api/inquiries", ({ request }) => {
     const url = new URL(request.url);

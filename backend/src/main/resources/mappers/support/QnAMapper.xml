@@ -23,6 +23,28 @@
     ORDER BY i.created_at DESC 
     </select>
 
+<select id="findAllForAdmin"
+        resultType="com.kopang.app.domain.support.Qna.QnADTO">
+    SELECT
+        i.inquiry_id AS id,
+        i.user_id AS userId,
+        i.type AS type,
+        i.product_id AS productId,
+        p.name AS productName,
+        i.title AS title,
+        CASE
+            WHEN u.name IS NULL OR u.name = '' THEN '고객'
+            ELSE CONCAT(SUBSTRING(u.name, 1, 1), '**')
+        END AS author,
+        i.status AS status,
+        i.created_at AS createdAt,
+        i.answer AS answerContent
+    FROM inquiries i
+    LEFT JOIN products p ON i.product_id = p.product_id
+    LEFT JOIN users u ON i.user_id = u.user_id
+    ORDER BY i.created_at DESC
+</select>
+
 
     <select id="findByType" resultType="com.kopang.app.domain.support.Qna.QnADTO"> 
     SELECT

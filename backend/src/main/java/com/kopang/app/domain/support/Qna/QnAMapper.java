@@ -9,6 +9,7 @@ import java.util.List;
 public interface QnAMapper {
 
         List<QnADTO> findAll(@Param("userId") Long userId);
+        List<QnADTO> findAllForAdmin();
 
         List<QnADTO> findByType(
                         @Param("userId") Long userId,

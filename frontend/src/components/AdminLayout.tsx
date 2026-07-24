@@ -45,6 +45,7 @@ const GROUPS: { title: string; items: Item[] }[] = [
   {
     title: "CUSTOMER",
     items: [
+      { to: "/admin/inquiries", label: "문의 관리", icon: CircleHelp },
       { to: "/admin/members", label: "회원 관리", icon: UsersRound },
       { to: "/admin/membership", label: "멤버십 관리", icon: BadgePercent },
     ],

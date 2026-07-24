@@ -19,6 +19,20 @@ public class QnAService {
         return qnAMapper.findByType(userId, type);
     }
 
+    public List<QnADTO> getAllQnaForAdmin() {
+        return qnAMapper.findAllForAdmin();
+    }
+
+    public QnADTO getQnaForAdmin(Long id) {
+        QnADTO qna = qnAMapper.findById(id);
+
+        if (qna == null) {
+            throw new IllegalArgumentException("NOT_FOUND");
+        }
+
+        return qna;
+    }
+
     public List<QnADTO> getProductQnaList(Long productId) {
         return qnAMapper.findByProductId(productId);
     }
