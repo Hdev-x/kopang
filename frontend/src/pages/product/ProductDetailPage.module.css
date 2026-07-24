@@ -83,6 +83,23 @@
   flex: 1;
 }
 
+.cartBtn {
+  background-color: #eff6ff !important;
+  color: #2563eb !important;
+  border: 1px solid #bfdbfe !important;
+  font-weight: 700 !important;
+}
+
+.cartBtn:hover {
+  background-color: #dbeafe !important;
+}
+
+.buyBtn {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
 .section {
   font-size: var(--font-lg);
   font-weight: var(--weight-bold);

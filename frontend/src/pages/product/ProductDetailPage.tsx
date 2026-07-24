@@ -6,13 +6,14 @@ import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
 import { AddToCartModal } from "../../components/AddToCartModal";
 import { getProduct, getAIRecommendations } from "../../api/products";
-import { addToCart } from "../../api/cart";
+import { addToCart, getCart } from "../../api/cart";
 import { checkWishlist, addWishlist, deleteWishlist } from "../../api/wishlist";
 import { getProductReviews } from "../../api/review";
 import { getProductQnaList } from "../../api/qna";
 import { useAuth } from "../../hooks/useAuth";
 import { recordProductView } from "../../api/productViews";
 import type { Product } from "../../types/product";
+import type { CartItem } from "../../types/cart";
 import type { Review } from "../../api/review";
 import styles from "./ProductDetailPage.module.css";
 import type { QnaSummary } from "../../types/qna";
@@ -93,6 +94,28 @@ export function ProductDetailPage() {
     ? Math.round((product.price * (100 - product.discountRate)) / 100)
     : product.price;
 
+  const handleDirectBuy = () => {
+    if (!user) {
+      if (window.confirm("로그인이 필요한 기능입니다. 로그인 페이지로 이동할까요?")) {
+        navigate("/login");
+      }
+      return;
+    }
+    if (id && product) {
+      const directItem: CartItem = {
+        itemId: Date.now(),
+        productId: product.id,
+        name: product.name,
+        price: discounted,
+        originalPrice: product.price,
+        discountPrice: discounted,
+        quantity: 1,
+        imageUrl: product.imageUrl || "",
+      };
+      navigate("/checkout", { state: { selectedItems: [directItem] } });
+    }
+  };
+
   return (
     <Layout>
       {product.imageUrl ? (
@@ -134,7 +157,7 @@ export function ProductDetailPage() {
           <Heart size={22} strokeWidth={2.2} fill={wished ? "currentColor" : "none"} />
         </button>
         <Button
-          className={styles.cta}
+          className={`${styles.cta} ${styles.cartBtn}`}
           onClick={() => {
             if (id) {
               addToCart(Number(id), 1)
@@ -146,7 +169,10 @@ export function ProductDetailPage() {
             }
           }}
         >
-          장바구니 담기
+          장바구니
+        </Button>
+        <Button className={`${styles.cta} ${styles.buyBtn}`} onClick={handleDirectBuy}>
+          바로 구매
         </Button>
       </div>
 
