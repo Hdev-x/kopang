@@ -94,7 +94,7 @@ export function OrderDetailPage() {
   }
 
   const dateStr = order.createdAt ? order.createdAt.split("T")[0] : "";
-  const dummyTracking = [
+  const trackingSteps = [
     { step: "결제완료", done: order.paymentStatus === "PAID" || order.orderStatus === "PAID" || order.orderStatus === "SHIPPING" || order.orderStatus === "DELIVERED" || order.orderStatus === "CONFIRMED" },
     { step: "상품준비중", done: order.orderStatus === "PAID" || order.orderStatus === "SHIPPING" || order.orderStatus === "DELIVERED" || order.orderStatus === "CONFIRMED" },
     { step: "배송중", done: order.orderStatus === "SHIPPING" || order.orderStatus === "DELIVERED" || order.orderStatus === "CONFIRMED" },
@@ -165,7 +165,7 @@ export function OrderDetailPage() {
           </div>
         ) : (
           <div className={s.track}>
-            {dummyTracking.map((t) => (
+            {trackingSteps.map((t) => (
               <div key={t.step} className={`${s.trackStep} ${t.done ? s.trackDone : ""}`}>
                 <span className={s.dot} />
                 <span>{t.step}</span>
