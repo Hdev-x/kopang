@@ -45,7 +45,19 @@ export function CheckoutPage() {
     }
     loadDefaultAddress();
     getPointBalance().then((d) => setAvailablePoint(d.balance)).catch(console.error);
-    getMyCoupons().then((list) => setMyCoupons(list.filter((c) => !c.used))).catch(console.error);
+    getMyCoupons()
+      .then((list) => {
+        const available = list.filter((c) => !c.used);
+        setMyCoupons(available);
+        // 장바구니 방치 5% 할인 쿠폰(couponId=3 또는 5% RATE 쿠폰)이 존재하면 자동 선택
+        const autoCoupon = available.find(
+          (c) => c.couponId === 3 || (c.discountType === "RATE" && c.discountValue === 5)
+        );
+        if (autoCoupon) {
+          setSelectedUserCouponId(String(autoCoupon.userCouponId));
+        }
+      })
+      .catch(console.error);
   }, []);
 
   const total = items.reduce((s, it) => s + it.price * it.quantity, 0);
