@@ -302,3 +302,9 @@ CREATE INDEX idx_users_last_login        ON users(last_login_at);               
 CREATE INDEX idx_churn_score_user        ON churn_score(user_id, scored_at);
 CREATE INDEX idx_intervention_user       ON retention_intervention(user_id, created_at);
 CREATE INDEX idx_notifications_user      ON notifications(user_id, is_read);
+
+-- ============ 13. 인덱스 (상품 조회 및 추천 최적화) ============
+CREATE INDEX idx_orders_item_product_id  ON orders_item(product_id);
+CREATE INDEX idx_orders_item_order_id    ON orders_item(order_id);
+CREATE INDEX idx_products_category_id    ON products(category_id);
+
