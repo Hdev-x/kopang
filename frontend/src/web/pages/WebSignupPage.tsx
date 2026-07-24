@@ -17,6 +17,10 @@ export function WebSignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [phone1, setPhone1] = useState("010");
+  const [phone2, setPhone2] = useState("");
+  const [phone3, setPhone3] = useState("");
+
   const [checkedEmail, setCheckedEmail] = useState("");
   const [serviceAgreed, setServiceAgreed] = useState(false);
   const [privacyAgreed, setPrivacyAgreed] = useState(false);
@@ -58,15 +62,41 @@ export function WebSignupPage() {
       window.alert("이메일 중복 확인을 진행해 주세요.");
       return;
     }
+    if (password.length < 8) {
+      window.alert("비밀번호는 최소 8자 이상이어야 합니다.");
+      return;
+    }
+    if (!name.trim()) {
+      window.alert("이름을 입력해 주세요.");
+      return;
+    }
+
+    const phoneFull = `${phone1}-${phone2}-${phone3}`;
+    const phoneRegex = /^01[016789]-\d{3,4}-\d{4}$/;
+    if (!phone2 || !phone3) {
+      window.alert("연락처를 끝까지 입력해 주세요.");
+      return;
+    }
+    if (!phoneRegex.test(phoneFull)) {
+      window.alert("올바른 휴대폰 번호 형식이 아닙니다.");
+      return;
+    }
+
     if (!requiredAgreed) return;
 
     setSubmitting(true);
     try {
-      await signup({ email, password, name });
+      await signup({
+        email,
+        password,
+        name,
+        phone: phoneFull
+      });
       window.alert("회원가입이 완료되었습니다. 로그인해 주세요.");
       navigate("/web/login");
-    } catch {
-      window.alert("회원가입에 실패했습니다. 입력값을 확인해 주세요.");
+    } catch (err: any) {
+      const msg = err.response?.data?.message || "회원가입에 실패했습니다. 입력값을 확인해 주세요.";
+      window.alert(msg);
     } finally {
       setSubmitting(false);
     }
@@ -115,6 +145,73 @@ export function WebSignupPage() {
           </div>
         </div>
         <div className={styles.field}><label htmlFor="web-signup-name">이름</label><input id="web-signup-name" value={name} onChange={(event) => setName(event.target.value)} placeholder="이름 입력" autoComplete="name" /></div>
+
+        {/* 연락처 3분할 입력 필드 */}
+        <div className={styles.field}>
+          <label>연락처</label>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center", width: "100%" }}>
+            <select
+              value={phone1}
+              onChange={(e) => setPhone1(e.target.value)}
+              style={{
+                flex: 1,
+                padding: "12px",
+                border: "1px solid var(--color-border, #ddd)",
+                borderRadius: "8px",
+                background: "var(--color-bg-card, #fff)",
+                color: "var(--color-text, #333)",
+                fontSize: "14px",
+                outline: "none",
+                height: "45px"
+              }}
+            >
+              <option value="010">010</option>
+              <option value="011">011</option>
+              <option value="016">016</option>
+              <option value="017">017</option>
+              <option value="018">018</option>
+              <option value="019">019</option>
+            </select>
+            <span style={{ color: "var(--color-text-muted, #888)" }}>-</span>
+            <input
+              type="text"
+              maxLength={4}
+              value={phone2}
+              onChange={(e) => setPhone2(e.target.value.replace(/[^0-9]/g, ""))}
+              placeholder="중간 4자리"
+              style={{
+                flex: 1.5,
+                padding: "12px",
+                border: "1px solid var(--color-border, #ddd)",
+                borderRadius: "8px",
+                background: "var(--color-bg-card, #fff)",
+                color: "var(--color-text, #333)",
+                fontSize: "14px",
+                outline: "none",
+                height: "45px"
+              }}
+            />
+            <span style={{ color: "var(--color-text-muted, #888)" }}>-</span>
+            <input
+              type="text"
+              maxLength={4}
+              value={phone3}
+              onChange={(e) => setPhone3(e.target.value.replace(/[^0-9]/g, ""))}
+              placeholder="끝 4자리"
+              style={{
+                flex: 1.5,
+                padding: "12px",
+                border: "1px solid var(--color-border, #ddd)",
+                borderRadius: "8px",
+                background: "var(--color-bg-card, #fff)",
+                color: "var(--color-text, #333)",
+                fontSize: "14px",
+                outline: "none",
+                height: "45px"
+              }}
+            />
+          </div>
+        </div>
 
         <div className={styles.terms}>
           <div className={`${styles.termsRow} ${styles.termsAll}`}><label className={styles.termLabel}><input type="checkbox" checked={allAgreed} onChange={toggleAll} />전체 동의</label></div>

@@ -113,6 +113,12 @@ export async function resetPassword(params: {
   return res.data.data;
 }
 
+// 아이디 찾기 - 이름과 연락처로 가입된 이메일 조회 (POST /api/auth/find-email)
+export async function findEmail(name: string, phone: string) {
+  const res = await client.post<ApiResponse<{ email: string }>>("/auth/find-email", { name, phone });
+  return res.data.data;
+}
+
 // 내 전체 배송지 조회 (GET /api/users/me/addresses)
 export async function getUserAddresses() {
   const res = await client.get<ApiResponse<UserAddressResponse[]>>("/users/me/addresses");

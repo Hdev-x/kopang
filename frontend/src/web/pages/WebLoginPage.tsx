@@ -75,7 +75,11 @@ export function WebLoginPage() {
         </div>
         <div className={styles.formOptions}>
           <label className={styles.remember}><input type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} />자동 로그인</label>
-          <Link to="/web/find-password">비밀번호 찾기</Link>
+          <div style={{ display: "flex", gap: "12px" }}>
+            <Link to="/web/find-email">아이디 찾기</Link>
+            <span style={{ color: "#ddd" }}>|</span>
+            <Link to="/web/find-password">비밀번호 찾기</Link>
+          </div>
         </div>
         <button className={styles.submit} type="submit" disabled={submitting}>{submitting ? "로그인 중..." : "로그인"}</button>
       </form>

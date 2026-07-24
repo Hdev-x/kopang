@@ -189,9 +189,45 @@ public class UserController {
         }
     }
 
+    // 10. 아이디 찾기 - 이름과 연락처로 이메일 조회 (POST /api/auth/find-email)
+    @PostMapping("/auth/find-email")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> findEmail(@RequestBody Map<String, String> body) {
+        try {
+            String name = body.get("name");
+            String phone = body.get("phone");
+
+            String email = userService.findEmailByNameAndPhone(name, phone);
+
+            // 로컬 파트 마스킹 (예: user123@naver.com -> us*****@naver.com)
+            String maskedEmail = maskEmail(email);
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("email", maskedEmail);
+
+            return ResponseEntity.ok(ApiResponse.success(data));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.fail(e.getMessage()));
+        }
+    }
+
+    private String maskEmail(String email) {
+        if (email == null || !email.contains("@")) {
+            return email;
+        }
+        int atIdx = email.indexOf('@');
+        String local = email.substring(0, atIdx);
+        String domain = email.substring(atIdx + 1);
+
+        if (local.length() <= 2) {
+            return "**@" + domain;
+        }
+        return local.substring(0, 2) + "*".repeat(local.length() - 2) + "@" + domain;
+    }
+
     // 10. 내 기본 배송지 조회 (GET /api/users/me/address)
     @GetMapping("/users/me/address")
-    public ResponseEntity<ApiResponse<UserAddressDTO>> getMyAddress(@AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<ApiResponse<UserAddressDTO>> getMyAddress(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
         if (userDetails == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.fail("인증되지 않은 사용자입니다"));

@@ -38,4 +38,42 @@
     <delete id="delete"> UPDATE users SET email = 'withdrawn_' || user_id || '_' || email, password
         = '', role = 'WITHDRAWN', status = 'WITHDRAWN', updated_at = NOW() WHERE user_id = #{userId} </delete>
 
+    <!-- 7. 이름과 연락처로 회원 조회 -->
+    <select id="findByNameAndPhone" resultType="com.kopang.app.domain.user.UserDTO">
+        SELECT 
+            user_id AS userId,
+            email,
+            password,
+            name,
+            phone,
+            birth_date AS birthDate,
+            role,
+            status,
+            created_at AS createdAt,
+            updated_at AS updatedAt,
+            last_login_at AS lastLoginAt
+        FROM users
+        WHERE name = #{name}
+          AND phone = #{phone}
+          AND status = 'ACTIVE'
+        LIMIT 1
+    </select>
+
+    <!-- 8. 전화번호로 회원 조회 (중복 체크용) -->
+    <select id="findByPhone" resultType="com.kopang.app.domain.user.UserDTO">
+        SELECT 
+            user_id AS userId,
+            email,
+            password,
+            name,
+            phone,
+            birth_date AS birthDate,
+            role,
+            status
+        FROM users
+        WHERE phone = #{phone}
+          AND status = 'ACTIVE'
+        LIMIT 1
+    </select>
+
 </mapper>

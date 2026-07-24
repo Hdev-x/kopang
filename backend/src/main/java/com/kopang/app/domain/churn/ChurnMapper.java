@@ -65,4 +65,8 @@ public interface ChurnMapper {
     // 상한②: 웰컴백·복귀 쿠폰을 받은 적 있는 회원 — 두 쿠폰 상호 배타용
     List<Long> findWelcomeComebackTreatedUserIds();
 
+    // 특정 회원의 특정 위험/대응/일수 내 기록이 존재하는지 카운트
+    int countRecentIntervention(@Param("userId") Long userId, @Param("riskType") String riskType,
+            @Param("actionType") String actionType, @Param("days") int days);
+
 }

@@ -19,4 +19,10 @@ public interface UserMapper {
     public int update(UserDTO userDTO);
 
     public int delete(@Param("userId") Long userId);
+
+    // 이름과 연락처로 가입된 회원 조회
+    UserDTO findByNameAndPhone(@Param("name") String name, @Param("phone") String phone);
+
+    // 전화번호로 가입된 회원 조회 (중복 체크용)
+    UserDTO findByPhone(@Param("phone") String phone);
 }

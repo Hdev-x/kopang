@@ -28,4 +28,10 @@ public interface UserService {
 
     // 비밀번호 찾기 - 비밀번호 재설정
     void resetPassword(String email, String code, String newPassword);
+
+    // 아이디 찾기 - 이름과 연락처로 가입된 이메일 조회
+    String findEmailByNameAndPhone(String name, String phone);
+
+    // 전화번호 중복 체크
+    boolean checkPhoneDuplicate(String phone);
 }

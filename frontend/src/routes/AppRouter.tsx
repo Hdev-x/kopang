@@ -4,6 +4,7 @@ import { Routes, Route } from "react-router-dom";
 import { LoginPage } from "../pages/auth/LoginPage";
 import { SignupPage } from "../pages/auth/SignupPage";
 import { FindPasswordPage } from "../pages/auth/FindPasswordPage";
+import { FindEmailPage } from "../pages/auth/FindEmailPage";
 import { OAuth2CallbackPage } from "../pages/auth/OAuth2CallbackPage";
 
 
@@ -36,6 +37,7 @@ import { WebProductDetailPage } from "../web/pages/WebProductDetailPage";
 import { WebLoginPage } from "../web/pages/WebLoginPage";
 import { WebSignupPage } from "../web/pages/WebSignupPage";
 import { WebFindPasswordPage } from "../web/pages/WebFindPasswordPage";
+import { WebFindEmailPage } from "../web/pages/WebFindEmailPage";
 import { WebSearchPage } from "../web/pages/WebSearchPage";
 import { WebCartPage } from "../web/pages/WebCartPage";
 import { WebCheckoutPage, WebOrderCompletePage, WebPaymentFailPage, WebPaymentSuccessPage, WebResumeCheckoutPage } from "../web/pages/WebOrderSkeletonPages";
@@ -99,6 +101,7 @@ export function AppRouter() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/find-password" element={<FindPasswordPage />} />
+      <Route path="/find-email" element={<FindEmailPage />} />
       <Route path="/oauth2/callback" element={<OAuth2CallbackPage />} />
 
       {/* ---------- 마이페이지 ---------- */}
@@ -128,6 +131,7 @@ export function AppRouter() {
       <Route path="/web/login" element={<WebLoginPage />} />
       <Route path="/web/signup" element={<WebSignupPage />} />
       <Route path="/web/find-password" element={<WebFindPasswordPage />} />
+      <Route path="/web/find-email" element={<WebFindEmailPage />} />
       <Route path="/web/search" element={<WebSearchPage />} />
       <Route path="/web/cart" element={<WebCartPage />} />
       <Route path="/web/checkout" element={<WebCheckoutPage />} />
