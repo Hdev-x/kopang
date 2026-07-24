@@ -160,7 +160,7 @@
         SELECT churn_score_id, user_id, risk_type
         FROM churn_score cs
         WHERE scored_at::date = CURRENT_DATE
-            AND risk_type IN ('WISHLIST_IDLE','SPENDING_DROP')
+            AND risk_type IN ('WISHLIST_IDLE','SPENDING_DROP','FIRST_ORDER_ONLY','BAD_EXPERIENCE')
             AND source = 'RULE'
             AND NOT EXISTS
             (
