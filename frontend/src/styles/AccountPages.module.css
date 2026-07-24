@@ -162,6 +162,8 @@
 .track {
   display: flex;
   justify-content: space-between;
+  position: relative;
+  padding: 4px 0;
 }
 
 .trackStep {
@@ -172,6 +174,7 @@
   gap: var(--space-2);
   font-size: var(--font-xs);
   color: var(--color-text-muted);
+  position: relative;
 }
 
 .dot {
@@ -179,6 +182,21 @@
   height: 14px;
   border-radius: var(--radius-full);
   background: var(--gray-300);
+  position: relative;
+  z-index: 2;
+}
+
+/* 동그라미 연결선 (이전 스텝에서 현재 스텝으로 들어오는 왼쪽 선) */
+.trackStep:not(:first-child)::before {
+  content: "";
+  position: absolute;
+  top: 6px;
+  right: 50%;
+  width: 100%;
+  height: 2px;
+  background: var(--gray-200, #e5e7eb);
+  z-index: 1;
+  transition: background-color 0.2s ease;
 }
 
 .trackDone {
@@ -188,6 +206,11 @@
 
 .trackDone .dot {
   background: var(--color-primary);
+}
+
+/* 현재 스텝까지 완료되었을 때만 왼쪽 연결선을 파란색으로 변경 */
+.trackDone:not(:first-child)::before {
+  background: var(--color-primary, #3b82f6);
 }
 
 /* 합계 */

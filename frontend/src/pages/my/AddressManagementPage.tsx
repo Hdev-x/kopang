@@ -13,6 +13,12 @@ import {
 } from "../../api/auth";
 import s from "./AddressManagementPage.module.css";
 
+declare global {
+  interface Window {
+    daum?: any;
+  }
+}
+
 export function AddressManagementPage() {
   const [addresses, setAddresses] = useState<UserAddressResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,6 +35,32 @@ export function AddressManagementPage() {
   const [address, setAddress] = useState("");
   const [detailAddress, setDetailAddress] = useState("");
   const [isDefaultVal, setIsDefaultVal] = useState(false);
+
+  const handleSearchAddress = () => {
+    if (!window.daum || !window.daum.Postcode) {
+      alert("주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.");
+      return;
+    }
+    new window.daum.Postcode({
+      oncomplete: (data: any) => {
+        let fullAddr = data.address;
+        let extraAddr = "";
+
+        if (data.addressType === "R") {
+          if (data.bname !== "") {
+            extraAddr += data.bname;
+          }
+          if (data.buildingName !== "") {
+            extraAddr += extraAddr !== "" ? `, ${data.buildingName}` : data.buildingName;
+          }
+          fullAddr += extraAddr !== "" ? ` (${extraAddr})` : "";
+        }
+
+        setZipcode(data.zonecode || "");
+        setAddress(fullAddr || "");
+      },
+    }).open();
+  };
 
   const fetchAddresses = async () => {
     setLoading(true);
@@ -221,22 +253,37 @@ export function AddressManagementPage() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
               />
-              <Input
-                label="우편번호"
-                placeholder="우편번호"
-                value={zipcode}
-                onChange={(e) => setZipcode(e.target.value)}
-              />
+              <div style={{ display: "flex", gap: "8px", alignItems: "flex-end", marginBottom: "12px" }}>
+                <div style={{ flex: 1 }}>
+                  <Input
+                    label="우편번호"
+                    placeholder="우편번호"
+                    value={zipcode}
+                    onChange={(e) => setZipcode(e.target.value)}
+                    readOnly
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={handleSearchAddress}
+                  style={{ marginBottom: "16px", height: "46px", flexShrink: 0 }}
+                >
+                  주소 검색
+                </Button>
+              </div>
               <Input
                 label="주소 (필수)"
-                placeholder="도로명 또는 지번 주소"
+                placeholder="주소 검색 버튼을 눌러 주소를 선택하세요"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
+                onClick={handleSearchAddress}
+                readOnly
                 required
               />
               <Input
                 label="상세 주소"
-                placeholder="나머지 주소를 입력하세요"
+                placeholder="동/호수 등 상세 주소를 입력하세요"
                 value={detailAddress}
                 onChange={(e) => setDetailAddress(e.target.value)}
               />
