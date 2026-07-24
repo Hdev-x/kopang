@@ -8,7 +8,7 @@ import com.kopang.app.domain.intervention.InterventionDTO;
 
 @Mapper
 public interface ChurnMapper {
-    
+
     // ===== 조회 =====
 
     // 룰1) 장바구니 방치
@@ -35,7 +35,6 @@ public interface ChurnMapper {
     // 룰8) 최근 30일 지출 < 직전 30일의 50% 회원 목록
     List<Long> findSpendingDropUsers();
 
-
     // ===== 저장 =====
 
     // 이탈 점수 저장 (모든 룰 공통)
@@ -44,7 +43,6 @@ public interface ChurnMapper {
     // 재실행 대비 멱등성 확보
     void deleteTodayRuleScores();
 
-
     // ===== 대응 (intervention) =====
 
     // 오늘자 ④⑧ 발송 대상 (7일 내 중복 발송 제외)
@@ -52,6 +50,9 @@ public interface ChurnMapper {
 
     // 팀원 대응용: 지정한 risk_type들의 오늘자 발송 대상 (7일 내 중복 제외)
     List<ChurnScoreDTO> findTargetsByRiskTypes(@Param("riskTypes") List<String> riskTypes);
+
+    // 특정 회원의 특정 위험 유형에 대한 최신 이탈 점수 조회
+    ChurnScoreDTO findLatestScoreByUserIdAndRiskType(@Param("userId") Long userId, @Param("riskType") String riskType);
 
     // 알림 발송은 NotificationMapper로 분리 (NOTI-01)
 

@@ -11,6 +11,7 @@ import {
   cancelMembership,
   keepMembership,
   getSavedShippingFee,
+  recordMembershipCancelModal,
   type UserMembershipResponse
 } from "../../api/membership";
 import styles from "./MembershipPage.module.css";
@@ -157,7 +158,7 @@ export function MembershipPage() {
       {membership && membership.status === "ACTIVE" ? (
         <>
           <p className={styles.status}>✓ 이용 중 · 다음 결제일 {formatPayDate(membership.endDate)}</p>
-          <Button variant="ghost" className={styles.cancel} onClick={() => setModalOpen(true)}>
+          <Button variant="ghost" className={styles.cancel} onClick={() => { setModalOpen(true); recordMembershipCancelModal().catch(err => console.error(err)); }}>
             멤버십 해지
           </Button>
         </>

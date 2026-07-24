@@ -5,8 +5,15 @@ import com.kopang.app.global.security.JwtAuthenticationFilter.CustomUserDetails;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import com.kopang.app.domain.user.UserMapper;
+import com.kopang.app.domain.user.UserDTO;
+import com.kopang.app.domain.churn.ChurnMapper;
+import com.kopang.app.domain.churn.ChurnScoreDTO;
+import com.kopang.app.domain.intervention.InterventionService;
+import com.kopang.app.domain.intervention.InterventionRequest;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -14,9 +21,16 @@ import java.util.Map;
 public class MembershipController {
 
     private final MembershipService membershipService;
+    private final UserMapper userMapper;
+    private final ChurnMapper churnMapper;
+    private final InterventionService interventionService;
 
-    public MembershipController(MembershipService membershipService) {
+    public MembershipController(MembershipService membershipService, UserMapper userMapper, ChurnMapper churnMapper,
+            InterventionService interventionService) {
         this.membershipService = membershipService;
+        this.userMapper = userMapper;
+        this.churnMapper = churnMapper;
+        this.interventionService = interventionService;
     }
 
     // 1. 멤버십 구독 상태 조회 (GET /api/membership/status)
@@ -102,6 +116,42 @@ public class MembershipController {
             data.put("savedFee", savedFee);
             return ResponseEntity.ok(ApiResponse.success(data));
         } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.fail(e.getMessage()));
+        }
+    }
+
+    // 6. 멤버십 이탈 방지 모달 노출 기록 (POST /api/membership/interventions/modal)
+    @PostMapping("/interventions/modal")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> recordModalIntervention(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(401).body(ApiResponse.fail("인증되지 않은 사용자입니다"));
+        }
+        try {
+            UserDTO user = userMapper.detailByEmail(userDetails.getEmail());
+            if (user == null) {
+                return ResponseEntity.badRequest().body(ApiResponse.fail("사용자를 찾을 수 없습니다."));
+            }
+
+            ChurnScoreDTO latestScore = churnMapper.findLatestScoreByUserIdAndRiskType(user.getUserId(),
+                    "MEMBERSHIP_CANCEL");
+            Long churnScoreId = latestScore != null ? latestScore.getChurnScoreId() : null;
+
+            InterventionRequest req = new InterventionRequest(
+                    user.getUserId(),
+                    churnScoreId,
+                    "MEMBERSHIP_CANCEL",
+                    "MODAL",
+                    "IN_APP");
+
+            List<Long> treatment = interventionService.recordAndCheckControl(List.of(req));
+            boolean isControl = treatment.isEmpty();
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("isControl", isControl);
+            data.put("message", "이탈방지 모달 노출이 기록되었습니다.");
+            return ResponseEntity.ok(ApiResponse.success(data));
+        } catch (Exception e) {
             return ResponseEntity.badRequest().body(ApiResponse.fail(e.getMessage()));
         }
     }

@@ -214,8 +214,22 @@
             #{i.actionType},
             #{i.isControl},
             #{i.channel}
-        )
         </foreach>
     </insert>
+    <!-- 특정 회원의 특정 위험 유형에 대한 최신 이탈 점수 조회 -->
+    <select id="findLatestScoreByUserIdAndRiskType" resultType="com.kopang.app.domain.churn.ChurnScoreDTO">
+        SELECT 
+            churn_score_id AS churnScoreId,
+            user_id AS userId,
+            score,
+            risk_level AS riskLevel,
+            risk_type AS riskType,
+            source,
+            scored_at AS scoredAt
+        FROM churn_score
+        WHERE user_id = #{userId} AND risk_type = #{riskType}
+        ORDER BY churn_score_id DESC
+        LIMIT 1
+    </select>
 
 </mapper>

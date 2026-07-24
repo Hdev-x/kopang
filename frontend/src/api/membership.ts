@@ -48,3 +48,9 @@ export async function getSavedShippingFee() {
     const res = await client.get<ApiResponse<{ savedFee: number }>>("/membership/saved-shipping");
     return res.data.data;
 }
+
+// 6. 멤버십 이탈 방지 모달 노출 기록
+export async function recordMembershipCancelModal() {
+    const res = await client.post<ApiResponse<{ isControl: boolean; message: string }>>("/membership/interventions/modal");
+    return res.data.data;
+}
