@@ -238,4 +238,20 @@
         LIMIT 1
     </select>
 
+    <!-- 상한①: 오늘 이미 실제 대응(처치군)을 받은 회원 (1일 1건 상한) -->
+    <select id="findTodayTreatedUserIds" resultType="long">
+        SELECT DISTINCT user_id
+        FROM retention_intervention
+        WHERE created_at::date = CURRENT_DATE
+            AND is_control = false
+    </select>
+
+    <!-- 상한②: 웰컴백·복귀 쿠폰을 받은 적 있는 회원 (두 쿠폰 상호 배타 - 하나 받으면 다른 것 불가) -->
+    <select id="findWelcomeComebackTreatedUserIds" resultType="long">
+        SELECT DISTINCT user_id
+        FROM retention_intervention
+        WHERE risk_type IN ('FIRST_ORDER_ONLY', 'LOGIN_INACTIVE')
+            AND is_control = false
+    </select>
+
 </mapper>

@@ -59,4 +59,10 @@ public interface ChurnMapper {
     // 발송 기록 (대조군 포함 전원) — 대상 리스트를 한 번의 INSERT로 bulk 기록
     void insertInterventions(List<InterventionDTO> interventions);
 
+    // 상한①: 오늘 이미 실제 대응(처치군)을 받은 회원 — 1일 1건 상한용
+    List<Long> findTodayTreatedUserIds();
+
+    // 상한②: 웰컴백·복귀 쿠폰을 받은 적 있는 회원 — 두 쿠폰 상호 배타용
+    List<Long> findWelcomeComebackTreatedUserIds();
+
 }
