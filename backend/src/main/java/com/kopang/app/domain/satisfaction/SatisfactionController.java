@@ -3,6 +3,7 @@ package com.kopang.app.domain.satisfaction;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,5 +33,16 @@ public class SatisfactionController {
         Long userId = userService.detailByEmail(userDetails.getEmail()).getUserId();
         satisfactionService.submit(userId, req);
         return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    // 조사 노출 가능 여부 (3개월 1회). 비로그인은 노출 안 함(false)
+    @GetMapping("/api/satisfaction/eligibility")
+    public ResponseEntity<ApiResponse<Boolean>> eligibility(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.ok(ApiResponse.success(false));
+        }
+        Long userId = userService.detailByEmail(userDetails.getEmail()).getUserId();
+        return ResponseEntity.ok(ApiResponse.success(satisfactionService.isEligible(userId)));
     }
 }
