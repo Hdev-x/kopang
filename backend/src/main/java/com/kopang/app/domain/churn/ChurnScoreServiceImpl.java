@@ -199,23 +199,133 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
             }
             String type;
             String message;
+            Long refId = null;
+
             switch (target.getRiskType()) {
+                case "CART_ABANDON" -> {
+                    type = "ABANDON";
+                    message = "장바구니에 상품이 남아있어요. 잊지 말고 구매해 보세요! 🛒";
+                    refId = 3L; // 장바구니 리마인드 5% 쿠폰 ID
+                    autoIssueCoupon(target.getUserId(), refId);
+                }
+                case "MEMBERSHIP_CANCEL" -> {
+                    type = "COMEBACK";
+                    message = "와우 멤버십 혜택을 계속 이용해 보세요! 혜택 유지 특별 쿠폰이 지급되었습니다. 🎁";
+                    refId = 6L; // 멤버십 갱신 15% 쿠폰 ID
+                    autoIssueCoupon(target.getUserId(), refId);
+                }
+                case "FIRST_ORDER_ONLY" -> {
+                    type = "COMEBACK";
+                    message = "돌아오신 것을 환영해요! 복귀 기념 특별 5,000원 할인 쿠폰이 발급되었습니다. 💖";
+                    refId = 4L; // 복귀 5000원 쿠폰 ID
+                    autoIssueCoupon(target.getUserId(), refId);
+                }
                 case "WISHLIST_IDLE" -> {
                     type = "WISHLIST";
-                    message = "찜하신 상품이 기다려요";
+                    message = "찜하신 상품이 기다려요! 마음에 둔 상품을 확인해 보세요. ⭐️";
+                    refId = 7L; // 찜 상품 7% 쿠폰 ID
+                    autoIssueCoupon(target.getUserId(), refId);
+                }
+                case "COUPON_EXPIRING" -> {
+                    type = "COUPON_EXPIRE";
+                    message = "[리마인드] 보유하신 미사용 쿠폰이 곧 만료됩니다! 만료 전에 꼭 사용해 보세요. 🎟️";
+                }
+                case "BAD_EXPERIENCE" -> {
+                    type = "APOLOGY";
+                    message = "이용에 불편을 드려 죄송합니다. 사과의 마음을 담은 특별 할인 쿠폰이 도착했습니다. 🙇";
+                    refId = 5L; // 사과 쿠폰 10%
+                    autoIssueCoupon(target.getUserId(), refId);
+                }
+                case "LOGIN_INACTIVE" -> {
+                    type = "COMEBACK";
+                    message = "오랜만에 뵙네요! 복귀 기념 특별 5,000원 할인 쿠폰이 발급되었습니다. 💖";
+                    refId = 4L; // 복귀 5000원 쿠폰 ID
+                    autoIssueCoupon(target.getUserId(), refId);
                 }
                 case "SPENDING_DROP" -> {
                     type = "REBUY";
-                    message = "요즘 뜸하셨네요, 특가 준비했어요";
+                    message = "요즘 뜸하셨네요, 다시 찾아주신 감사함으로 재구매 할인 쿠폰을 드립니다. 🛍️";
+                    refId = 8L; // 재구매 감사 5%
+                    autoIssueCoupon(target.getUserId(), refId);
                 }
-                default -> throw new IllegalArgumentException("모르는 유형: " + target.getRiskType());
+                default -> {
+                    // 예외 처리 대신 기본값 처리로 예기치 못한 타입에 대한 오류 방지
+                    type = "NOTICE";
+                    message = "코팡이 준비한 맞춤형 특별 혜택을 확인해 보세요!";
+                }
             }
             NotificationDTO noti = new NotificationDTO();
             noti.setUserId(target.getUserId());
             noti.setType(type);
             noti.setMessage(message);
+            noti.setRefId(refId);
+            noti.setIsRead(false);
+            noti.setClicked(false);
             notificationMapper.insertNotification(noti);
         }
     }
 
+    @Transactional
+    @Override
+    public void runCouponExpiringInterventions() {
+        List<ChurnScoreDTO> targets = churnMapper.findTargetsByRiskTypes(List.of("COUPON_EXPIRING"));
+        List<InterventionRequest> reqs = new ArrayList<>();
+        for (ChurnScoreDTO target : targets) {
+            reqs.add(new InterventionRequest(
+                    target.getUserId(),
+                    target.getChurnScoreId(),
+                    "COUPON_EXPIRING",
+                    "PUSH",
+                    "IN_APP"));
+        }
+
+        Set<Long> toSend = new HashSet<>(interventionService.recordAndCheckControl(reqs));
+
+        for (ChurnScoreDTO target : targets) {
+            if (!toSend.contains(target.getUserId())) {
+                continue;
+            }
+            NotificationDTO noti = new NotificationDTO();
+            noti.setUserId(target.getUserId());
+            noti.setType("COUPON_EXPIRE");
+            noti.setMessage("[리마인드] 보유하신 미사용 쿠폰이 곧 만료됩니다! 만료 전에 꼭 사용해 보세요. 🎟️");
+            noti.setIsRead(false);
+            noti.setClicked(false);
+            notificationMapper.insertNotification(noti);
+        }
+    }
+
+    @Transactional
+    @Override
+    public void runLoginInactiveInterventions() {
+        List<ChurnScoreDTO> targets = churnMapper.findTargetsByRiskTypes(List.of("LOGIN_INACTIVE"));
+        List<InterventionRequest> reqs = new ArrayList<>();
+        for (ChurnScoreDTO target : targets) {
+            reqs.add(new InterventionRequest(
+                    target.getUserId(),
+                    target.getChurnScoreId(),
+                    "LOGIN_INACTIVE",
+                    "PUSH",
+                    "IN_APP"));
+        }
+
+        Set<Long> toSend = new HashSet<>(interventionService.recordAndCheckControl(reqs));
+
+        for (ChurnScoreDTO target : targets) {
+            if (!toSend.contains(target.getUserId())) {
+                continue;
+            }
+            // 복귀 5,000원 쿠폰 지급
+            autoIssueCoupon(target.getUserId(), 4L);
+
+            NotificationDTO noti = new NotificationDTO();
+            noti.setUserId(target.getUserId());
+            noti.setType("COMEBACK");
+            noti.setMessage("오랜만에 뵙네요! 복귀 기념 특별 5,000원 할인 쿠폰이 발급되었습니다. 💖");
+            noti.setRefId(4L);
+            noti.setIsRead(false);
+            noti.setClicked(false);
+            notificationMapper.insertNotification(noti);
+        }
+    }
 }

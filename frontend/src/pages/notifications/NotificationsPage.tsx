@@ -22,15 +22,16 @@ const FALLBACK = { label: "알림", emoji: "🔔" };
 // type + refId → 클릭 이동 경로. 대상 없으면 null(이동 안 함).
 function linkTo(type: string, refId: number | null): string | null {
   switch (type) {
-    case "WISHLIST":
     case "RECOMMEND":
-    case "REBUY":
       return refId ? `/products/${refId}` : null;
     case "ABANDON":
       return "/cart";
     case "COUPON_EXPIRE":
     case "WELCOME_BACK":
     case "APOLOGY":
+    case "COMEBACK":
+    case "WISHLIST":
+    case "REBUY":
       return "/my/coupons";
     case "NOTICE":
       return refId ? `/my/support/notices/${refId}` : "/my/support/notices";
