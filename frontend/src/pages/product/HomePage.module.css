@@ -63,45 +63,140 @@
   flex-shrink: 0;
 }
 
-/* 히어로 */
+/* 히어로 배너 캐러셀 */
 .hero {
   position: relative;
-  aspect-ratio: 16 / 10;
-  background:
-    linear-gradient(to top, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.05) 60%),
-    var(--color-primary) url("/hero.jpg") center / cover no-repeat;
+  aspect-ratio: 16 / 9;
   border-radius: var(--radius-md);
   margin-bottom: var(--space-5);
   overflow: hidden;
   display: flex;
   align-items: flex-end;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: background 0.5s ease;
 }
 
-.heroText {
-  padding: var(--space-4);
+.heroLink {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  text-decoration: none;
   color: #fff;
+  z-index: 1;
+}
+
+.heroBgImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.45;
+  transition: transform 0.5s ease;
+}
+
+.heroLink:hover .heroBgImage {
+  transform: scale(1.03);
+}
+
+.heroOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.2) 60%, rgba(0, 0, 0, 0) 100%);
+}
+
+.heroContent {
+  position: relative;
+  z-index: 2;
+  padding: var(--space-4);
+}
+
+.heroTagRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+
+.heroTag {
+  font-size: var(--font-xs);
+  font-weight: var(--weight-bold);
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(4px);
+  padding: 3px var(--space-2);
+  border-radius: var(--radius-sm);
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
+.heroBadge {
+  font-size: var(--font-xs);
+  font-weight: var(--weight-bold);
+  background: #ff4757;
+  color: #fff;
+  padding: 3px var(--space-2);
+  border-radius: var(--radius-sm);
 }
 
 .heroTitle {
   font-size: var(--font-xl);
   font-weight: var(--weight-bold);
+  line-height: 1.3;
+  margin: 0;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .heroSub {
   font-size: var(--font-sm);
-  opacity: 0.9;
-  margin-top: var(--space-1);
+  opacity: 0.95;
+  margin-top: 4px;
+}
+
+.heroNav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  background: rgba(0, 0, 0, 0.3);
+  border: none;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(2px);
+  transition: background 0.2s ease;
+}
+
+.heroNav:hover {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.heroNavLeft {
+  left: var(--space-2);
+}
+
+.heroNavRight {
+  right: var(--space-2);
 }
 
 .heroPager {
   position: absolute;
   right: var(--space-3);
   bottom: var(--space-3);
-  background: rgba(0, 0, 0, 0.4);
+  z-index: 3;
+  background: rgba(0, 0, 0, 0.5);
   color: #fff;
   font-size: var(--font-xs);
-  padding: 2px var(--space-2);
+  font-weight: var(--weight-bold);
+  padding: 3px var(--space-3);
   border-radius: var(--radius-full);
+  backdrop-filter: blur(2px);
 }
 
 /* 카테고리 가로 스크롤 */
