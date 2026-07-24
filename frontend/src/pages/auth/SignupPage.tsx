@@ -51,6 +51,8 @@ export function SignupPage() {
   const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [agreeMkt, setAgreeMkt] = useState(false);
   const [openTerm, setOpenTerm] = useState<null | "service" | "privacy">(null);
+  const [emailChecked, setEmailChecked] = useState(false);
+  const [checkedEmailStr, setCheckedEmailStr] = useState("");
   const navigate = useNavigate();
 
   const allAgreed = agreeTerms && agreePrivacy && agreeMkt;
@@ -62,19 +64,40 @@ export function SignupPage() {
     setAgreeMkt(v);
   };
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!requiredOk) return;
-
+  const handleCheckDuplicate = async () => {
+    if (!email) {
+      alert("이메일을 입력해 주세요.");
+      return;
+    }
+    if (!email.includes("@")) {
+      alert("올바른 이메일 형식(@ 포함)을 입력해 주세요.");
+      return;
+    }
     try {
-      // 1. 이메일 중복 확인 (FR-USER-03)
       const checkRes = await apiCheckEmail(email);
       if (checkRes.exists) {
         alert("이미 사용 중인 이메일입니다.");
-        return;
+        setEmailChecked(false);
+      } else {
+        alert("사용 가능한 이메일입니다.");
+        setEmailChecked(true);
+        setCheckedEmailStr(email);
       }
+    } catch (err) {
+      alert("이메일 중복 확인에 실패했습니다.");
+    }
+  };
 
-      // 2. 회원 등록 (FR-USER-01)
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!requiredOk) return;
+    if (!emailChecked || email !== checkedEmailStr) {
+      alert("이메일 중복 확인을 진행해 주세요.");
+      return;
+    }
+
+    try {
+      // 회원 등록 (FR-USER-01)
       await apiSignup({ email, password, name });
       alert("회원가입이 성공적으로 완료되었습니다! 로그인해 주세요.");
       navigate("/login");
@@ -89,13 +112,35 @@ export function SignupPage() {
       <div className={styles.wrap}>
         <h1 className={styles.title}>회원가입</h1>
         <form className={styles.form} onSubmit={handleSubmit}>
-          <Input
-            label="이메일"
-            type="email"
-            placeholder="email@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+          <div style={{ display: "flex", gap: "8px", alignItems: "flex-end" }}>
+            <div style={{ flex: 1 }}>
+              <Input
+                label="이메일"
+                type="email"
+                placeholder="email@example.com"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (e.target.value !== checkedEmailStr) {
+                    setEmailChecked(false);
+                  }
+                }}
+              />
+            </div>
+            <Button
+              type="button"
+              onClick={handleCheckDuplicate}
+              style={{ height: "45px", minWidth: "80px", marginBottom: "15px" }}
+            >
+              중복확인
+            </Button>
+          </div>
+          {emailChecked && (
+            <p style={{ color: "green", fontSize: "12px", marginTop: "-10px", marginBottom: "10px" }}>
+              ✓ 사용 가능한 이메일입니다.
+            </p>
+          )}
+
           <Input
             label="비밀번호"
             type="password"

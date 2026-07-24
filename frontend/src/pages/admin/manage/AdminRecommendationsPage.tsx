@@ -1,32 +1,55 @@
+import { useEffect, useState } from "react";
 import { AdminLayout } from "../../../components/AdminLayout";
 import { Card } from "../../../components/Card";
+import {
+  getRecommendationPerformance,
+  type RecommendationPerformance,
+  type RecommendationResultItem,
+} from "../../../api/adminRecommendations";
 import sh from "../adminShared.module.css";
 
-// 목업 — recommendation_history 점검 (item-CF 결과 확인)
-const KPIS = [
-  { label: "추천 노출(주)", value: "18,400" },
-  { label: "추천 클릭률", value: "9.2%" },
-  { label: "추천 전환율", value: "3.1%" },
-  { label: "추천發 매출(주)", value: "₩1.1M" },
-];
-const RECO = [
-  { user: "이영희", item: "주방세제 리필", score: 0.92, reason: "함께 구매", click: true, buy: true },
-  { user: "김민수", item: "제주 삼다수 2L x6", score: 0.88, reason: "구매 카테고리", click: true, buy: false },
-  { user: "정해인", item: "USB-C 충전기 30W", score: 0.71, reason: "최근 본 상품", click: false, buy: false },
-  { user: "윤서아", item: "유기농 오이 3입", score: 0.64, reason: "함께 구매", click: true, buy: true },
-];
+function outcome(result: RecommendationResultItem) {
+  if (result.converted) return { label: "전환", cls: sh.bOk };
+  if (result.clicked) return { label: "클릭", cls: sh.bInfo };
+  if (result.shown) return { label: "노출", cls: sh.bMuted };
+  return { label: "생성", cls: sh.bWarn };
+}
 
-function outcome(r: { click: boolean; buy: boolean }) {
-  if (r.buy) return { label: "전환", cls: sh.bOk };
-  if (r.click) return { label: "클릭", cls: sh.bInfo };
-  return { label: "노출", cls: sh.bMuted };
+function formatRate(value: number | null) {
+  return value == null ? "0.0%" : `${value.toFixed(1)}%`;
+}
+
+function kpis(data: RecommendationPerformance | null) {
+  if (!data) {
+    return [
+      { label: "추천 노출(7일)", value: "—" },
+      { label: "추천 클릭률", value: "—" },
+      { label: "추천 전환율", value: "—" },
+      { label: "추천 매출(7일)", value: "—" },
+    ];
+  }
+  return [
+    { label: "추천 노출(7일)", value: data.shownCount.toLocaleString() },
+    { label: "추천 클릭률", value: formatRate(data.clickRate) },
+    { label: "추천 전환율", value: formatRate(data.conversionRate) },
+    { label: "추천 매출(7일)", value: `${data.revenue.toLocaleString()}원` },
+  ];
 }
 
 export function AdminRecommendationsPage() {
+  const [data, setData] = useState<RecommendationPerformance | null>(null);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    getRecommendationPerformance()
+      .then(setData)
+      .catch(() => setError(true));
+  }, []);
+
   return (
     <AdminLayout title="AI 추천 관리">
       <div className={sh.stats}>
-        {KPIS.map((k) => (
+        {kpis(data).map((k) => (
           <div key={k.label} className={sh.statCard}>
             <p className={sh.statLabel}>{k.label}</p>
             <p className={sh.statValue}>{k.value}</p>
@@ -38,17 +61,18 @@ export function AdminRecommendationsPage() {
         item 기반 협업필터링 결과 · 콜드스타트는 룰 추천으로 대체
       </p>
 
+      {error && <p className={sh.muted}>추천 성과를 불러오지 못했습니다.</p>}
       <div className={sh.list}>
-        {RECO.map((r, i) => {
+        {(data?.items ?? []).map((r) => {
           const o = outcome(r);
           return (
-            <Card key={i}>
+            <Card key={r.recommendId}>
               <div className={sh.itemHead}>
-                <span className={sh.itemTitle}>{r.user}</span>
+                <span className={sh.itemTitle}>{r.userName}</span>
                 <span className={`${sh.badge} ${o.cls}`}>{o.label}</span>
               </div>
               <p className={sh.itemMeta}>
-                {r.item} ({r.score.toFixed(2)})
+                {r.productName} ({r.score.toFixed(2)})
               </p>
               <p className={sh.itemMeta}>{r.reason}</p>
             </Card>

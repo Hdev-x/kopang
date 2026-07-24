@@ -53,11 +53,20 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public void createCoupon(com.kopang.app.domain.coupon.CouponDTO coupon) {
-        if (coupon.getName() == null || coupon.getName().isEmpty()) {
+        if (coupon.getName() == null || coupon.getName().isBlank()) {
             throw new IllegalArgumentException("쿠폰 이름을 입력해 주세요");
+        }
+        coupon.setName(coupon.getName().trim());
+
+        if (!"RATE".equals(coupon.getDiscountType())
+                && !"AMOUNT".equals(coupon.getDiscountType())) {
+            throw new IllegalArgumentException("할인 방식은 RATE 또는 AMOUNT여야 합니다");
         }
         if (coupon.getDiscountValue() <= 0) {
             throw new IllegalArgumentException("할인 수치는 0보다 커야 합니다");
+        }
+        if ("RATE".equals(coupon.getDiscountType()) && coupon.getDiscountValue() > 100) {
+            throw new IllegalArgumentException("할인 비율은 100% 이하여야 합니다");
         }
         if (coupon.getStartDate() == null) {
             coupon.setStartDate(new java.util.Date()); // 기본 오늘
@@ -69,8 +78,11 @@ public class AdminServiceImpl implements AdminService {
             cal.add(java.util.Calendar.DAY_OF_MONTH, 30);
             coupon.setEndDate(cal.getTime());
         }
+        if (coupon.getStartDate().after(coupon.getEndDate())) {
+            throw new IllegalArgumentException("종료일은 시작일보다 빠를 수 없습니다");
+        }
         if (coupon.getQuantity() <= 0) {
-            coupon.setQuantity(10000); // 기본 대량
+            throw new IllegalArgumentException("발급 수량은 0보다 커야 합니다");
         }
 
         adminMapper.insertCouponPolicy(coupon);

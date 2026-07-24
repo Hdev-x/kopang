@@ -150,4 +150,72 @@
     </delete>
 
 
+    <!-- ============================================= -->
+    <!-- 대응(intervention) : 발송 대상 조회 · 알림 · 로그   -->
+    <!-- ============================================= -->
+
+    <!-- 조회 -->
+    <!-- 오늘 감지된 찜 방치, 구매액 감소 중, 최근 7일 안에 같은 대응을 안 받은 사람은 누구인가? -->
+    <select id="findInterventionTargets">
+        SELECT churn_score_id, user_id, risk_type
+        FROM churn_score cs
+        WHERE scored_at::date = CURRENT_DATE
+            AND risk_type IN ('WISHLIST_IDLE','SPENDING_DROP')
+            AND source = 'RULE'
+            AND NOT EXISTS
+            (
+                SELECT 1
+                FROM retention_intervention ri
+                WHERE ri.user_id = cs.user_id
+                    AND ri.risk_type = cs.risk_type
+                    AND ri.created_at &gt; NOW() - INTERVAL '7 days'
+            )
+    </select>
+
+    <!-- 팀원 대응용: 지정한 risk_type들의 오늘자 발송 대상 (7일 내 중복 제외) -->
+    <select id="findTargetsByRiskTypes" resultType="com.kopang.app.domain.churn.ChurnScoreDTO">
+        SELECT churn_score_id, user_id, risk_type
+        FROM churn_score cs
+        WHERE scored_at::date = CURRENT_DATE
+            AND risk_type IN
+            <foreach item="type" collection="riskTypes" open="(" separator="," close=")">
+                #{type}
+            </foreach>
+            AND source = 'RULE'
+            AND NOT EXISTS
+            (
+                SELECT 1
+                FROM retention_intervention ri
+                WHERE ri.user_id = cs.user_id
+                    AND ri.risk_type = cs.risk_type
+                    AND ri.created_at &gt; NOW() - INTERVAL '7 days'
+            )
+    </select>
+
+    <!-- 알림 INSERT는 notification/NotificationMapper.xml로 분리 (NOTI-01) -->
+
+    <!-- 로그 (bulk) : 대상 리스트를 한 번의 INSERT로 기록 (대조군 포함 전원) -->
+    <insert id="insertInterventions">
+        INSERT INTO retention_intervention
+        (
+            user_id,
+            churn_score_id,
+            risk_type,
+            action_type,
+            is_control,
+            channel
+        )
+        VALUES
+        <foreach collection="list" item="i" separator=",">
+        (
+            #{i.userId},
+            #{i.churnScoreId},
+            #{i.riskType},
+            #{i.actionType},
+            #{i.isControl},
+            #{i.channel}
+        )
+        </foreach>
+    </insert>
+
 </mapper>

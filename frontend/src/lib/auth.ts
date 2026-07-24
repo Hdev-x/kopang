@@ -6,7 +6,7 @@ export type AuthUser = { name: string; role?: "USER" | "ADMIN" };
 
 export function getAuth(): AuthUser | null {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = sessionStorage.getItem(KEY) || localStorage.getItem(KEY);
     return raw ? (JSON.parse(raw) as AuthUser) : null;
   } catch {
     return null;
@@ -21,21 +21,36 @@ export function isAdmin(): boolean {
   return getAuth()?.role === "ADMIN";
 }
 
-export function login(user: AuthUser, accessToken?: string, refreshToken?: string): void {
-  localStorage.setItem(KEY, JSON.stringify(user));
+export function login(user: AuthUser, accessToken?: string, refreshToken?: string, rememberMe?: boolean): void {
+  if (rememberMe) {
+    localStorage.setItem(KEY, JSON.stringify(user));
+  } else {
+    sessionStorage.setItem(KEY, JSON.stringify(user));
+  }
+
   if (accessToken) {
-    sessionStorage.setItem("accessToken", accessToken);
+    if (rememberMe) {
+      localStorage.setItem("accessToken", accessToken);
+    } else {
+      sessionStorage.setItem("accessToken", accessToken);
+    }
   }
   if (refreshToken) {
-    sessionStorage.setItem("refreshToken", refreshToken);
+    if (rememberMe) {
+      localStorage.setItem("refreshToken", refreshToken);
+    } else {
+      sessionStorage.setItem("refreshToken", refreshToken);
+    }
   }
   window.dispatchEvent(new Event("auth-change"));
 }
 
-
 export function logout(): void {
+  sessionStorage.removeItem(KEY);
   localStorage.removeItem(KEY);
   sessionStorage.removeItem("accessToken");
   sessionStorage.removeItem("refreshToken");
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
   window.dispatchEvent(new Event("auth-change"));
 }

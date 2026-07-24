@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kopang.app.domain.churn.ChurnDashboardMapper">
+
+    <!-- KPI : 최신 일별 스냅샷 1행 -->
+    <select id="selectLatestKpi"
+            resultType="com.kopang.app.domain.churn.ChurnSummaryResponse$Kpi">
+        SELECT
+            at_risk_high AS highRiskCount,
+            churn_rate   AS churnRate,
+            ROUND(100.0 * conversion_count / NULLIF(intervention_count, 0), 1) AS conversionRate,
+            attributed_revenue AS attributedRevenue
+        FROM churn_daily_metric
+        ORDER BY metric_date DESC
+        LIMIT 1
+    </select>
+
+    <!-- ① 위험 등급별 인원 : user별 최신 판정 1건 기준 -->
+    <select id="selectLevelCounts"
+            resultType="com.kopang.app.domain.churn.ChurnSummaryResponse$LevelCount">
+        WITH latest AS (
+            SELECT DISTINCT ON (user_id) user_id, risk_level
+            FROM churn_score
+            ORDER BY user_id, scored_at DESC
+        )
+        SELECT risk_level AS riskLevel, COUNT(*) AS count
+        FROM latest
+        GROUP BY risk_level
+    </select>
+
+    <!-- ①-b 일반/멤버십 세그먼트별 고위험 -->
+    <select id="selectSegmentCounts"
+            resultType="com.kopang.app.domain.churn.ChurnSummaryResponse$SegmentCount">
+        WITH latest AS (
+            SELECT DISTINCT ON (user_id) user_id, risk_level
+            FROM churn_score
+            ORDER BY user_id, scored_at DESC
+        )
+        SELECT
+            CASE WHEN um.user_id IS NOT NULL THEN 'MEMBER' ELSE 'NORMAL' END AS segment,
+            COUNT(*) AS total,
+            SUM(CASE WHEN l.risk_level = 'HIGH' THEN 1 ELSE 0 END) AS high
+        FROM latest l
+        LEFT JOIN (
+            SELECT DISTINCT user_id FROM user_membership WHERE status = 'ACTIVE'
+        ) um ON um.user_id = l.user_id
+        GROUP BY segment
+    </select>
+
+    <!-- ② 주간 이탈율 추이 : 최근 limit일을 과거→현재 순으로 -->
+    <select id="selectWeeklyTrend"
+            resultType="com.kopang.app.domain.churn.ChurnSummaryResponse$TrendPoint">
+        SELECT metricDate, churnRate
+        FROM (
+            SELECT metric_date AS metricDate, churn_rate AS churnRate
+            FROM churn_daily_metric
+            ORDER BY metric_date DESC
+            LIMIT #{limit}
+        ) recent
+        ORDER BY metricDate ASC
+    </select>
+
+    <!-- ③ 대응 액션별 처치군 vs 대조군 전환율 -->
+    <select id="selectEffect"
+            resultType="com.kopang.app.domain.churn.ChurnSummaryResponse$EffectRow">
+        SELECT
+            ri.action_type AS actionType,
+            ROUND(100.0 * SUM(CASE WHEN NOT ri.is_control AND io.converted THEN 1 ELSE 0 END)
+                  / NULLIF(SUM(CASE WHEN NOT ri.is_control THEN 1 ELSE 0 END), 0), 1) AS treatPct,
+            ROUND(100.0 * SUM(CASE WHEN ri.is_control AND io.converted THEN 1 ELSE 0 END)
+                  / NULLIF(SUM(CASE WHEN ri.is_control THEN 1 ELSE 0 END), 0), 1) AS controlPct,
+            SUM(COALESCE(io.revenue_amount, 0)) AS revenue
+        FROM retention_intervention ri
+        LEFT JOIN intervention_outcome io ON io.intervention_id = ri.intervention_id
+        GROUP BY ri.action_type
+        ORDER BY revenue DESC
+    </select>
+
+    <!-- ④ 위험 고객 상위 : user별 최신 score 내림차순 -->
+    <select id="selectTopAtRisk"
+            resultType="com.kopang.app.domain.churn.ChurnSummaryResponse$AtRiskCustomer">
+        WITH latest AS (
+            SELECT DISTINCT ON (user_id) user_id, score, risk_level, risk_type
+            FROM churn_score
+            ORDER BY user_id, scored_at DESC
+        )
+        SELECT
+            l.user_id   AS userId,
+            u.name      AS name,
+            l.score     AS score,
+            l.risk_level AS riskLevel,
+            l.risk_type  AS riskType,
+            CASE WHEN um.user_id IS NOT NULL THEN true ELSE false END AS isMember
+        FROM latest l
+        JOIN users u ON u.user_id = l.user_id
+        LEFT JOIN (
+            SELECT DISTINCT user_id FROM user_membership WHERE status = 'ACTIVE'
+        ) um ON um.user_id = l.user_id
+        ORDER BY l.score DESC
+        LIMIT #{limit}
+    </select>
+
+</mapper>

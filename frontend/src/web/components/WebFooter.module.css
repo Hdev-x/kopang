@@ -1,0 +1,17 @@
+.footer { margin-top: 80px; padding: 48px var(--web-page-padding) var(--space-6); color: var(--color-text-muted); background: var(--gray-50); border-top: 1px solid var(--color-border); }
+.inner,.legal { width: min(100%, var(--web-content-max-width)); margin: 0 auto; }
+.inner { display: grid; grid-template-columns: minmax(280px,.9fr) minmax(260px,.8fr) minmax(360px,1.3fr); gap: 48px; }
+.logo { color: var(--color-primary); font-size: var(--font-xl); font-weight: var(--weight-bold); text-decoration: none; }
+.support { padding-right: var(--space-8); border-right: 1px solid var(--color-border); }
+.support h2 { display: flex; align-items: center; color: var(--color-text); font-size: var(--font-lg); }
+.support > a,.support > button,.phone { width: 100%; min-height: 64px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: var(--space-3); margin-top: var(--space-2); padding: var(--space-3); color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); text-align: left; text-decoration: none; }
+.support > button { cursor: pointer; }
+.support span,.company { display: flex; flex-direction: column; gap: var(--space-1); }
+.support small,.company p { color: var(--color-text-muted); font-size: var(--font-xs); }
+.phone { grid-template-columns: auto 1fr; }
+.inner nav { display: grid; grid-template-columns: repeat(2,1fr); gap: var(--space-8); padding-right: var(--space-8); border-right: 1px solid var(--color-border); }
+.inner nav > div { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); }
+.inner nav a { color: var(--color-text-muted); font-size: var(--font-sm); text-decoration: none; }
+.inner nav a:hover,.inner nav strong { color: var(--color-text); }
+.company p:first-of-type { margin-top: var(--space-4); color: var(--color-text); }
+.legal { display: flex; justify-content: space-between; gap: var(--space-5); margin-top: 40px; padding-top: var(--space-5); border-top: 1px solid var(--color-border); color: var(--gray-500); font-size: var(--font-xs); }

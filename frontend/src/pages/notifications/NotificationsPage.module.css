@@ -54,3 +54,10 @@
   background: var(--color-sale);
   margin-top: var(--space-1);
 }
+
+.empty {
+  padding: var(--space-4) var(--space-2);
+  text-align: center;
+  font-size: var(--font-sm);
+  color: var(--color-text-muted);
+}

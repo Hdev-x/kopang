@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { AdminLayout } from "../../../components/AdminLayout";
 import { ChurnSubnav } from "../../../components/ChurnSubnav";
 import { Card } from "../../../components/Card";
@@ -8,52 +9,40 @@ import {
   Coins,
   AlertTriangle,
 } from "lucide-react";
+import { getChurnSummary, type ChurnSummary } from "../../../api/churn";
 import sh from "../adminShared.module.css";
 import styles from "./AdminChurnPage.module.css";
 
-// ⚠️ 전부 목업 데이터 (실제론 churn_score / intervention_outcome / churn_daily_metric 집계)
+// 위험 등급 표시 메타 (HIGH/MID/LOW → 라벨·색·정렬순서)
+const LEVEL_META: Record<string, { label: string; color: string; order: number }> = {
+  HIGH: { label: "고위험", color: "var(--color-danger)", order: 0 },
+  MID: { label: "중위험", color: "var(--color-warning)", order: 1 },
+  LOW: { label: "저위험", color: "var(--color-success)", order: 2 },
+};
 
-// 상단 KPI — 닫힌 루프 4지표
-const KPIS = [
-  { icon: AlertTriangle, label: "고위험 고객", value: "143명", delta: "▲ 9 지난주", tone: "warn" as const },
-  { icon: TrendingDown, label: "주간 이탈율", value: "4.2%", delta: "▼ 0.8%p", tone: "good" as const },
-  { icon: Target, label: "대응 전환율", value: "31%", delta: "▲ 4%p", tone: "good" as const },
-  { icon: Coins, label: "추천發 매출(월)", value: "₩2.1M", delta: "▲ 18%", tone: "good" as const },
-];
+// 대응 액션 한글 라벨
+const ACTION_LABEL: Record<string, string> = {
+  COUPON: "할인 쿠폰",
+  PUSH: "푸시 알림",
+  MODAL: "만류 모달",
+  RECOMMEND: "맞춤 추천",
+};
 
-// ① 위험도 분포 (전체)
-const RISK_DIST = [
-  { label: "고위험", count: 143, color: "var(--color-danger)" },
-  { label: "중위험", count: 312, color: "var(--color-warning)" },
-  { label: "저위험", count: 1945, color: "var(--color-success)" },
-];
-// 고객 유형별 고위험
-const RISK_BY_TYPE = [
-  { type: "일반 고객", high: 98, total: 1820 },
-  { type: "멤버십 고객", high: 45, total: 580 },
-];
+// 위험 유형 한글 라벨 (추천 대응 표시용)
+const RISK_TYPE_LABEL: Record<string, string> = {
+  CART_ABANDON: "장바구니 방치",
+  MEMBERSHIP_CANCEL: "멤버십 해지",
+  FIRST_ORDER_ONLY: "첫구매 미복귀",
+  WISHLIST_IDLE: "찜 방치",
+  COUPON_EXPIRING: "쿠폰 만료임박",
+  BAD_EXPERIENCE: "부정경험",
+  LOGIN_INACTIVE: "접속 뜸",
+  SPENDING_DROP: "구매액 감소",
+  ML_HIGH: "ML 고위험",
+};
 
-// ② 주간 이탈율 추이 (%)
-const CHURN_TREND = [
-  { w: "5주전", v: 5.1 }, { w: "4주전", v: 4.9 }, { w: "3주전", v: 5.3 },
-  { w: "2주전", v: 4.6 }, { w: "지난주", v: 4.4 }, { w: "이번주", v: 4.2 },
-];
+const SEG_LABEL: Record<string, string> = { MEMBER: "멤버십 고객", NORMAL: "일반 고객" };
 const CHURN_TARGET = 4.0;
-
-// ③ 대응 효과 — 처치군 vs 대조군(무처치) 전환율 = 순효과(lift)
-const EFFECT = [
-  { action: "맞춤 추천", treat: 34, control: 18, revenue: "₩1.26M" },
-  { action: "할인 쿠폰", treat: 28, control: 16, revenue: "₩820K" },
-  { action: "만류 모달", treat: 41, control: 22, revenue: "₩540K" },
-];
-
-// ④ 위험 고객 목록 (예측 → 추천 대응)
-const AT_RISK = [
-  { name: "김민수", type: "멤버십", score: 0.87, action: "만류 쿠폰" },
-  { name: "이지은", type: "일반", score: 0.79, action: "맞춤 추천" },
-  { name: "박서준", type: "일반", score: 0.64, action: "재구매 알림" },
-  { name: "최유나", type: "멤버십", score: 0.58, action: "혜택 안내" },
-];
 
 function scoreColor(s: number) {
   if (s >= 0.7) return "var(--color-danger)";
@@ -62,28 +51,74 @@ function scoreColor(s: number) {
 }
 
 export function AdminChurnPage() {
-  const distTotal = RISK_DIST.reduce((a, b) => a + b.count, 0);
-  // 도넛(conic-gradient) 구간 계산 — reduce로 누적합 계산 (let 재할당 없음)
-  const stops = RISK_DIST.reduce<{ parts: string[]; acc: number }>(
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<ChurnSummary | null>(null);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    getChurnSummary()
+      .then(setData)
+      .catch((err) => {
+        console.error("이탈 대시보드 집계를 불러오지 못했습니다.", err);
+        setError(true);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <AdminLayout title="이탈 방지 대시보드">
+        <ChurnSubnav />
+        <p className={styles.caption}>집계를 불러오는 중…</p>
+      </AdminLayout>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <AdminLayout title="이탈 방지 대시보드">
+        <ChurnSubnav />
+        <p className={styles.caption}>집계를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</p>
+      </AdminLayout>
+    );
+  }
+
+  const { kpi, levelCounts, segments, weeklyChurnRate, effect, atRisk } = data;
+
+  // KPI 4지표
+  const kpiCards = [
+    { icon: AlertTriangle, label: "고위험 고객", value: `${kpi.highRiskCount.toLocaleString()}명`, tone: "warn" as const },
+    { icon: TrendingDown, label: "주간 이탈율", value: `${kpi.churnRate}%`, tone: "good" as const },
+    { icon: Target, label: "대응 전환율", value: `${kpi.conversionRate}%`, tone: "good" as const },
+    { icon: Coins, label: "대응 귀속 매출(일)", value: `₩${kpi.attributedRevenue.toLocaleString()}`, tone: "good" as const },
+  ];
+
+  // ① 위험도 분포 — HIGH/MID/LOW 순으로 정렬 + 표시 메타 결합
+  const dist = levelCounts
+    .map((l) => ({ ...l, meta: LEVEL_META[l.riskLevel] }))
+    .sort((a, b) => a.meta.order - b.meta.order);
+  const distTotal = dist.reduce((a, b) => a + b.count, 0);
+  const stops = dist.reduce<{ parts: string[]; acc: number }>(
     (state, r) => {
       const start = (state.acc / distTotal) * 100;
       const next = state.acc + r.count;
       const end = (next / distTotal) * 100;
-      return { parts: [...state.parts, `${r.color} ${start}% ${end}%`], acc: next };
+      return { parts: [...state.parts, `${r.meta.color} ${start}% ${end}%`], acc: next };
     },
     { parts: [], acc: 0 }
   ).parts.join(", ");
 
-  const trendMax = Math.max(...CHURN_TREND.map((t) => t.v), CHURN_TARGET) * 1.1;
+  const trendMax = Math.max(...weeklyChurnRate.map((t) => t.churnRate), CHURN_TARGET) * 1.1;
+  const lastDate = weeklyChurnRate.at(-1)?.metricDate ?? "";
 
   return (
     <AdminLayout title="이탈 방지 대시보드">
       <ChurnSubnav />
-      <p className={styles.caption}>예측 → 대응 → 효과를 한눈에 · 기준 2026-06-30 09:00 (배치)</p>
+      <p className={styles.caption}>예측 → 대응 → 효과를 한눈에 · 기준 {lastDate} (배치)</p>
 
       {/* KPI */}
       <div className={styles.kpiGrid}>
-        {KPIS.map((k) => {
+        {kpiCards.map((k) => {
           const Icon = k.icon;
           return (
             <Card key={k.label} className={styles.kpiCard}>
@@ -92,7 +127,6 @@ export function AdminChurnPage() {
                 <span className={styles.kpiLabel}>{k.label}</span>
               </div>
               <p className={styles.kpiValue}>{k.value}</p>
-              <span className={`${styles.kpiDelta} ${styles[k.tone]}`}>{k.delta}</span>
             </Card>
           );
         })}
@@ -109,19 +143,19 @@ export function AdminChurnPage() {
             </div>
           </div>
           <ul className={styles.legend}>
-            {RISK_DIST.map((r) => (
-              <li key={r.label}>
-                <span className={styles.dot} style={{ background: r.color }} />
-                {r.label}
+            {dist.map((r) => (
+              <li key={r.riskLevel}>
+                <span className={styles.dot} style={{ background: r.meta.color }} />
+                {r.meta.label}
                 <strong>{r.count.toLocaleString()}명</strong>
               </li>
             ))}
           </ul>
         </div>
         <div className={styles.typeSplit}>
-          {RISK_BY_TYPE.map((t) => (
-            <div key={t.type} className={styles.typeRow}>
-              <span className={styles.typeName}>{t.type}</span>
+          {segments.map((t) => (
+            <div key={t.segment} className={styles.typeRow}>
+              <span className={styles.typeName}>{SEG_LABEL[t.segment] ?? t.segment}</span>
               <span className={styles.typeMeta}>
                 고위험 <strong>{t.high}</strong> / {t.total.toLocaleString()}명
               </span>
@@ -134,41 +168,43 @@ export function AdminChurnPage() {
       <h2 className={styles.section}>② 주간 이탈율 추이</h2>
       <Card>
         <div className={styles.chart}>
-          {CHURN_TREND.map((t) => (
-            <div key={t.w} className={styles.bar}>
-              <span className={styles.barValue}>{t.v}%</span>
-              <div className={styles.barFill} style={{ height: `${(t.v / trendMax) * 100}%` }} />
-              <span className={styles.barLabel}>{t.w}</span>
+          {weeklyChurnRate.map((t) => (
+            <div key={t.metricDate} className={styles.bar}>
+              <span className={styles.barValue}>{t.churnRate}%</span>
+              <div className={styles.barFill} style={{ height: `${(t.churnRate / trendMax) * 100}%` }} />
+              <span className={styles.barLabel}>{t.metricDate.slice(5)}</span>
             </div>
           ))}
         </div>
-        <p className={styles.targetNote}>목표 {CHURN_TARGET}% · 4주 연속 하락 중</p>
+        <p className={styles.targetNote}>목표 {CHURN_TARGET}%</p>
       </Card>
 
       {/* ③ 대응 효과 (순효과) */}
       <h2 className={styles.section}>③ 대응 효과 (대조군 대비 순효과)</h2>
       <Card className={styles.effectCard}>
-        {EFFECT.map((e) => {
-          const lift = e.treat - e.control;
+        {effect.map((e) => {
+          const treat = e.treatPct ?? 0;
+          const control = e.controlPct ?? 0;
+          const lift = Math.round((treat - control) * 10) / 10;
           return (
-            <div key={e.action} className={styles.effRow}>
+            <div key={e.actionType} className={styles.effRow}>
               <div className={styles.effHead}>
-                <span className={styles.effName}>{e.action}</span>
-                <span className={styles.effRevenue}>{e.revenue}</span>
+                <span className={styles.effName}>{ACTION_LABEL[e.actionType] ?? e.actionType}</span>
+                <span className={styles.effRevenue}>₩{e.revenue.toLocaleString()}</span>
               </div>
               <div className={styles.dualBar}>
                 <div className={styles.dualTrack}>
-                  <div className={styles.treatFill} style={{ width: `${e.treat}%` }} />
+                  <div className={styles.treatFill} style={{ width: `${treat}%` }} />
                 </div>
-                <span className={styles.dualPct}>처치 {e.treat}%</span>
+                <span className={styles.dualPct}>처치 {treat}%</span>
               </div>
               <div className={styles.dualBar}>
                 <div className={styles.dualTrack}>
-                  <div className={styles.controlFill} style={{ width: `${e.control}%` }} />
+                  <div className={styles.controlFill} style={{ width: `${control}%` }} />
                 </div>
-                <span className={styles.dualPct}>대조 {e.control}%</span>
+                <span className={styles.dualPct}>대조 {control}%</span>
               </div>
-              <span className={styles.lift}>순효과 +{lift}%p</span>
+              <span className={styles.lift}>순효과 {lift >= 0 ? "+" : ""}{lift}%p</span>
             </div>
           );
         })}
@@ -180,22 +216,24 @@ export function AdminChurnPage() {
       {/* ④ 위험 고객 목록 */}
       <h2 className={styles.section}>④ 위험 고객 목록</h2>
       <div className={sh.list}>
-        {AT_RISK.map((c) => (
-          <Card key={c.name}>
+        {atRisk.map((c) => (
+          <Card key={c.userId}>
             <div className={sh.itemHead}>
               <span className={sh.itemTitle}>
                 {c.name}{" "}
-                <span className={`${sh.badge} ${c.type === "멤버십" ? sh.bInfo : sh.bMuted}`}>{c.type}</span>
+                <span className={`${sh.badge} ${c.isMember ? sh.bInfo : sh.bMuted}`}>
+                  {c.isMember ? "멤버십" : "일반"}
+                </span>
               </span>
               <strong style={{ color: scoreColor(c.score) }}>{c.score.toFixed(2)}</strong>
             </div>
-            <p className={sh.itemMeta}>추천 대응: {c.action}</p>
+            <p className={sh.itemMeta}>위험 유형: {RISK_TYPE_LABEL[c.riskType] ?? c.riskType}</p>
           </Card>
         ))}
       </div>
 
       <div className={styles.footHint}>
-        <Users size={14} /> 데이터 출처: 이탈예측 ML(churn_score) · 추천 ML(item-CF) · 효과측정(intervention_outcome)
+        <Users size={14} /> 데이터 출처: churn_score(예측) · churn_daily_metric(집계) · intervention_outcome(효과측정)
       </div>
     </AdminLayout>
   );

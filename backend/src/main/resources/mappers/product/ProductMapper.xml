@@ -7,7 +7,7 @@
     <sql id="productSearchCondition">
         <where>
             <if test="categoryId != null">
-                AND category_id IN (
+                AND products.category_id IN (
                     WITH RECURSIVE subcategories AS (
                         SELECT category_id FROM categories WHERE category_id = #{categoryId}
                         UNION ALL
@@ -18,45 +18,46 @@
                 )
             </if>
             <if test="keyword != null and keyword != ''">
-                AND name LIKE CONCAT('%', #{keyword}, '%')
+                AND products.name LIKE CONCAT('%', #{keyword}, '%')
             </if>
         </where>
     </sql>
 
     <select id="findProducts" resultType="com.kopang.app.domain.product.ProductDTO">
         SELECT 
-            product_id,
-            category_id,
-            name,
-            description,
-            price,
-            discount_price,
-            stock,
-            image_url,
-            status,
-            created_at
+            products.product_id,
+            products.category_id,
+            products.name,
+            products.description,
+            products.price,
+            products.discount_price,
+            products.stock,
+            products.image_url,
+            products.status,
+            products.created_at
         FROM products
+        LEFT JOIN (
+            SELECT oi.product_id, SUM(oi.quantity) as popular_score
+            FROM orders_item oi
+            INNER JOIN orders o ON oi.order_id = o.order_id
+            WHERE o.payment_status = 'PAID'
+              AND (o.order_status IS NULL OR o.order_status != 'CANCELLED')
+            GROUP BY oi.product_id
+        ) pop ON products.product_id = pop.product_id
         <include refid="productSearchCondition" />
         ORDER BY
         <choose>
             <when test="sort == 'priceAsc'">
-                price ASC, product_id DESC
+                products.price ASC, products.product_id DESC
             </when>
             <when test="sort == 'priceDesc'">
-                price DESC, product_id DESC
+                products.price DESC, products.product_id DESC
             </when>
             <when test="sort == 'latest'">
-                product_id DESC
+                products.product_id DESC
             </when>
             <otherwise>
-                (
-                    SELECT COALESCE(SUM(oi.quantity), 0)
-                    FROM orders_item oi
-                    INNER JOIN orders o ON oi.order_id = o.order_id
-                    WHERE oi.product_id = products.product_id
-                      AND o.payment_status = 'PAID'
-                      AND (o.order_status IS NULL OR o.order_status != 'CANCELLED')
-                ) DESC, product_id DESC
+                COALESCE(pop.popular_score, 0) DESC, products.product_id DESC
             </otherwise>
         </choose>
         LIMIT #{limit} OFFSET #{offset}
@@ -149,5 +150,49 @@
         DELETE FROM product_images
         WHERE product_id = #{productId}
     </delete>
+
+    <select id="findSimilarProducts" resultType="com.kopang.app.domain.product.ProductDTO">
+        SELECT 
+            product_id,
+            category_id,
+            name,
+            description,
+            price,
+            discount_price,
+            stock,
+            image_url,
+            status,
+            created_at
+        FROM products
+        WHERE category_id = #{categoryId}
+          AND product_id != #{productId}
+        ORDER BY ABS(price - #{price}) ASC, product_id DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="findFrequentlyBoughtTogether" resultType="com.kopang.app.domain.product.ProductDTO">
+        SELECT p.product_id, p.category_id, p.name, p.description, p.price, p.discount_price, p.stock, p.image_url, p.status, p.created_at
+        FROM orders_item oi1
+        INNER JOIN orders_item oi2 ON oi1.order_id = oi2.order_id
+        INNER JOIN products p ON oi2.product_id = p.product_id
+        WHERE oi1.product_id = #{productId}
+          AND oi2.product_id != #{productId}
+        GROUP BY p.product_id, p.category_id, p.name, p.description, p.price, p.discount_price, p.stock, p.image_url, p.status, p.created_at
+        ORDER BY COUNT(oi2.order_item_id) DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="findRelatedCategoryProducts" resultType="com.kopang.app.domain.product.ProductDTO">
+        SELECT p.product_id, p.category_id, p.name, p.description, p.price, p.discount_price, p.stock, p.image_url, p.status, p.created_at
+        FROM products p
+        INNER JOIN categories c ON p.category_id = c.category_id
+        WHERE p.product_id != #{productId}
+          AND (
+            c.parent_id = (SELECT parent_id FROM categories WHERE category_id = #{categoryId} AND parent_id IS NOT NULL)
+            OR (SELECT parent_id FROM categories WHERE category_id = #{categoryId}) IS NULL
+          )
+        ORDER BY p.product_id DESC
+        LIMIT #{limit}
+    </select>
 
 </mapper>

@@ -8,7 +8,6 @@ import { Card } from "../../components/Card";
 import { useAuth } from "../../hooks/useAuth";
 import {
   getMembershipStatus,
-  subscribeMembership,
   cancelMembership,
   keepMembership,
   getSavedShippingFee,
@@ -16,7 +15,8 @@ import {
 } from "../../api/membership";
 import styles from "./MembershipPage.module.css";
 
-const BENEFITS = ["무료배송 무제한", "구매액 2% 적립", "회원 단독 특가·쿠폰", "무료 반품"];
+const BENEFITS = ["무료배송 무제한", "구매액 5% 적립", "회원 단독 특가·쿠폰", "무료 반품"];
+const CLIENT_KEY = "test_ck_nRQoOaPz8LNMgv7d5bDPVy47BMw6";
 
 export function MembershipPage() {
   const user = useAuth();
@@ -67,14 +67,33 @@ export function MembershipPage() {
     );
   }
 
-  // 가입 신청 처리
+  // 가입 신청 처리 (토스페이먼츠 연동 결제 창 활성화)
   const handleSubscribe = async () => {
     try {
-      const data = await subscribeMembership();
-      setMembership(data);
-      alert("와우 멤버십 가입이 성공적으로 완료되었습니다! 매달 30일마다 정기 결제됩니다.");
-    } catch {
-      alert("멤버십 가입에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+      const tossPayments = (
+        window as unknown as {
+          TossPayments: (key: string) => {
+            requestPayment: (
+              method: string,
+              opts: Record<string, unknown>
+            ) => Promise<void>;
+          };
+        }
+      ).TossPayments(CLIENT_KEY);
+
+      // 결제 고유번호 생성
+      const orderId = `MEMBERSHIP-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
+      await tossPayments.requestPayment("카드", {
+        amount: 4990,
+        orderId,
+        orderName: "WOW 멤버십 정기 구독",
+        successUrl: `${window.location.origin}/membership/success`,
+        failUrl: `${window.location.origin}/membership/fail`,
+      });
+    } catch (err) {
+      console.error("결제 요청 중 오류가 발생했습니다.", err);
+      alert("결제 진행 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
     }
   };
 
@@ -121,7 +140,7 @@ export function MembershipPage() {
 
   return (
     <Layout>
-      <PageHeader />
+      <PageHeader title="WOW 멤버십" />
       <div className={styles.hero}>
         <p className={styles.brand}>WOW 멤버십</p>
         <p className={styles.priceLine}>월 4,990원</p>

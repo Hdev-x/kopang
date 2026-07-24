@@ -115,3 +115,20 @@ export async function searchProductsAI(query: string, page: number = 0, size: nu
   });
   return res.data.data;
 }
+
+// 비슷한 상품 추천 조회 (GET /api/products/:id/similar)
+export async function getSimilarProducts(productId: number) {
+  const res = await client.get<ApiResponse<Product[]>>(`/products/${productId}/similar`);
+  return res.data.data;
+}
+
+export type AIRecommendationResponse = {
+  similarProducts: Product[];
+  frequentlyBoughtTogether: Product[];
+};
+
+// AI 추천 (비슷한 상품 & 함께 구매하면 좋은 상품) (GET /api/products/:id/ai-recommendations)
+export async function getAIRecommendations(productId: number) {
+  const res = await client.get<ApiResponse<AIRecommendationResponse>>(`/products/${productId}/ai-recommendations`);
+  return res.data.data;
+}

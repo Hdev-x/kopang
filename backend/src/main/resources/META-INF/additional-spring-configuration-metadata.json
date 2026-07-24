@@ -1,0 +1,10 @@
+{
+  "properties": [
+    {
+      "name": "churn.batch.cron",
+      "type": "java.lang.String",
+      "description": "이탈 점수 배치 실행 주기 (Spring cron 표현식). ChurnScheduler에서 사용.",
+      "defaultValue": "0 0 3 * * *"
+    }
+  ]
+}

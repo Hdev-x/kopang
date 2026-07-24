@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kopang.app.domain.churn.ChurnCustomerMapper">
+
+    <!-- 공통 필터: 위험유형 + 등급 + 멤버십 여부 (있을 때만 붙음) -->
+    <sql id="customerFilter">
+        <if test="type != null and type != ''">
+            AND l.risk_type = #{type}
+        </if>
+        <if test="level != null and level != ''">
+            AND l.risk_level = #{level}
+        </if>
+        <if test="memberType == 'MEMBER'">
+            AND um.user_id IS NOT NULL
+        </if>
+        <if test="memberType == 'NORMAL'">
+            AND um.user_id IS NULL
+        </if>
+    </sql>
+
+    <!-- 위험 고객 목록 : user별 최신 판정 + 이름/멤버십/발송상태 -->
+    <select id="findRiskCustomers"
+            resultType="com.kopang.app.domain.churn.RiskCustomerResponse">
+        WITH latest AS (
+            SELECT DISTINCT ON (user_id) user_id, score, risk_level, risk_type, scored_at
+            FROM churn_score
+            ORDER BY user_id, scored_at DESC
+        )
+        SELECT
+            l.user_id           AS userId,
+            u.name              AS name,
+            (um.user_id IS NOT NULL) AS isMember,
+            l.score             AS score,
+            l.risk_level        AS riskLevel,
+            l.risk_type         AS riskType,
+            l.scored_at::date   AS detectedAt,
+            CASE
+                WHEN ri.is_control IS NULL THEN 'SCHEDULED'
+                WHEN ri.is_control THEN 'CONTROL'
+                ELSE 'SENT'
+            END AS status
+        FROM latest l
+        JOIN users u ON u.user_id = l.user_id
+        LEFT JOIN (
+            SELECT DISTINCT user_id FROM user_membership WHERE status = 'ACTIVE'
+        ) um ON um.user_id = l.user_id
+        LEFT JOIN LATERAL (
+            SELECT is_control FROM retention_intervention ri
+            WHERE ri.user_id = l.user_id AND ri.risk_type = l.risk_type
+            ORDER BY ri.created_at DESC
+            LIMIT 1
+        ) ri ON true
+        <where>
+            <include refid="customerFilter"/>
+        </where>
+        ORDER BY l.score DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <!-- 같은 필터의 총 건수 (목록엔 없는 users/발송상태 조인 생략) -->
+    <select id="countRiskCustomers" resultType="long">
+        WITH latest AS (
+            SELECT DISTINCT ON (user_id) user_id, risk_level, risk_type
+            FROM churn_score
+            ORDER BY user_id, scored_at DESC
+        )
+        SELECT COUNT(*)
+        FROM latest l
+        LEFT JOIN (
+            SELECT DISTINCT user_id FROM user_membership WHERE status = 'ACTIVE'
+        ) um ON um.user_id = l.user_id
+        <where>
+            <include refid="customerFilter"/>
+        </where>
+    </select>
+
+</mapper>

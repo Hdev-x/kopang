@@ -17,14 +17,32 @@ import { MyInquiriesPage } from "../pages/my/MyInquiriesPage";
 import { MyInquiryDetailPage } from "../pages/my/MyInquiryDetailPage";
 import { AddressManagementPage } from "../pages/my/AddressManagementPage";
 
+
 // ===== 멤버십 (membership) — 담당 A =====
 import { MembershipPage } from "../pages/membership/MembershipPage";
+import { MembershipSuccessPage } from "../pages/membership/MembershipSuccessPage";
+import { MembershipFailPage } from "../pages/membership/MembershipFailPage";
 
 // ===== 상품 (product) — 담당 B =====
 import { HomePage } from "../pages/product/HomePage";
 import { ProductListPage } from "../pages/product/ProductListPage";
 import { ProductDetailPage } from "../pages/product/ProductDetailPage";
 import { SearchPage } from "../pages/product/SearchPage";
+
+// ===== Web 전용 사용자 화면 =====
+import { WebHomePage } from "../web/pages/WebHomePage";
+import { WebProductListPage } from "../web/pages/WebProductListPage";
+import { WebProductDetailPage } from "../web/pages/WebProductDetailPage";
+import { WebLoginPage } from "../web/pages/WebLoginPage";
+import { WebSignupPage } from "../web/pages/WebSignupPage";
+import { WebFindPasswordPage } from "../web/pages/WebFindPasswordPage";
+import { WebSearchPage } from "../web/pages/WebSearchPage";
+import { WebCartPage } from "../web/pages/WebCartPage";
+import { WebCheckoutPage, WebOrderCompletePage, WebPaymentFailPage, WebPaymentSuccessPage, WebResumeCheckoutPage } from "../web/pages/WebOrderSkeletonPages";
+import { WebAccountPage } from "../web/pages/WebAccountPages";
+import { WebFaqPage, WebNoticeDetailPage, WebNoticeListPage, WebNotificationsPage, WebQnaDetailPage, WebQnaListPage, WebQnaWritePage, WebSupportInquiryPage, WebSupportPage } from "../web/pages/WebServiceSkeletonPages";
+import { WebMembershipFailPage, WebMembershipPage, WebMembershipSuccessPage } from "../web/pages/WebMembershipPages";
+import { WebPointsPage } from "../web/pages/WebPointsPage";
 
 // ===== 장바구니 (cart) — 담당 B =====
 import { CartPage } from "../pages/cart/CartPage";
@@ -53,7 +71,6 @@ import { QnaWritePage } from "../pages/support/QnaWritePage";
 
 // ===== 관리자 공통 (admin) =====
 import { AdminRoute } from "../components/AdminRoute";
-import { AdminLoginPage } from "../pages/admin/AdminLoginPage";
 import { AdminPage } from "../pages/admin/AdminPage";
 
 // ===== 관리자 · 이탈방지 (admin/churn) — 담당 C =====
@@ -72,10 +89,8 @@ import { AdminCouponsPage } from "../pages/admin/manage/AdminCouponsPage";
 import { AdminFaqPage } from "../pages/admin/manage/AdminFaqPage";
 import { AdminInquiriesPage } from "../pages/admin/manage/AdminInquiriesPage";
 import { AdminInquiryDetailPage } from "../pages/admin/manage/AdminInquiryDetailPage";
-
-// 통계·AI추천관리 페이지는 보류 — 파일은 유지하되 라우팅에서 제외 (over-scope 정리)
-// import { AdminStatsPage } from "../pages/admin/manage/AdminStatsPage";
-// import { AdminRecommendationsPage } from "../pages/admin/manage/AdminRecommendationsPage";
+import { AdminStatsPage } from "../pages/admin/manage/AdminStatsPage";
+import { AdminRecommendationsPage } from "../pages/admin/manage/AdminRecommendationsPage";
 
 export function AppRouter() {
   return (
@@ -89,7 +104,6 @@ export function AppRouter() {
       {/* ---------- 마이페이지 ---------- */}
       <Route path="/my" element={<MyPage />} />
       <Route path="/my/profile" element={<EditProfilePage />} />
-      <Route path="/my/addresses" element={<AddressManagementPage />} />
       <Route path="/my/wishlist" element={<WishlistPage />} />
       <Route path="/my/points" element={<PointHistoryPage />} />
       <Route path="/my/coupons" element={<CouponPage />} />
@@ -98,12 +112,58 @@ export function AppRouter() {
 
       {/* ---------- 멤버십 ---------- */}
       <Route path="/membership" element={<MembershipPage />} />
+      <Route path="/membership/success" element={<MembershipSuccessPage />} />
+      <Route path="/membership/fail" element={<MembershipFailPage />} />
 
       {/* ---------- 상품 ---------- */}
       <Route path="/" element={<HomePage />} />
       <Route path="/products" element={<ProductListPage />} />
       <Route path="/products/:id" element={<ProductDetailPage />} />
       <Route path="/search" element={<SearchPage />} />
+
+      {/* ---------- Web 전용 사용자 화면 ---------- */}
+      <Route path="/web" element={<WebHomePage />} />
+      <Route path="/web/products" element={<WebProductListPage />} />
+      <Route path="/web/products/:id" element={<WebProductDetailPage />} />
+      <Route path="/web/login" element={<WebLoginPage />} />
+      <Route path="/web/signup" element={<WebSignupPage />} />
+      <Route path="/web/find-password" element={<WebFindPasswordPage />} />
+      <Route path="/web/search" element={<WebSearchPage />} />
+      <Route path="/web/cart" element={<WebCartPage />} />
+      <Route path="/web/checkout" element={<WebCheckoutPage />} />
+      <Route path="/web/checkout/resume/:orderId" element={<WebResumeCheckoutPage />} />
+      <Route path="/web/order/complete" element={<WebOrderCompletePage />} />
+      <Route path="/web/payment/success" element={<WebPaymentSuccessPage />} />
+      <Route path="/web/payment/fail" element={<WebPaymentFailPage />} />
+      <Route path="/web/my" element={<WebAccountPage kind="home" />} />
+      <Route path="/web/my/profile" element={<WebAccountPage kind="profile" />} />
+      <Route path="/web/my/notifications" element={<WebAccountPage kind="notifications" />} />
+      <Route path="/web/my/password" element={<WebAccountPage kind="password" />} />
+      <Route path="/web/my/orders" element={<WebAccountPage kind="orders" />} />
+      <Route path="/web/my/orders/:no" element={<WebAccountPage kind="order" />} />
+      <Route path="/web/my/addresses" element={<WebAccountPage kind="addresses" />} />
+      <Route path="/web/my/wishlist" element={<WebAccountPage kind="wishlist" />} />
+      <Route path="/web/my/points" element={<WebPointsPage />} />
+      <Route path="/web/my/coupons" element={<WebAccountPage kind="coupons" />} />
+      <Route path="/web/my/inquiries" element={<WebAccountPage kind="inquiries" />} />
+      <Route path="/web/my/inquiries/:id" element={<WebAccountPage kind="inquiry" />} />
+      <Route path="/web/my/reviews" element={<WebAccountPage kind="reviews" />} />
+      <Route path="/web/my/reviews/write" element={<WebAccountPage kind="review-write" />} />
+      <Route path="/web/membership" element={<WebMembershipPage />} />
+      <Route path="/web/membership/success" element={<WebMembershipSuccessPage />} />
+      <Route path="/web/membership/fail" element={<WebMembershipFailPage />} />
+      <Route path="/web/notifications" element={<WebNotificationsPage />} />
+      <Route path="/web/support" element={<WebSupportPage />} />
+      <Route path="/web/support/inquiry" element={<WebSupportInquiryPage />} />
+      <Route path="/web/support/notices" element={<WebNoticeListPage />} />
+      <Route path="/web/support/notices/:id" element={<WebNoticeDetailPage />} />
+      <Route path="/web/support/faq" element={<WebFaqPage />} />
+      <Route path="/web/qna" element={<WebQnaListPage />} />
+      <Route path="/web/qna/:id" element={<WebQnaDetailPage />} />
+      <Route path="/web/qna/write" element={<WebQnaWritePage />} />
+      <Route path="/web/oauth2/callback" element={<OAuth2CallbackPage />} />
+      {/* 기존 사용자 화면을 mobile 기준으로 유지하는 임시 진입점 */}
+      <Route path="/mobile" element={<HomePage />} />
 
       {/* ---------- 장바구니 · 주문/결제 ---------- */}
       <Route path="/cart" element={<CartPage />} />
@@ -114,6 +174,7 @@ export function AppRouter() {
       <Route path="/payment/fail" element={<PaymentFailPage />} />
       <Route path="/my/orders" element={<OrderHistoryPage />} />
       <Route path="/my/orders/:no" element={<OrderDetailPage />} />
+      <Route path="/my/addresses" element={<AddressManagementPage />} />
 
       {/* ---------- 알림 ---------- */}
       <Route path="/notifications" element={<NotificationsPage />} />
@@ -125,12 +186,11 @@ export function AppRouter() {
       <Route path="/my/support/notices/:id" element={<NoticeDetailPage />} />
       <Route path="/my/support/faq" element={<FaqPage />} />
       <Route path="/qna" element={<QnaListPage />} />
-      <Route path="/qna/write" element={<QnaWritePage />} />
       <Route path="/qna/:id" element={<QnaDetailPage />} />
+      <Route path="/qna/write" element={<QnaWritePage />} />
 
 
       {/* ---------- 관리자 ---------- */}
-      <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
       <Route path="/admin/inquiries/:id" element={<AdminRoute><AdminInquiryDetailPage /></AdminRoute>} />
       <Route path="/admin/inquiries" element={<AdminRoute><AdminInquiriesPage /></AdminRoute>} />
@@ -150,7 +210,8 @@ export function AppRouter() {
       <Route path="/admin/membership" element={<AdminRoute><AdminMembershipPage /></AdminRoute>} />
       <Route path="/admin/coupons" element={<AdminRoute><AdminCouponsPage /></AdminRoute>} />
       <Route path="/admin/faqs" element={<AdminRoute><AdminFaqPage /></AdminRoute>} />
-      {/* /admin/stats · /admin/recommendations : 보류 (파일 유지, 라우팅 제외) */}
+      <Route path="/admin/recommendations" element={<AdminRoute><AdminRecommendationsPage /></AdminRoute>} />
+      <Route path="/admin/stats" element={<AdminRoute><AdminStatsPage /></AdminRoute>} />
     </Routes>
   );
 }

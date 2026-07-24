@@ -4,7 +4,7 @@ import { Layout } from "../../components/Layout";
 import { PageHeader } from "../../components/PageHeader";
 import { Card } from "../../components/Card";
 import { Button } from "../../components/Button";
-import { getPointBalance, getPointHistory, earnPoint, spendPoint, type PointHistoryResponse } from "../../api/point";
+import { getPointBalance, getPointHistory, type PointHistoryResponse } from "../../api/point";
 import { useAuth } from "../../hooks/useAuth";
 import s from "../../styles/AccountPages.module.css";
 
@@ -58,28 +58,6 @@ export function PointHistoryPage() {
     );
   }
 
-  // 모의 적립 핸들러
-  const handleEarn = async () => {
-    try {
-      await earnPoint(1000, "이벤트 참여 보너스 적립");
-      alert("1,000P가 적립되었습니다!");
-      loadPointData();
-    } catch {
-      alert("포인트 적립에 실패했습니다.");
-    }
-  };
-
-  // 모의 사용 핸들러
-  const handleUse = async () => {
-    try {
-      await spendPoint(500, "포인트 샵 모의 차감");
-      alert("500P가 사용되었습니다!");
-      loadPointData();
-    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-      alert(err.response?.data?.message || "포인트 사용에 실패했습니다. 잔액을 확인해 주세요.");
-    }
-  };
-
   if (loading) {
     return (
       <Layout>
@@ -101,20 +79,6 @@ export function PointHistoryPage() {
       <div className={s.summary}>
         <div className={s.summaryNum}>{balance.toLocaleString()}P</div>
         <div className={s.summaryLabel}>사용 가능 포인트</div>
-      </div>
-
-      {/* 모의 테스트 구역 (발표용 실시간 변동 제어) */}
-      <div style={{
-        display: "flex",
-        gap: "10px",
-        marginBottom: "25px",
-        padding: "15px",
-        borderRadius: "var(--radius-md, 8px)",
-        border: "1px dashed var(--color-border, #eee)",
-        backgroundColor: "var(--gray-50, #fafafa)"
-      }}>
-        <Button style={{ flex: 1 }} onClick={handleEarn}>+1,000P 적립</Button>
-        <Button variant="ghost" style={{ flex: 1, borderColor: "var(--color-primary)" }} onClick={handleUse}>-500P 사용</Button>
       </div>
 
       <div className={s.list}>

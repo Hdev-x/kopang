@@ -1,7 +1,12 @@
 package com.kopang.app.domain.review;
 
+import com.kopang.app.domain.membership.MembershipMapper;
+import com.kopang.app.domain.membership.UserMembershipDTO;
 import com.kopang.app.domain.order.OrderDTO;
 import com.kopang.app.domain.order.OrderMapper;
+import com.kopang.app.domain.point.PointHistoryDTO;
+import com.kopang.app.domain.point.PointMapper;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,9 +19,20 @@ public class ReviewServiceImpl implements ReviewService {
 
     private final ReviewMapper reviewMapper;
     private final OrderMapper orderMapper;
+    private final PointMapper pointMapper;
+    private final MembershipMapper membershipMapper;
 
     @Override
     public void addReview(Long userId, Long productId, double rating, String content, String imageUrl) {
+
+        // 이미 해당 상품에 대해 작성한 리뷰가 있는지 검증
+        List<ReviewDTO> existingReviews = reviewMapper.findByUserId(userId);
+        boolean alreadyReviewed = existingReviews.stream()
+                .anyMatch(r -> r.getProductId().equals(productId));
+        if (alreadyReviewed) {
+            throw new IllegalStateException("이미 이 상품에 대해 리뷰를 작성하셨습니다.");
+        }
+
         // 구매확정 상태인지 검증
         List<OrderDTO> orders = orderMapper.findOrdersByUserId(userId);
         boolean hasConfirmedPurchase = orders.stream()
@@ -35,6 +51,22 @@ public class ReviewServiceImpl implements ReviewService {
         dto.setContent(content);
         dto.setImage(imageUrl);
         reviewMapper.insert(dto);
+
+        // 리뷰 작성시 포인트 적립
+        UserMembershipDTO activeMembership = membershipMapper.findActiveMembershipByUserId(userId);
+        int points = 50;
+
+        // 멤버십 회원에게는 3배 혜택인 150P 지급
+        if (activeMembership != null && "ACTIVE".equals(activeMembership.getStatus())) {
+            points = 150;
+        }
+
+        PointHistoryDTO history = new PointHistoryDTO();
+        history.setUserId(userId);
+        history.setAmount(points);
+        history.setType("REVIEW");
+        history.setDescription("리뷰 작성 보너스 포인트 적립 (상품 ID: " + productId + ")");
+        pointMapper.insertPointHistory(history);
     }
 
     @Override

@@ -97,18 +97,84 @@
 
 .similarCard {
   min-width: 120px;
+  max-width: 140px;
   flex-shrink: 0;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.similarCard:hover {
+  transform: translateY(-2px);
 }
 
 .similarThumb {
+  width: 100%;
   aspect-ratio: 1;
   background: var(--gray-100);
   border-radius: var(--radius-sm);
   margin-bottom: var(--space-2);
+  object-fit: cover;
+  display: block;
 }
 
 .similarName {
   font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.similarPriceArea {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.similarDiscount {
+  font-size: var(--font-xs);
+  font-weight: var(--weight-bold);
+  color: var(--color-sale, #e53e3e);
+}
+
+.similarPrice {
+  font-size: var(--font-sm);
+  font-weight: var(--weight-bold);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.skeletonThumb {
+  width: 100%;
+  aspect-ratio: 1;
+  background: var(--gray-200, #e5e7eb);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-2);
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+.skeletonLine {
+  height: 14px;
+  background: var(--gray-200, #e5e7eb);
+  border-radius: 4px;
+  margin-bottom: 6px;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+.skeletonLineShort {
+  height: 14px;
+  width: 60%;
+  background: var(--gray-200, #e5e7eb);
+  border-radius: 4px;
+  animation: pulse 1.5s infinite ease-in-out;
 }
 
 .review {

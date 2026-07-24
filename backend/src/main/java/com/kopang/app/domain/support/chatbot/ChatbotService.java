@@ -56,7 +56,7 @@ public class ChatbotService {
                     """ + message;
 
             String url = "https://generativelanguage.googleapis.com/v1beta/models/"
-                    + "gemini-2.5-flash:generateContent?key=" + geminiApiKey;
+                    + "gemini-flash-latest:generateContent?key=" + geminiApiKey;
 
             Map<String, Object> requestBody = Map.of(
                     "contents", List.of(
@@ -64,7 +64,7 @@ public class ChatbotService {
                                     Map.of("text", prompt)))),
                     "generationConfig", Map.of(
                             "responseMimeType", "application/json",
-                            "maxOutputTokens", 512,
+                            "maxOutputTokens", 2048,
                             "temperature", 0.4));
 
             String responseBody = restTemplate.postForObject(url, requestBody, String.class);

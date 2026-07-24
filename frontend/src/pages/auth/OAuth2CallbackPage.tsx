@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { login as authLogin } from "../../lib/auth";
+import { login as authLogin, type AuthUser } from "../../lib/auth";
 
 export function OAuth2CallbackPage() {
     const navigate = useNavigate();
@@ -10,14 +10,17 @@ export function OAuth2CallbackPage() {
         const accessToken = searchParams.get("accessToken");
         const refreshToken = searchParams.get("refreshToken");
         const nameRaw = searchParams.get("name");
-        const role = searchParams.get("role") || "USER";
+        const roleParam = searchParams.get("role");
+        const role: AuthUser["role"] = roleParam === "ADMIN" ? "ADMIN" : "USER";
 
         if (accessToken && refreshToken && nameRaw) {
             const name = decodeURIComponent(nameRaw);
             // 자체 세션 스토리지에 로그인 정보 저장
-            authLogin({ name, role: role as any }, accessToken, refreshToken);
+            authLogin({ name, role }, accessToken, refreshToken);
             alert(`${name}님, 소셜 로그인으로 반갑습니다!`);
-            navigate("/");
+            const preferredView = localStorage.getItem("kopang_login_view");
+            localStorage.removeItem("kopang_login_view");
+            navigate(preferredView === "web" ? "/web" : "/");
         } else {
             alert("소셜 로그인 인증에 실패했습니다.");
             navigate("/login");

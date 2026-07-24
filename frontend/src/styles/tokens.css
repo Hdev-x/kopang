@@ -61,6 +61,12 @@
 
   /* ===== 레이아웃 ===== */
   --max-width: 480px;
+  --web-content-max-width: 1200px;
+  --web-page-padding: 32px;
+  --web-header-height: 72px;
+  --web-grid-gap: 20px;
+  --web-quickbar-width: 52px;
+  --web-modal-width: 520px;
 
   /* ===== z-index 층 ===== */
   --z-header: 100;

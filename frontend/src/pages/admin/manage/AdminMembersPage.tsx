@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Search } from "lucide-react";
 import { AdminLayout } from "../../../components/AdminLayout";
 import { Card } from "../../../components/Card";
@@ -16,6 +16,9 @@ export function AdminMembersPage() {
   const [members, setMembers] = useState<AdminMemberResponse[]>([]);
   const [q, setQ] = useState("");
   const [sortBy, setSortBy] = useState("join_desc");
+  const [visibleCount, setVisibleCount] = useState(20);
+
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const loadData = async () => {
     try {
@@ -31,6 +34,28 @@ export function AdminMembersPage() {
   useEffect(() => {
     loadData();
   }, []);
+
+  // 검색이나 정렬 조건 변경 시 무한 스크롤 초기화
+  useEffect(() => {
+    setVisibleCount(20);
+  }, [q, sortBy]);
+
+  // 무한 스크롤 감시자 등록
+  useEffect(() => {
+    if (loading) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount((prev) => prev + 20);
+        }
+      },
+      { rootMargin: "100px" }
+    );
+    if (sentinelRef.current) {
+      observer.observe(sentinelRef.current);
+    }
+    return () => observer.disconnect();
+  }, [loading, members.length, q, sortBy]);
 
   const rows = members.filter(
     (m) =>
@@ -48,6 +73,8 @@ export function AdminMembersPage() {
     }
     return 0;
   });
+
+  const displayedRows = sortedRows.slice(0, visibleCount);
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "";
@@ -96,12 +123,12 @@ export function AdminMembersPage() {
       </div>
 
       <div className={sh.list}>
-        {sortedRows.length === 0 ? (
+        {displayedRows.length === 0 ? (
           <div className={sh.empty} style={{ border: "1px solid var(--color-border, #eee)", borderRadius: "var(--radius-md, 8px)" }}>
             검색 결과에 맞는 회원이 없습니다.
           </div>
         ) : (
-          sortedRows.map((m) => (
+          displayedRows.map((m) => (
             <Card key={m.userId}>
               <div className={sh.itemHead}>
                 <span className={sh.itemTitle}>
@@ -119,6 +146,11 @@ export function AdminMembersPage() {
               </p>
             </Card>
           ))
+        )}
+        {visibleCount < sortedRows.length && (
+          <div ref={sentinelRef} style={{ height: "60px", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--color-text-muted)", fontSize: "13px" }}>
+            목록 불러오는 중...
+          </div>
         )}
       </div>
     </AdminLayout>

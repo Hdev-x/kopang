@@ -5,12 +5,13 @@ import { Layout } from "../../components/Layout";
 import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
 import { AddToCartModal } from "../../components/AddToCartModal";
-import { getProduct } from "../../api/products";
+import { getProduct, getAIRecommendations } from "../../api/products";
 import { addToCart } from "../../api/cart";
 import { checkWishlist, addWishlist, deleteWishlist } from "../../api/wishlist";
 import { getProductReviews } from "../../api/review";
 import { getProductQnaList } from "../../api/qna";
 import { useAuth } from "../../hooks/useAuth";
+import { recordProductView } from "../../api/productViews";
 import type { Product } from "../../types/product";
 import type { Review } from "../../api/review";
 import styles from "./ProductDetailPage.module.css";
@@ -23,6 +24,9 @@ export function ProductDetailPage() {
   const navigate = useNavigate();
   const user = useAuth();
   const [product, setProduct] = useState<Product | null>(null);
+  const [similarProducts, setSimilarProducts] = useState<Product[]>([]);
+  const [togetherProducts, setTogetherProducts] = useState<Product[]>([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(true);
   const [wished, setWished] = useState(false);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
@@ -32,7 +36,15 @@ export function ProductDetailPage() {
   useEffect(() => {
     if (id) {
       const prodId = Number(id);
+      setLoadingRecommendations(true);
       getProduct(prodId).then(setProduct).catch(console.error);
+      getAIRecommendations(prodId)
+        .then((data) => {
+          setSimilarProducts(data.similarProducts || []);
+          setTogetherProducts(data.frequentlyBoughtTogether || []);
+        })
+        .catch(console.error)
+        .finally(() => setLoadingRecommendations(false));
       getProductReviews(prodId).then(setReviews).catch(console.error);
       getProductQnaList(prodId)
         .then(setProductQna)
@@ -40,6 +52,7 @@ export function ProductDetailPage() {
 
       if (user) {
         checkWishlist(prodId).then(setWished).catch(console.error);
+        recordProductView(prodId).catch(console.error);
       } else {
         setWished(false);
       }
@@ -137,16 +150,99 @@ export function ProductDetailPage() {
         </Button>
       </div>
 
-      {/* 비슷한 상품 (content-based 추천 자리) */}
-      <h2 className={styles.section}>비슷한 상품</h2>
-      <div className={styles.similarRow}>
-        {[1, 2, 3, 4, 5, 6].map((n) => (
-          <Card key={n} className={styles.similarCard}>
-            <div className={styles.similarThumb} />
-            <p className={styles.similarName}>추천 상품 {n}</p>
-          </Card>
-        ))}
-      </div>
+      {/* 비슷한 상품 */}
+      {(loadingRecommendations || similarProducts.length > 0) && (
+        <>
+          <h2 className={styles.section}>비슷한 상품</h2>
+          <div className={styles.similarRow}>
+            {loadingRecommendations ? (
+              [1, 2, 3, 4].map((n) => (
+                <Card key={n} className={styles.similarCard}>
+                  <div className={styles.skeletonThumb} />
+                  <div className={styles.skeletonLine} />
+                  <div className={styles.skeletonLineShort} />
+                </Card>
+              ))
+            ) : (
+              similarProducts.map((sim, idx) => {
+                const hasDiscount = Boolean(sim.discountRate && sim.discountRate > 0);
+                const discountedPrice = hasDiscount
+                  ? Math.round((sim.price * (100 - (sim.discountRate || 0))) / 100)
+                  : sim.price;
+                return (
+                  <Card
+                    key={sim.id ? `sim-${sim.id}-${idx}` : `sim-${idx}`}
+                    className={styles.similarCard}
+                    onClick={() => sim.id && navigate(`/products/${sim.id}`)}
+                  >
+                    {sim.imageUrl ? (
+                      <img src={sim.imageUrl} alt={sim.name || "상품 이미지"} className={styles.similarThumb} />
+                    ) : (
+                      <div className={styles.similarThumb} />
+                    )}
+                    <p className={styles.similarName}>{sim.name || "상품명 없음"}</p>
+                    {hasDiscount ? (
+                      <div className={styles.similarPriceArea}>
+                        <span className={styles.similarDiscount}>{sim.discountRate}%</span>
+                        <span className={styles.similarPrice}>{discountedPrice.toLocaleString()}원</span>
+                      </div>
+                    ) : (
+                      <p className={styles.similarPrice}>{(sim.price ?? 0).toLocaleString()}원</p>
+                    )}
+                  </Card>
+                );
+              })
+            )}
+          </div>
+        </>
+      )}
+
+      {/* 함께 구매하면 좋은 상품 */}
+      {(loadingRecommendations || togetherProducts.length > 0) && (
+        <>
+          <h2 className={styles.section}>함께 구매하면 좋은 상품</h2>
+          <div className={styles.similarRow}>
+            {loadingRecommendations ? (
+              [1, 2, 3, 4].map((n) => (
+                <Card key={n} className={styles.similarCard}>
+                  <div className={styles.skeletonThumb} />
+                  <div className={styles.skeletonLine} />
+                  <div className={styles.skeletonLineShort} />
+                </Card>
+              ))
+            ) : (
+              togetherProducts.map((item, idx) => {
+                const hasDiscount = Boolean(item.discountRate && item.discountRate > 0);
+                const discountedPrice = hasDiscount
+                  ? Math.round((item.price * (100 - (item.discountRate || 0))) / 100)
+                  : item.price;
+                return (
+                  <Card
+                    key={item.id ? `tog-${item.id}-${idx}` : `tog-${idx}`}
+                    className={styles.similarCard}
+                    onClick={() => item.id && navigate(`/products/${item.id}`)}
+                  >
+                    {item.imageUrl ? (
+                      <img src={item.imageUrl} alt={item.name || "상품 이미지"} className={styles.similarThumb} />
+                    ) : (
+                      <div className={styles.similarThumb} />
+                    )}
+                    <p className={styles.similarName}>{item.name || "상품명 없음"}</p>
+                    {hasDiscount ? (
+                      <div className={styles.similarPriceArea}>
+                        <span className={styles.similarDiscount}>{item.discountRate}%</span>
+                        <span className={styles.similarPrice}>{discountedPrice.toLocaleString()}원</span>
+                      </div>
+                    ) : (
+                      <p className={styles.similarPrice}>{(item.price ?? 0).toLocaleString()}원</p>
+                    )}
+                  </Card>
+                );
+              })
+            )}
+          </div>
+        </>
+      )}
 
       {/* 리뷰 / 상품문의 탭 */}
       <div className={styles.tabs}>

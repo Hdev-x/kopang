@@ -139,7 +139,7 @@ public class AISearchService {
                 "\n" +
                 "Respond ONLY with a JSON object. No markdown block wrappers like ```json.";
 
-        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + geminiApiKey;
+        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" + geminiApiKey;
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -156,6 +156,7 @@ public class AISearchService {
 
         Map<String, Object> generationConfig = new HashMap<>();
         generationConfig.put("responseMimeType", "application/json");
+        generationConfig.put("maxOutputTokens", 2048);
         contents.put("generationConfig", generationConfig);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(contents, headers);

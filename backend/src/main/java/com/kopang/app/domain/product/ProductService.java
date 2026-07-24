@@ -13,6 +13,7 @@ public class ProductService {
 
     private final ProductMapper productMapper;
     private final S3Service s3Service;
+    private final AISimilarProductService aiSimilarProductService;
 
     public PageResponse<ProductResponseDTO> getProducts(Long categoryId, String keyword, String sort, int page, int size) {
         int offset = page * size;
@@ -32,6 +33,10 @@ public class ProductService {
             throw new IllegalArgumentException("존재하지 않는 상품입니다. ID: " + id);
         }
         dto.setImageUrls(productMapper.findImageUrlsByProductId(id.intValue()));
+
+        // 상세 페이지 진입 시 해당 상품 1개만 비동기 예열
+        aiSimilarProductService.warmupRecommendationsAsync(List.of(id));
+
         return ProductResponseDTO.from(dto);
     }
 
@@ -119,5 +124,16 @@ public class ProductService {
                 s3Service.deleteFile(url);
             }
         }
+    }
+
+    public List<ProductResponseDTO> getSimilarProducts(Long id) {
+        ProductDTO product = productMapper.findById(id);
+        if (product == null) {
+            return java.util.Collections.emptyList();
+        }
+        Long categoryId = (long) product.getCategoryId();
+        int price = product.getPrice();
+        List<ProductDTO> sim = productMapper.findSimilarProducts(id, categoryId, price, 6);
+        return sim.stream().map(ProductResponseDTO::from).collect(Collectors.toList());
     }
 }

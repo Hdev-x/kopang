@@ -14,6 +14,8 @@ public class OrderDTO {
     private String paymentKey;
     private String orderStatus;
     private LocalDateTime createdAt;
-    
+    private int usedPoint;
+    private Long userCouponId;
+
     private List<OrderItemDTO> items;
 }
