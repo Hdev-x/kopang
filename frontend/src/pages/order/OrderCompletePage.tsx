@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, Star } from "lucide-react";
 import { Layout } from "../../components/Layout";
 import { Button } from "../../components/Button";
-import { submitSatisfaction } from "../../api/satisfaction";
+import { submitSatisfaction, getSatisfactionEligibility, SATISFACTION_REASONS } from "../../api/satisfaction";
 import styles from "./OrderCompletePage.module.css";
 
 export function OrderCompletePage() {
@@ -15,13 +15,22 @@ export function OrderCompletePage() {
   // 만족도 위젯 상태 (CHURN-17)
   const [score, setScore] = useState(0);
   const [hover, setHover] = useState(0);
+  const [reason, setReason] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  // 노출 정책: 회원당 3개월 1회 (2026-07-24 회의) — 판단 전(null)엔 미노출
+  const [eligible, setEligible] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    getSatisfactionEligibility()
+      .then(setEligible)
+      .catch(() => setEligible(false));
+  }, []);
 
   const submit = () => {
     if (!score) return;
     // 낙관적: UI 먼저 감사 표시, 응답률 낮은 수집이라 실패는 조용히 무시
     setSubmitted(true);
-    submitSatisfaction(score, "ORDER").catch(() => {});
+    submitSatisfaction(score, "ORDER", reason ?? undefined).catch(() => {});
   };
 
   return (
@@ -31,7 +40,8 @@ export function OrderCompletePage() {
         <h1 className={styles.title}>주문이 완료되었어요</h1>
         <p className={styles.orderNo}>주문번호 {orderNo}</p>
 
-        {/* 만족도 수집 (CHURN-17) */}
+        {/* 만족도 수집 (CHURN-17) — 3개월 1회만 노출 */}
+        {eligible && (
         <div className={styles.survey}>
           {submitted ? (
             <p className={styles.surveyThanks}>소중한 의견 감사합니다 🙏</p>
@@ -58,12 +68,28 @@ export function OrderCompletePage() {
                   </button>
                 ))}
               </div>
+              {/* 별점 선택 시 사유 칩 노출 (선택 사항) */}
+              {score > 0 && (
+                <div className={styles.reasonRow}>
+                  {SATISFACTION_REASONS.map((r) => (
+                    <button
+                      key={r.value}
+                      type="button"
+                      className={`${styles.reasonChip} ${reason === r.value ? styles.reasonChipOn : ""}`}
+                      onClick={() => setReason(reason === r.value ? null : r.value)}
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+              )}
               <Button className={styles.surveyBtn} disabled={!score} onClick={submit}>
                 평가 남기기
               </Button>
             </>
           )}
         </div>
+        )}
 
         <div className={styles.actions}>
           <Button variant="ghost" className={styles.btn} onClick={() => navigate("/")}>

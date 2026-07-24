@@ -5,10 +5,18 @@
 
 <mapper namespace="com.kopang.app.domain.satisfaction.SatisfactionMapper">
 
-    <!-- 만족도 저장 -->
+    <!-- 만족도 저장 (reason은 선택 — 미선택이면 null) -->
     <insert id="insertSatisfaction">
-        INSERT INTO satisfaction_survey (user_id, score, context)
-        VALUES (#{userId}, #{req.score}, #{req.context})
+        INSERT INTO satisfaction_survey (user_id, score, context, reason)
+        VALUES (#{userId}, #{req.score}, #{req.context}, #{req.reason})
     </insert>
+
+    <!-- 최근 N일 내 제출 건수 (3개월 1회 노출 판단) -->
+    <select id="countRecentByUserId" resultType="int">
+        SELECT COUNT(*)
+        FROM satisfaction_survey
+        WHERE user_id = #{userId}
+            AND created_at &gt; NOW() - (#{days} || ' days')::interval
+    </select>
 
 </mapper>
