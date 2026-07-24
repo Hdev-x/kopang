@@ -11,6 +11,7 @@ import { checkWishlist, addWishlist, deleteWishlist } from "../../api/wishlist";
 import { getProductReviews } from "../../api/review";
 import { getProductQnaList } from "../../api/qna";
 import { useAuth } from "../../hooks/useAuth";
+import { recordProductView } from "../../api/productViews";
 import type { Product } from "../../types/product";
 import type { Review } from "../../api/review";
 import styles from "./ProductDetailPage.module.css";
@@ -51,6 +52,7 @@ export function ProductDetailPage() {
 
       if (user) {
         checkWishlist(prodId).then(setWished).catch(console.error);
+        recordProductView(prodId).catch(console.error);
       } else {
         setWished(false);
       }

@@ -9,13 +9,37 @@ import { getProducts } from "../../api/products";
 import { CATEGORY_EMOJIS } from "../../types/category";
 import type { Category } from "../../types/category";
 import type { Product } from "../../types/product";
+import { getRecommendations, markRecommendationShown, markRecommendationClicked } from "../../api/recommendations";
+import type { RecommendationList, RecommendedProduct } from "../../api/recommendations";
 import styles from "./HomePage.module.css";
+
+function RecommendedProductCard({ item }: { item: RecommendedProduct }) {
+  useEffect(() => {
+    markRecommendationShown(item.recommendId).catch(console.error);
+  }, [item.recommendId]);
+
+  const mappedProduct: Product = {
+    id: item.productId,
+    name: item.name,
+    price: item.price,
+    imageUrl: item.imageUrl || "",
+    categoryId: item.categoryId,
+    discountRate: item.discountPrice && item.price ? Math.round(((item.price - item.discountPrice) / item.price) * 100) : undefined,
+  };
+
+  const handleClick = () => {
+    markRecommendationClicked(item.recommendId).catch(console.error);
+  };
+
+  return <ProductCard product={mappedProduct} onClick={handleClick} />;
+}
 
 export function HomePage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [bannerOpen, setBannerOpen] = useState(true); // 이탈위험①: 장바구니 방치 리마인더
   const [rebuyOpen, setRebuyOpen] = useState(true); // 이탈위험⑧: 재구매 주기 알림
+  const [reco, setReco] = useState<RecommendationList | null>(null);
   const user = useAuth();
 
   useEffect(() => {
@@ -26,6 +50,16 @@ export function HomePage() {
       .then((page) => setProducts(page.content))
       .catch((err) => console.error("상품 불러오기 실패:", err));
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      getRecommendations()
+        .then(setReco)
+        .catch((err) => console.error("추천 불러오기 실패:", err));
+    } else {
+      setReco(null);
+    }
+  }, [user]);
 
   // mock 8개를 순서만 돌려 섹션별로 다양하게 (실제론 각 섹션 전용 API)
   const rotate = (arr: Product[], n: number) => [...arr.slice(n), ...arr.slice(0, n)];
@@ -110,18 +144,16 @@ export function HomePage() {
       </Link>
 
       {/* 맞춤 추천 (추천 ML: item-CF 결과 자리. 콜드스타트는 인기상품으로 대체) */}
-      {products.length > 0 && (
+      {reco && reco.items.length > 0 && (
         <section className={styles.section}>
           <div className={styles.sectionHead}>
-            <h2 className={styles.sectionTitle}>🎯 {user ? `${user.name}님` : "회원님"} 맞춤 추천</h2>
+            <h2 className={styles.sectionTitle}>🎯 {reco.title}</h2>
             <span className={styles.recoNote}>최근 본·구매 기반</span>
           </div>
           <div className={styles.hrow}>
-            {rotate(products, 2)
-              .slice(0, 6)
-              .map((p) => (
-                <ProductCard key={`reco-${p.id}`} product={p} />
-              ))}
+            {reco.items.slice(0, 6).map((item) => (
+              <RecommendedProductCard key={`reco-${item.recommendId}`} item={item} />
+            ))}
           </div>
         </section>
       )}
