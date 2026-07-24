@@ -54,6 +54,54 @@
   margin-bottom: var(--space-4);
 }
 
+/* 배송비 안내 박스 */
+.shippingBox {
+  background: var(--gray-50, #f9fafb);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.shippingRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.shippingTitle {
+  font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-muted);
+}
+
+.shippingFeeText {
+  font-size: var(--font-md);
+  font-weight: var(--weight-bold);
+  color: var(--color-text);
+}
+
+.shippingBadge {
+  font-size: var(--font-xs);
+  background-color: #eff6ff;
+  color: #2563eb;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-weight: var(--weight-bold);
+}
+
+.shippingSubText {
+  font-size: var(--font-xs);
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+
+.membershipLink {
+  color: var(--color-primary);
+  font-weight: var(--weight-bold);
+  text-decoration: underline;
+}
+
 /* 찜 + 담기 한 줄 */
 .ctaRow {
   display: flex;
