@@ -155,7 +155,7 @@ export function OrderHistoryPage() {
                                   const paymentLabel = formatOrderStatus(o.paymentStatus);
                                   const shipStatusLabel = o.orderStatus === "PAID" ? "배송준비" : formatOrderStatus(o.orderStatus);
                                   const showShipLabel = o.paymentStatus === "PAID" && o.orderStatus !== "CANCELLED" && o.orderStatus !== "RETURNED";
-                                  return showShipLabel ? `${paymentLabel} (${shipStatusLabel})` : paymentLabel;
+                                  return o.orderStatus === "RETURNED" ? "환불/반품 완료" : showShipLabel ? `${paymentLabel} (${shipStatusLabel})` : paymentLabel;
                                 })()}
                               </span>
                               {canDelete && (
