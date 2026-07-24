@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kopang.app.domain.productview.ProductViewMapper">
+
+    <!-- 같은 상품을 한 시간 안에 반복 조회해도 행동 로그는 한 건만 남긴다. -->
+    <insert id="insertView">
+        INSERT INTO user_behavior_log (user_id, action, target_id)
+        SELECT #{userId}, 'VIEW', #{productId}
+        WHERE EXISTS (
+            SELECT 1
+            FROM products
+            WHERE product_id = #{productId}
+              AND status = 'ACTIVE'
+        )
+          AND NOT EXISTS (
+            SELECT 1
+            FROM user_behavior_log
+            WHERE user_id = #{userId}
+              AND action = 'VIEW'
+              AND target_id = #{productId}
+              AND created_at &gt; NOW() - INTERVAL '1 hour'
+        )
+    </insert>
+
+    <select id="findRecentViews"
+            resultType="com.kopang.app.domain.productview.ProductViewResponse">
+        WITH latest_view AS (
+            SELECT DISTINCT ON (target_id)
+                target_id AS product_id,
+                created_at
+            FROM user_behavior_log
+            WHERE user_id = #{userId}
+              AND action = 'VIEW'
+            ORDER BY target_id, created_at DESC
+        )
+        SELECT
+            p.product_id AS productId,
+            p.name,
+            p.price,
+            p.discount_price AS discountPrice,
+            p.image_url AS imageUrl,
+            lv.created_at AS viewedAt
+        FROM latest_view lv
+        JOIN products p ON p.product_id = lv.product_id
+        WHERE p.status = 'ACTIVE'
+        ORDER BY lv.created_at DESC
+        LIMIT #{limit}
+    </select>
+
+</mapper>
