@@ -42,8 +42,7 @@ public class ChurnBlindSpotServiceImpl implements ChurnBlindSpotService {
         List<InterventionRequest> requests = new ArrayList<>();
         Map<Long, Long> firstProductByUser = new HashMap<>();
         for (ChurnBlindSpotTarget target : targets) {
-            List<RecommendationResponse> recommendations =
-                    recommendationService.getRecommendations(target.getUserId());
+            List<RecommendationResponse> recommendations = recommendationService.getRecommendations(target.getUserId());
             if (recommendations.isEmpty()) {
                 continue;
             }
@@ -60,14 +59,15 @@ public class ChurnBlindSpotServiceImpl implements ChurnBlindSpotService {
             return new ChurnBlindSpotResult(targets.size(), 0);
         }
 
-        Set<Long> treatmentUsers =
-                new HashSet<>(interventionService.recordAndCheckControl(requests));
+        Set<Long> treatmentUsers = new HashSet<>(interventionService.recordAndCheckControl(requests));
         for (Long userId : treatmentUsers) {
             NotificationDTO notification = new NotificationDTO();
             notification.setUserId(userId);
             notification.setType("RECOMMEND");
             notification.setMessage("회원님을 위한 추천 상품이 준비됐어요.");
             notification.setRefId(firstProductByUser.get(userId));
+            notification.setIsRead(false);
+            notification.setClicked(false);
             notificationMapper.insertNotification(notification);
         }
         return new ChurnBlindSpotResult(targets.size(), treatmentUsers.size());

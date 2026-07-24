@@ -12,7 +12,6 @@ export type NotificationItem = {
   createdAt: string; // ISO 문자열
 };
 
-// 내 알림 목록 (GET /api/notifications) — 최신순
 export async function getNotifications() {
   const res = await client.get<ApiResponse<{ items: NotificationItem[] }>>("/notifications");
   return res.data.data.items;
@@ -21,4 +20,9 @@ export async function getNotifications() {
 // 알림 읽음 처리 (PATCH /api/notifications/{id}/read) — 본인 알림만
 export async function markNotificationRead(id: number) {
   await client.patch(`/notifications/${id}/read`);
+}
+
+// 알림 클릭 처리 (PATCH /api/notifications/{id}/click) — 본인 알림만
+export async function markNotificationClicked(id: number) {
+  await client.patch(`/notifications/${id}/click`);
 }

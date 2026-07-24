@@ -1,52 +1,62 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper
-    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
-
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.kopang.app.domain.notification.NotificationMapper">
 
-    <!-- 알림 생성 (이탈 대응 발송 시 호출) -->
-    <!-- ref_id는 nullable — 클릭 이동 대상(상품·쿠폰 id) 있을 때만 세팅 -->
-    <insert id="insertNotification">
-        INSERT INTO notifications
-        (
-            user_id,
-            type,
-            message,
-            ref_id
-        )
-        VALUES
-        (
-            #{userId},
-            #{type},
-            #{message},
-            #{refId}
-        )
-    </insert>
-
-    <!-- 내 알림 목록 (최신순) -->
     <select id="findByUserId" resultType="com.kopang.app.domain.notification.NotificationDTO">
-        SELECT
-            notification_id,
-            user_id,
-            type,
-            message,
-            ref_id,
-            is_read,
-            clicked,
-            created_at
+        SELECT 
+            notification_id AS notificationId,
+            user_id AS userId,
+            type AS type,
+            message AS message,
+            ref_id AS refId,
+            is_read AS isRead,
+            clicked AS clicked,
+            created_at AS createdAt
         FROM notifications
         WHERE user_id = #{userId}
-        ORDER BY created_at DESC
+        ORDER BY notification_id DESC
     </select>
 
-    <!-- 읽음 처리 : user_id 조건 필수 (남의 알림 보호). clicked도 함께 true(대응 반응 추적) -->
+    <select id="countUnreadByUserId" resultType="int">
+        SELECT COUNT(*)
+        FROM notifications
+        WHERE user_id = #{userId} AND is_read = false
+    </select>
+
+    <select id="findById" resultType="com.kopang.app.domain.notification.NotificationDTO">
+        SELECT 
+            notification_id AS notificationId,
+            user_id AS userId,
+            type AS type,
+            message AS message,
+            ref_id AS refId,
+            is_read AS isRead,
+            clicked AS clicked,
+            created_at AS createdAt
+        FROM notifications
+        WHERE notification_id = #{notificationId}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="notificationId">
+        INSERT INTO notifications (user_id, type, message, ref_id, is_read, clicked)
+        VALUES (#{userId}, #{type}, #{message}, #{refId}, COALESCE(#{isRead}, false), COALESCE(#{clicked}, false))
+    </insert>
+
+    <insert id="insertNotification" useGeneratedKeys="true" keyProperty="notificationId">
+        INSERT INTO notifications (user_id, type, message, ref_id, is_read, clicked)
+        VALUES (#{userId}, #{type}, #{message}, #{refId}, COALESCE(#{isRead}, false), COALESCE(#{clicked}, false))
+    </insert>
+
     <update id="markAsRead">
         UPDATE notifications
-        SET is_read = true,
-            clicked = true
+        SET is_read = true
         WHERE notification_id = #{notificationId}
-            AND user_id = #{userId}
+    </update>
+
+    <update id="markAsClicked">
+        UPDATE notifications
+        SET clicked = true, is_read = true
+        WHERE notification_id = #{notificationId}
     </update>
 
 </mapper>

@@ -1,15 +1,14 @@
 package com.kopang.app.domain.notification;
 
-import com.kopang.app.domain.user.UserService;
 import com.kopang.app.global.common.ApiResponse;
 import com.kopang.app.global.security.JwtAuthenticationFilter.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -17,36 +16,72 @@ import java.util.List;
 public class NotificationController {
 
     private final NotificationService notificationService;
-    private final UserService userService;
 
-    // 내 알림 목록 (최신순)
+    // 1. 회원별 전체 알림 목록 조회 (GET /api/notifications)
     @GetMapping
     public ResponseEntity<ApiResponse<NotificationListResponse>> getNotifications(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         if (userDetails == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.fail("인증되지 않은 사용자입니다"));
+            return ResponseEntity.status(401).body(ApiResponse.fail("인증되지 않은 사용자입니다"));
         }
-        Long userId = userService.detailByEmail(userDetails.getEmail()).getUserId();
-        List<NotificationDTO> list = notificationService.getNotifications(userId);
-        return ResponseEntity.ok(ApiResponse.success(NotificationListResponse.from(list)));
+        try {
+            List<NotificationDTO> list = notificationService.getNotifications(userDetails.getEmail());
+            return ResponseEntity.ok(ApiResponse.success(NotificationListResponse.from(list)));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.fail(e.getMessage()));
+        }
     }
 
-    // 알림 읽음 처리 (NOTI M3). 본인 알림만 — 남의 id면 404. (= 대응 클릭 추적)
-    @PatchMapping("/{id}/read")
-    public ResponseEntity<ApiResponse<Void>> markRead(
-            @PathVariable("id") Long id,
+    // 2. 미독 알림 개수 조회 (GET /api/notifications/unread-count)
+    @GetMapping("/unread-count")
+    public ResponseEntity<ApiResponse<Map<String, Integer>>> getUnreadCount(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         if (userDetails == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.fail("인증되지 않은 사용자입니다"));
+            return ResponseEntity.status(401).body(ApiResponse.fail("인증되지 않은 사용자입니다"));
         }
-        Long userId = userService.detailByEmail(userDetails.getEmail()).getUserId();
-        boolean ok = notificationService.markAsRead(id, userId);
-        if (!ok) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.fail("알림이 없거나 접근 권한이 없습니다"));
+        try {
+            int count = notificationService.getUnreadCount(userDetails.getEmail());
+            Map<String, Integer> data = new HashMap<>();
+            data.put("count", count);
+            return ResponseEntity.ok(ApiResponse.success(data));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.fail(e.getMessage()));
         }
-        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    // 3. 알림 읽음 처리 (PATCH /api/notifications/{id}/read)
+    @PatchMapping("/{id}/read")
+    public ResponseEntity<ApiResponse<Map<String, String>>> readNotification(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable("id") Long id) {
+        if (userDetails == null) {
+            return ResponseEntity.status(401).body(ApiResponse.fail("인증되지 않은 사용자입니다"));
+        }
+        try {
+            notificationService.readNotification(userDetails.getEmail(), id);
+            Map<String, String> data = new HashMap<>();
+            data.put("message", "알림을 읽음 처리했습니다.");
+            return ResponseEntity.ok(ApiResponse.success(data));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.fail(e.getMessage()));
+        }
+    }
+
+    // 4. 알림 클릭 처리 (PATCH /api/notifications/{id}/click)
+    @PatchMapping("/{id}/click")
+    public ResponseEntity<ApiResponse<Map<String, String>>> clickNotification(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable("id") Long id) {
+        if (userDetails == null) {
+            return ResponseEntity.status(401).body(ApiResponse.fail("인증되지 않은 사용자입니다"));
+        }
+        try {
+            notificationService.clickNotification(userDetails.getEmail(), id);
+            Map<String, String> data = new HashMap<>();
+            data.put("message", "알림을 클릭 처리했습니다.");
+            return ResponseEntity.ok(ApiResponse.success(data));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.fail(e.getMessage()));
+        }
     }
 }
