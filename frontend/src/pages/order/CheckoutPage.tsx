@@ -3,13 +3,20 @@ import { useLocation } from "react-router-dom";
 import { Layout } from "../../components/Layout";
 import { PageHeader } from "../../components/PageHeader";
 import { Button } from "../../components/Button";
+import { Input } from "../../components/Input";
 import { getCart } from "../../api/cart";
-import { getUserAddress, getUserAddresses, type UserAddressResponse } from "../../api/auth";
+import { getUserAddress, getUserAddresses, addAddress, type UserAddressResponse } from "../../api/auth";
 import { createOrder } from "../../api/order";
 import { getPointBalance } from "../../api/point";
 import { getMyCoupons } from "../../api/coupon";
 import type { CartItem } from "../../types/cart";
 import styles from "./CheckoutPage.module.css";
+
+declare global {
+  interface Window {
+    daum?: any;
+  }
+}
 
 const CLIENT_KEY = "test_ck_nRQoOaPz8LNMgv7d5bDPVy47BMw6";
 
@@ -28,6 +35,82 @@ export function CheckoutPage() {
   const [selectedAddress, setSelectedAddress] = useState<UserAddressResponse | null>(null);
   const [addressList, setAddressList] = useState<UserAddressResponse[]>([]);
   const [showSelectModal, setShowSelectModal] = useState(false);
+
+  // 새 배송지 추가 모달 관련 상태
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newReceiver, setNewReceiver] = useState("");
+  const [newPhone, setNewPhone] = useState("");
+  const [newZipcode, setNewZipcode] = useState("");
+  const [newAddress, setNewAddress] = useState("");
+  const [newDetailAddress, setNewDetailAddress] = useState("");
+  const [newIsDefault, setNewIsDefault] = useState(false);
+
+  const handleSearchAddressInCheckout = () => {
+    if (!window.daum || !window.daum.Postcode) {
+      alert("주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.");
+      return;
+    }
+    new window.daum.Postcode({
+      oncomplete: (data: any) => {
+        let fullAddr = data.address;
+        let extraAddr = "";
+
+        if (data.addressType === "R") {
+          if (data.bname !== "") {
+            extraAddr += data.bname;
+          }
+          if (data.buildingName !== "") {
+            extraAddr += extraAddr !== "" ? `, ${data.buildingName}` : data.buildingName;
+          }
+          fullAddr += extraAddr !== "" ? ` (${extraAddr})` : "";
+        }
+
+        setNewZipcode(data.zonecode || "");
+        setNewAddress(fullAddr || "");
+      },
+    }).open();
+  };
+
+  const handleOpenAddModal = () => {
+    setNewReceiver("");
+    setNewPhone("");
+    setNewZipcode("");
+    setNewAddress("");
+    setNewDetailAddress("");
+    setNewIsDefault(addressList.length === 0);
+    setShowAddModal(true);
+  };
+
+  const handleSaveNewAddress = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newReceiver.trim()) return alert("수령인을 입력해주세요.");
+    if (!newAddress.trim()) return alert("주소를 입력해주세요.");
+
+    try {
+      const created = await addAddress({
+        receiver: newReceiver,
+        phone: newPhone || undefined,
+        zipcode: newZipcode || undefined,
+        address: newAddress,
+        detailAddress: newDetailAddress || undefined,
+        isDefault: newIsDefault,
+      });
+
+      alert("새 배송지가 추가되었습니다.");
+      setShowAddModal(false);
+
+      const updatedList = await getUserAddresses();
+      setAddressList(updatedList || []);
+      const newlyAdded = (updatedList || []).find((a) => a.addressId === created.addressId) || (updatedList && updatedList[0]);
+      if (newlyAdded) {
+        setSelectedAddress(newlyAdded);
+      }
+      setShowSelectModal(false);
+    } catch (err) {
+      alert("배송지 저장 중 오류가 발생했습니다.");
+      console.error(err);
+    }
+  };
 
   const loadDefaultAddress = () => {
     getUserAddress()
@@ -339,14 +422,87 @@ export function CheckoutPage() {
               <Button
                 type="button"
                 variant="ghost"
-                onClick={() => window.open("/my/addresses", "_blank")}
+                onClick={handleOpenAddModal}
               >
-                배송지 관리 가기
+                + 새 배송지 추가
               </Button>
               <Button type="button" onClick={() => setShowSelectModal(false)}>
                 닫기
               </Button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 새 배송지 추가 모달 */}
+      {showAddModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowAddModal(false)}>
+          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+            <h3 className={styles.modalTitle}>새 배송지 추가</h3>
+            <form onSubmit={handleSaveNewAddress} className={styles.addForm}>
+              <Input
+                label="수령인 (필수)"
+                placeholder="수령인 이름을 입력하세요"
+                value={newReceiver}
+                onChange={(e) => setNewReceiver(e.target.value)}
+                required
+              />
+              <Input
+                label="연락처"
+                placeholder="010-0000-0000"
+                value={newPhone}
+                onChange={(e) => setNewPhone(e.target.value)}
+              />
+              <div style={{ display: "flex", gap: "8px", alignItems: "flex-end", marginBottom: "12px" }}>
+                <div style={{ flex: 1 }}>
+                  <Input
+                    label="우편번호"
+                    placeholder="우편번호"
+                    value={newZipcode}
+                    onChange={(e) => setNewZipcode(e.target.value)}
+                    readOnly
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={handleSearchAddressInCheckout}
+                  style={{ marginBottom: "16px", height: "46px", flexShrink: 0 }}
+                >
+                  주소 검색
+                </Button>
+              </div>
+              <Input
+                label="주소 (필수)"
+                placeholder="주소 검색 버튼을 눌러 주소를 선택하세요"
+                value={newAddress}
+                onChange={(e) => setNewAddress(e.target.value)}
+                onClick={handleSearchAddressInCheckout}
+                readOnly
+                required
+              />
+              <Input
+                label="상세 주소"
+                placeholder="동/호수 등 상세 주소를 입력하세요"
+                value={newDetailAddress}
+                onChange={(e) => setNewDetailAddress(e.target.value)}
+              />
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={newIsDefault}
+                  onChange={(e) => setNewIsDefault(e.target.checked)}
+                />
+                기본 배송지로 지정
+              </label>
+
+              <div className={styles.modalButtons}>
+                <Button type="button" variant="ghost" onClick={() => setShowAddModal(false)}>
+                  취소
+                </Button>
+                <Button type="submit">저장하기</Button>
+              </div>
+            </form>
           </div>
         </div>
       )}
