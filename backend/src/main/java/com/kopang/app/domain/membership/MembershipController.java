@@ -137,19 +137,22 @@ public class MembershipController {
                     "MEMBERSHIP_CANCEL");
             Long churnScoreId = latestScore != null ? latestScore.getChurnScoreId() : null;
 
-            InterventionRequest req = new InterventionRequest(
-                    user.getUserId(),
-                    churnScoreId,
-                    "MEMBERSHIP_CANCEL",
-                    "MODAL",
-                    "IN_APP");
+            boolean isControl = (user.getUserId() % 5 == 0);
+            int recentCount = churnMapper.countRecentIntervention(user.getUserId(), "MEMBERSHIP_CANCEL", "MODAL", 7);
 
-            List<Long> treatment = interventionService.recordAndCheckControl(List.of(req));
-            boolean isControl = treatment.isEmpty();
+            if (recentCount == 0) {
+                InterventionRequest req = new InterventionRequest(
+                        user.getUserId(),
+                        churnScoreId,
+                        "MEMBERSHIP_CANCEL",
+                        "MODAL",
+                        "IN_APP");
+                interventionService.recordAndCheckControl(List.of(req));
+            }
 
             Map<String, Object> data = new HashMap<>();
             data.put("isControl", isControl);
-            data.put("message", "이탈방지 모달 노출이 기록되었습니다.");
+            data.put("message", recentCount > 0 ? "최근 7일 내 이미 모달 노출이 기록되었습니다." : "이탈방지 모달 노출이 기록되었습니다.");
             return ResponseEntity.ok(ApiResponse.success(data));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ApiResponse.fail(e.getMessage()));

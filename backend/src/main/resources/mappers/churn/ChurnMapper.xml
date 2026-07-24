@@ -219,7 +219,6 @@
             #{i.actionType},
             #{i.isControl},
             #{i.channel}
-        )
         </foreach>
     </insert>
     <!-- 특정 회원의 특정 위험 유형에 대한 최신 이탈 점수 조회 -->
@@ -236,6 +235,15 @@
         WHERE user_id = #{userId} AND risk_type = #{riskType}
         ORDER BY churn_score_id DESC
         LIMIT 1
+    </select>
+    <!-- 특정 회원의 특정 위험/대응/일수 내 기록이 존재하는지 카운트 -->
+    <select id="countRecentIntervention" resultType="int">
+        SELECT COUNT(*)
+        FROM retention_intervention
+        WHERE user_id = #{userId}
+          AND risk_type = #{riskType}
+          AND action_type = #{actionType}
+          AND created_at &gt; NOW() - CAST(#{days} || ' days' AS INTERVAL)
     </select>
 
     <!-- 상한①: 오늘 이미 실제 대응(처치군)을 받은 회원 (1일 1건 상한) -->

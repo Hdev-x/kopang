@@ -148,10 +148,43 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("수정할 회원을 찾을 수 없습니다");
         }
 
-        // 비밀번호를 수정하려는 경우 다시 암호화 처리
+        // 1. 이름 검증
+        if (request.getName() != null) {
+            if (request.getName().trim().isEmpty() || request.getName().length() > 50) {
+                throw new IllegalArgumentException("이름은 1자 이상 50자 이하로 입력해 주세요.");
+            }
+        }
+
+        // 2. 연락처 검증
+        if (request.getPhone() != null && !request.getPhone().isEmpty()) {
+            if (!request.getPhone().matches("^01[016789]-\\d{3,4}-\\d{4}$")) {
+                throw new IllegalArgumentException("올바른 휴대폰 번호 형식이 아닙니다. (예: 010-1234-5678)");
+            }
+        }
+
+        // 3. 생년월일 검증
+        if (request.getBirthDate() != null && !request.getBirthDate().isEmpty()) {
+            try {
+                java.time.LocalDate birth = java.time.LocalDate.parse(request.getBirthDate());
+                if (birth.isAfter(java.time.LocalDate.now())) {
+                    throw new IllegalArgumentException("생년월일은 미래 날짜일 수 없습니다.");
+                }
+                if (birth.isBefore(java.time.LocalDate.of(1900, 1, 1))) {
+                    throw new IllegalArgumentException("올바른 생년월일을 입력해 주세요. (1900년 이후)");
+                }
+            } catch (java.time.format.DateTimeParseException e) {
+                throw new IllegalArgumentException("올바른 날짜 형식이 아닙니다. (YYYY-MM-DD)");
+            }
+        }
+
+        // 4. 비밀번호 검증
         if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+            if (request.getPassword().length() < 8) {
+                throw new IllegalArgumentException("비밀번호는 최소 8자 이상이어야 합니다.");
+            }
             existingUser.setPassword(passwordEncoder.encode(request.getPassword()));
         }
+
         // 변경하고자 하는 값만 동적으로 업데이트 세팅
         if (request.getName() != null) {
             existingUser.setName(request.getName());

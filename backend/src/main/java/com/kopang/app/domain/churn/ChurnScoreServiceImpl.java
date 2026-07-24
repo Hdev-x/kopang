@@ -7,6 +7,7 @@ import java.util.Set;
 
 import com.kopang.app.domain.intervention.InterventionRequest;
 import com.kopang.app.domain.intervention.InterventionService;
+import com.kopang.app.domain.intervention.InterventionDTO;
 import com.kopang.app.domain.notification.NotificationDTO;
 import com.kopang.app.domain.notification.NotificationMapper;
 import com.kopang.app.domain.coupon.CouponMapper;
@@ -188,12 +189,18 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
         // ① 판정 + 로그 (전원, bulk 1번) — 반환 = 발송해야 할 처치군 userId
         List<InterventionRequest> reqs = new ArrayList<>();
         for (ChurnScoreDTO target : targets) {
+            if ("WISHLIST_IDLE".equals(target.getRiskType())) {
+                continue; // 찜 방치는 CHURN-13(할인 시 알림)에서 처리하므로 독촉 발송 제외
+            }
             reqs.add(toRequest(target));
         }
         Set<Long> toSend = new HashSet<>(interventionService.recordAndCheckControl(reqs));
 
         // ② 발송 (처치군만) — riskType별 알림 만들어 notifications INSERT
         for (ChurnScoreDTO target : targets) {
+            if ("WISHLIST_IDLE".equals(target.getRiskType())) {
+                continue; // 찜 방치는 CHURN-13(할인 시 알림)에서 처리하므로 독촉 발송 제외
+            }
             if (!toSend.contains(target.getUserId())) {
                 continue; // 대조군 → 발송 스킵
             }
@@ -218,12 +225,6 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
                     type = "COMEBACK";
                     message = "돌아오신 것을 환영해요! 복귀 기념 특별 5,000원 할인 쿠폰이 발급되었습니다. 💖";
                     refId = 4L; // 복귀 5000원 쿠폰 ID
-                    autoIssueCoupon(target.getUserId(), refId);
-                }
-                case "WISHLIST_IDLE" -> {
-                    type = "WISHLIST";
-                    message = "찜하신 상품이 기다려요! 마음에 둔 상품을 확인해 보세요. ⭐️";
-                    refId = 7L; // 찜 상품 7% 쿠폰 ID
                     autoIssueCoupon(target.getUserId(), refId);
                 }
                 case "COUPON_EXPIRING" -> {
@@ -269,22 +270,27 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
     @Override
     public void runCouponExpiringInterventions() {
         List<ChurnScoreDTO> targets = churnMapper.findTargetsByRiskTypes(List.of("COUPON_EXPIRING"));
-        List<InterventionRequest> reqs = new ArrayList<>();
-        for (ChurnScoreDTO target : targets) {
-            reqs.add(new InterventionRequest(
-                    target.getUserId(),
-                    target.getChurnScoreId(),
-                    "COUPON_EXPIRING",
-                    "PUSH",
-                    "IN_APP"));
+        if (targets.isEmpty()) {
+            return;
         }
 
-        Set<Long> toSend = new HashSet<>(interventionService.recordAndCheckControl(reqs));
-
+        List<InterventionDTO> logs = new ArrayList<>();
         for (ChurnScoreDTO target : targets) {
-            if (!toSend.contains(target.getUserId())) {
-                continue;
-            }
+            InterventionDTO log = new InterventionDTO();
+            log.setUserId(target.getUserId());
+            log.setChurnScoreId(target.getChurnScoreId());
+            log.setRiskType("COUPON_EXPIRING");
+            log.setActionType("PUSH");
+            log.setIsControl(false); // 운영성 안내로 대조군 제외
+            log.setChannel("IN_APP");
+            logs.add(log);
+        }
+
+        // 1. 대조군 없이 100% 벌크 저장
+        churnMapper.insertInterventions(logs);
+
+        // 2. 100% 알림 전송
+        for (ChurnScoreDTO target : targets) {
             NotificationDTO noti = new NotificationDTO();
             noti.setUserId(target.getUserId());
             noti.setType("COUPON_EXPIRE");
