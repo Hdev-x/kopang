@@ -214,6 +214,7 @@
             #{i.actionType},
             #{i.isControl},
             #{i.channel}
+        )
         </foreach>
     </insert>
     <!-- 특정 회원의 특정 위험 유형에 대한 최신 이탈 점수 조회 -->
