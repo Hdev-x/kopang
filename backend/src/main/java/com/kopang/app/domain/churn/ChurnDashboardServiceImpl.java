@@ -20,6 +20,16 @@ public class ChurnDashboardServiceImpl implements ChurnDashboardService {
         res.setKpi(dashboardMapper.selectLatestKpi());
         res.setLevelCounts(dashboardMapper.selectLevelCounts());
         res.setTypeCounts(dashboardMapper.selectTypeCounts());
+        res.setLastRuleRunAt(dashboardMapper.selectLastRuleRunAt());
+
+        // ⑤ 운영 현황: 카운트 쿼리 + 커버리지 쿼리 결과를 한 객체로 합침
+        ChurnSummaryResponse.OpsSummary ops = dashboardMapper.selectOpsCounts();
+        ChurnSummaryResponse.OpsSummary coverage = dashboardMapper.selectHighCoverage();
+        ops.setHighTotal(coverage.getHighTotal());
+        ops.setHighCovered(coverage.getHighCovered());
+        res.setOps(ops);
+
+        res.setMlCover(dashboardMapper.selectMlCover());
         res.setSegments(dashboardMapper.selectSegmentCounts());
         res.setWeeklyChurnRate(dashboardMapper.selectWeeklyTrend(TREND_WEEKS));
         res.setEffect(dashboardMapper.selectEffect());

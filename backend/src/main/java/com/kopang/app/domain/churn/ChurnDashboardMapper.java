@@ -29,6 +29,18 @@ public interface ChurnDashboardMapper {
     // ①-c 위험 유형별 인원 (현재 상태 기준 — 임시, 팀 확정 전)
     List<TypeCount> selectTypeCounts();
 
+    // 마지막 감지 배치(RULE) 실행 시각
+    java.time.LocalDateTime selectLastRuleRunAt();
+
+    // ⑤ 대응 운영 현황 (오늘 발송·대조군·누적·전환)
+    ChurnSummaryResponse.OpsSummary selectOpsCounts();
+
+    // ⑤-b 고위험(현재 상태) 커버리지 — highTotal/highCovered만 채워짐
+    ChurnSummaryResponse.OpsSummary selectHighCoverage();
+
+    // ⑥ 룰 vs ML 감지 커버 (룰 최근 7일, ML 최근 30일)
+    ChurnSummaryResponse.MlCover selectMlCover();
+
     // ② 주간 이탈율 추이 (최근 limit일, 과거→현재 정렬)
     List<TrendPoint> selectWeeklyTrend(@Param("limit") int limit);
 

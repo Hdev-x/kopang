@@ -20,6 +20,9 @@ public class ChurnSummaryResponse {
     private List<TrendPoint> weeklyChurnRate; // ② 주간 이탈율 추이
     private List<EffectRow> effect;        // ③ 대응 효과 (처치군 vs 대조군)
     private List<AtRiskCustomer> atRisk;   // ④ 위험 고객 상위
+    private java.time.LocalDateTime lastRuleRunAt; // 마지막 감지 배치(RULE) 실행 시각
+    private OpsSummary ops;                // ⑤ 대응 운영 현황 (C-2)
+    private MlCover mlCover;               // ⑥ 룰 vs ML 감지 커버 (C-2)
 
     /** KPI — churn_daily_metric 최신 1행에서 산출 */
     @Data
@@ -35,6 +38,29 @@ public class ChurnSummaryResponse {
     public static class LevelCount {
         private String riskLevel;          // HIGH / MID / LOW
         private Integer count;
+    }
+
+    /** 대응 운영 현황 — retention_intervention 기준 */
+    @Data
+    public static class OpsSummary {
+        private Integer sentToday;        // 오늘 실제 발송(처치군)
+        private Integer sentPushToday;    // 오늘 발송 중 PUSH
+        private Integer sentCouponToday;  // 오늘 발송 중 COUPON
+        private Integer controlToday;     // 오늘 대조군
+        private Long totalCount;          // 누적 대응 기록
+        private Long convertedCount;      // 전환(처치군, 7일 귀속)
+        private Integer highTotal;        // 고위험(현재 상태) 수
+        private Integer highCovered;      // 그중 대응 기록 있는 수 → 커버리지
+    }
+
+    /** 룰 vs ML 감지 커버 — 룰(최근 7일) / ML(최근 30일) 대상자 교차 */
+    @Data
+    public static class MlCover {
+        private Integer ruleOnly;
+        private Integer mlOnly;
+        private Integer both;
+        private Long blindspotSent;              // ML 사각지대 전용 발송 누적
+        private java.time.LocalDateTime lastMlRunAt; // 마지막 ML 예측 실행
     }
 
     /** 위험 유형별 인원 — riskType null = ML 예측 */

@@ -55,6 +55,9 @@ export type ChurnSummary = {
   weeklyChurnRate: ChurnTrendPoint[];
   effect: ChurnEffectRow[];
   atRisk: ChurnAtRiskCustomer[];
+  lastRuleRunAt: string | null; // 마지막 감지 배치(RULE) 실행 시각
+  ops: ChurnOpsSummary;
+  mlCover: ChurnMlCover;
 };
 
 // 이탈 대시보드 요약 집계 (GET /api/admin/churn/summary)
@@ -100,3 +103,24 @@ export async function runCouponExpiringIntervention() {
 export async function runLoginInactiveIntervention() {
   await client.post<ApiResponse<{ message: string }>>("/admin/churn/intervene/login-inactive");
 }
+
+// ⑤ 대응 운영 현황 — 백엔드 OpsSummary와 1:1
+export type ChurnOpsSummary = {
+  sentToday: number;
+  sentPushToday: number;
+  sentCouponToday: number;
+  controlToday: number;
+  totalCount: number;
+  convertedCount: number;
+  highTotal: number;
+  highCovered: number;
+};
+
+// ⑥ 룰 vs ML 감지 커버 — 백엔드 MlCover와 1:1
+export type ChurnMlCover = {
+  ruleOnly: number;
+  mlOnly: number;
+  both: number;
+  blindspotSent: number;
+  lastMlRunAt: string | null;
+};

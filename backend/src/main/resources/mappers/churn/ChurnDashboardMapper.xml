@@ -32,19 +32,77 @@
     </select>
 
     <!-- ①-c 위험 유형별 인원.
-         ⚠ 집계 기준 = "현재 상태"(유저별 최신 1건) — 위험 고객 목록과 수치 일치를 위해 선택한 임시 기준.
-         "오늘 감지 기준"과의 선택은 팀 확정 전 (ml-run이 최신을 덮으면 룰 유형 수가 줄어드는 트레이드오프 있음) -->
+         집계 = 최근 7일 감지 창에서 유형별 고유 인원 (한 사람이 여러 유형이면 중복 카운트).
+         "최신 1건" 방식은 룰 실행 순서가 대표 유형을 정하는 아티팩트가 있어 폐기 (2026-07-25).
+         인원수 지표(고위험 KPI 등)는 계속 최신 1건 기준 — 용도별 기준 분리 -->
     <select id="selectTypeCounts"
             resultType="com.kopang.app.domain.churn.ChurnSummaryResponse$TypeCount">
+        SELECT risk_type AS riskType, COUNT(DISTINCT user_id) AS count
+        FROM churn_score
+        WHERE scored_at &gt; NOW() - INTERVAL '7 days'
+          -- ML은 전원 예측이라 그대로 세면 항상 전체 인원 = 무의미. 고위험 예측만 신호로 취급
+          AND (source = 'RULE' OR risk_level = 'HIGH')
+        GROUP BY risk_type
+        ORDER BY count DESC
+    </select>
+
+    <!-- 마지막 감지 배치(RULE) 실행 시각 -->
+    <select id="selectLastRuleRunAt" resultType="java.time.LocalDateTime">
+        SELECT MAX(scored_at) FROM churn_score WHERE source = 'RULE'
+    </select>
+
+    <!-- ⑤ 대응 운영 현황 : 오늘 발송(채널별)·대조군 + 누적 + 전환(처치군) -->
+    <select id="selectOpsCounts"
+            resultType="com.kopang.app.domain.churn.ChurnSummaryResponse$OpsSummary">
+        SELECT
+            COUNT(*) FILTER (WHERE created_at::date = CURRENT_DATE AND NOT is_control) AS sentToday,
+            COUNT(*) FILTER (WHERE created_at::date = CURRENT_DATE AND NOT is_control AND action_type = 'PUSH')   AS sentPushToday,
+            COUNT(*) FILTER (WHERE created_at::date = CURRENT_DATE AND NOT is_control AND action_type = 'COUPON') AS sentCouponToday,
+            COUNT(*) FILTER (WHERE created_at::date = CURRENT_DATE AND is_control) AS controlToday,
+            COUNT(*) AS totalCount,
+            (
+                SELECT COUNT(*)
+                FROM intervention_outcome io
+                JOIN retention_intervention r2 ON r2.intervention_id = io.intervention_id
+                WHERE io.converted AND NOT r2.is_control
+            ) AS convertedCount
+        FROM retention_intervention
+    </select>
+
+    <!-- ⑤-b 고위험(현재 상태) 중 대응 기록 보유 수 = 커버리지 분자 -->
+    <select id="selectHighCoverage"
+            resultType="com.kopang.app.domain.churn.ChurnSummaryResponse$OpsSummary">
         WITH latest AS (
-            SELECT DISTINCT ON (user_id) user_id, risk_type
+            SELECT DISTINCT ON (user_id) user_id, risk_level
             FROM churn_score
             ORDER BY user_id, scored_at DESC
         )
-        SELECT risk_type AS riskType, COUNT(*) AS count
-        FROM latest
-        GROUP BY risk_type
-        ORDER BY count DESC
+        SELECT
+            COUNT(*) AS highTotal,
+            COUNT(*) FILTER (
+                WHERE EXISTS (SELECT 1 FROM retention_intervention ri WHERE ri.user_id = l.user_id)
+            ) AS highCovered
+        FROM latest l
+        WHERE risk_level = 'HIGH'
+    </select>
+
+    <!-- ⑥ 룰 vs ML 감지 커버. 창: 룰 = 최근 7일(매일 배치), ML = 최근 30일(비정기 실행) -->
+    <select id="selectMlCover"
+            resultType="com.kopang.app.domain.churn.ChurnSummaryResponse$MlCover">
+        WITH rule_u AS (
+            SELECT DISTINCT user_id FROM churn_score
+            WHERE source = 'RULE' AND scored_at &gt; NOW() - INTERVAL '7 days'
+        ),
+        ml_u AS (
+            SELECT DISTINCT user_id FROM churn_score
+            WHERE source = 'ML' AND scored_at &gt; NOW() - INTERVAL '30 days'
+        )
+        SELECT
+            (SELECT COUNT(*) FROM rule_u r WHERE NOT EXISTS (SELECT 1 FROM ml_u m WHERE m.user_id = r.user_id)) AS ruleOnly,
+            (SELECT COUNT(*) FROM ml_u m WHERE NOT EXISTS (SELECT 1 FROM rule_u r WHERE r.user_id = m.user_id)) AS mlOnly,
+            (SELECT COUNT(*) FROM ml_u m WHERE EXISTS (SELECT 1 FROM rule_u r WHERE r.user_id = m.user_id)) AS both,
+            (SELECT COUNT(*) FROM retention_intervention WHERE risk_type = 'ML_HIGH') AS blindspotSent,
+            (SELECT MAX(scored_at) FROM churn_score WHERE source = 'ML') AS lastMlRunAt
     </select>
 
     <!-- ①-b 일반/멤버십 세그먼트별 고위험 -->
