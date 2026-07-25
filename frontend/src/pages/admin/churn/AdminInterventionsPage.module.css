@@ -1,0 +1,84 @@
+/* D-1 대응 이력 — 구분선 플랫 (요약 바 + 필터 + 풀폭 테이블 + 페이저) */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  padding: 24px 40px 50px;
+  background: #fff;
+  height: calc(100vh - 62px);
+}
+
+.pageHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.caption { margin: 0; color: #8b94a5; font-size: 12.5px; }
+
+/* 요약 바 — 대시보드 KPI 구분선 스타일 통일 */
+.summary {
+  display: flex;
+  border-top: 1px solid #e5e8ef;
+  border-bottom: 1px solid #e5e8ef;
+  margin-bottom: 18px;
+}
+
+.sumCell { flex: 1; padding: 16px 26px; }
+.sumCell:first-child { padding-left: 0; }
+.sumCell + .sumCell { border-left: 1px solid #e5e8ef; }
+.sumCell .lbl { display: flex; align-items: center; gap: 6px; color: #8b94a5; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.sumCell .lbl i { width: 8px; height: 8px; border-radius: 2px; }
+.sumCell .v { font-size: 22px; font-weight: 750; letter-spacing: -0.02em; margin-top: 6px; font-variant-numeric: tabular-nums; }
+.sumCell .sub { font-size: 11.5px; color: #626d80; margin-top: 2px; }
+
+/* 필터 줄 */
+.filters { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.chips { display: inline-flex; gap: 5px; }
+.chip { padding: 6px 12px; border: 1px solid #e5e8ef; border-radius: 999px; background: #fff; color: #626d80; font-size: 12px; font-weight: 600; cursor: pointer; }
+.chip.on { border-color: #2f6bff; background: #2f6bff; color: #fff; }
+.typeSelect { padding: 7px 10px; border: 1px solid #e5e8ef; border-radius: 8px; background: #fff; color: #626d80; font-size: 12.5px; }
+.count { margin-left: auto; color: #8b94a5; font-size: 12px; }
+
+/* 풀폭 테이블 — 남는 높이 채우고 내부 스크롤 */
+.tableWrap { flex: 1; min-height: 0; overflow-y: auto; border: 1px solid #e5e8ef; border-radius: 12px; }
+.tbl th { position: sticky; top: 0; z-index: 1; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tbl th { text-align: left; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: #8b94a5; font-weight: 700; padding: 11px 16px; background: #fbfcfe; border-bottom: 1px solid #e5e8ef; }
+.tbl td { padding: 11px 16px; border-bottom: 1px solid #f0f2f5; color: #3a4553; }
+.tbl tr:last-child td { border-bottom: 0; }
+.tbl tr:hover td { background: #fbfcfe; }
+.tbl .name { color: #171d2b; font-weight: 600; }
+.tbl .num { font-variant-numeric: tabular-nums; }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+.bOk { background: #e3f6ec; color: #12a150; }
+.bWarn { background: #fbf0d9; color: #d98a06; }
+.bMuted { background: #eef1f5; color: #626d80; }
+.bInfo { background: #e9f0ff; color: #2f6bff; }
+
+.empty { padding: 40px; text-align: center; color: #8b94a5; font-size: 13px; }
+
+/* 페이저 — 번호는 페이지 중앙 고정, 범위 텍스트는 왼쪽 서브 */
+.pager { position: relative; display: flex; align-items: center; justify-content: center; margin-top: 14px; min-height: 30px; }
+.rangeInfo { position: absolute; left: 0; font-size: 12px; color: #8b94a5; }
+.pageBtns { display: flex; gap: 5px; }
+.pageBtns button { min-width: 30px; height: 30px; padding: 0 8px; border: 1px solid #e5e8ef; border-radius: 7px; background: #fff; color: #626d80; font-size: 12px; cursor: pointer; }
+.pageBtns button.on {
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: linear-gradient(135deg, rgba(47, 107, 255, 0.92), rgba(47, 107, 255, 0.72));
+  box-shadow: 0 2px 7px rgba(47, 107, 255, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(3px);
+}
+.pageBtns button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+@media (max-width: 1080px) {
+  .page { padding: 20px; }
+  .summary { flex-wrap: wrap; }
+  .sumCell { flex: 1 1 50%; }
+  .tableWrap { overflow-x: auto; }
+}
