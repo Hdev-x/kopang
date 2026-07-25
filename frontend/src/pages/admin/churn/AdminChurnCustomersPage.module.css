@@ -1,34 +1,40 @@
-/* B-2 위험 고객 트리아지 (목록-상세) — 시안(2026-07-23 아티팩트) 기준 */
+/* B-2 위험 고객 트리아지 (목록-상세) — 구분선 플랫 레이아웃 */
 
+.page { background: #fff; }
+
+/* 페이지 높이 고정(뷰포트) — 목록·상세는 각자 내부 스크롤, 페이지 자체는 스크롤 없음 */
 .split {
   display: grid;
   grid-template-columns: 340px minmax(0, 1fr);
-  gap: 16px;
-  align-items: start;
+  grid-template-rows: 1fr;
+  height: calc(100vh - 62px);
 }
 
-/* PC 기준 두 카드 동일 고정 높이 — 내용은 카드 내부 스크롤 */
-.split > .card {
+/* 좌 목록(좁은 영역) | 세로 구분선 | 우 상세(넓은 영역) — 둘 다 화면 높이 채우고 내부 스크롤 */
+.listCol,
+.detailCol {
   display: flex;
-  height: 720px;
   flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
 }
 
-.card {
-  overflow: hidden;
-  border: 1px solid #e5e8ef;
-  border-radius: 14px;
-  background: #fff;
-  box-shadow: 0 1px 2px rgba(20, 30, 50, 0.04), 0 4px 16px rgba(20, 30, 50, 0.05);
+.detailCol {
+  border-left: 1px solid #e5e8ef;
+  padding: 0 20px;
 }
+
 
 /* 좌측 목록 */
 .listHead {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 10px;
+  min-height: 133px;
   padding: 14px 14px 12px;
-  border-bottom: 1px solid #e5e8ef;
+  border-bottom: 1px solid #f0f2f5;
+  box-sizing: border-box;
 }
 
 .listTitle {
@@ -75,37 +81,21 @@
 
 .listBody { flex: 1; min-height: 0; overflow-y: auto; }
 
-/* 상세: 헤더·탭·요약은 고정, 이력 테이블만 내부 스크롤 */
+/* 상세: 헤더 고정, 나머지 세로 펼침 + 상세 컬럼 전체 내부 스크롤 */
 .dBody {
-  display: flex;
   flex: 1;
   min-height: 0;
-  flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
+  padding-top: 20px;
+  padding-bottom: 20px;
 }
 
-.fillSec {
-  display: flex;
-  flex: 1;
-  min-height: 0;
-  flex-direction: column;
-}
-
-.scrollTable { flex: 1; min-height: 0; overflow-y: auto; }
-
-/* 스크롤 시 테이블 헤더 고정 */
-.scrollTable th {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  background: #fff;
-  box-shadow: inset 0 -1px 0 #e5e8ef;
-}
+/* 섹션 사이는 여백만 유지 — 구분선 없음(강조 바 있는 제목으로 구분) */
 
 .li {
   display: flex;
   width: 100%;
-  align-items: center;
+  align-items: flex-start;
   gap: 11px;
   padding: 12px 14px;
   border: 0;
@@ -129,7 +119,6 @@
   height: 34px;
   flex: 0 0 34px;
   place-items: center;
-  border: 1px solid #e5e8ef;
   border-radius: 50%;
   background: #fbfcfe;
   color: #626d80;
@@ -138,8 +127,12 @@
 }
 
 .who { min-width: 0; flex: 1; }
-.who b { display: block; font-size: 13px; }
-.who small { display: block; overflow: hidden; color: #626d80; font-size: 11.5px; text-overflow: ellipsis; white-space: nowrap; }
+.who b { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+
+.liType { display: block; margin-top: 4px; overflow: hidden; color: #626d80; font-size: 11.5px; text-overflow: ellipsis; white-space: nowrap; }
+
+.liRight { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex: 0 0 auto; }
+.liDate { color: #8b94a5; font-size: 10.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 .pb {
   padding: 2px 8px;
@@ -158,8 +151,25 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 18px 20px 8px;
+  min-height: 133px;
+  margin: 0 -20px;
+  padding: 20px 40px 20px 30px;
+  border-bottom: 1px solid #f0f2f5;
+  box-sizing: border-box;
 }
+
+/* 이름 옆 멤버십/일반 배지 */
+.memBadge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.memOn { background: #e9f0ff; color: #2f6bff; }
+.memOff { background: #eef1f5; color: #626d80; }
 
 .lav {
   display: grid;
@@ -174,8 +184,16 @@
   font-weight: 800;
 }
 
+.dName { flex: 1; min-width: 0; }
 .dName b { font-size: 17px; }
 .dName small { display: block; margin-top: 2px; color: #626d80; font-size: 12px; }
+
+/* 프로필 헤더 우측 요약 (총 구매액 | 최근 주문) — 세로 구분선으로 나눔 */
+.headStats { display: flex; flex: 0 0 auto; }
+.headStat { padding: 0 22px; }
+.headStat + .headStat { border-left: 1px solid #e5e8ef; }
+.headStat:last-child { padding-right: 0; }
+.headStat .mValue { font-size: 16px; margin-top: 3px; }
 
 .dTabs {
   display: flex;
@@ -211,9 +229,9 @@
 
 .mBox {
   padding: 13px;
-  border: 1px solid #e5e8ef;
   border-radius: 10px;
-  background: #fbfcfe;
+  background: #fff;
+  border: 1px solid #f0f2f5;
 }
 
 .mLabel {
@@ -230,16 +248,27 @@
 .warnText { color: #d98a06; }
 .goodText { color: #12a150; }
 
-.dSec { padding: 0 20px 18px; }
+.dBody > .mGrid { padding: 18px 20px; }
+.dSec { padding: 20px 20px; }
 
 .secLabel {
-  display: block;
-  margin-bottom: 10px;
-  color: #8b94a5;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: #171d2b;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+/* 제목 앞 색 강조 바 */
+.secLabel::before {
+  content: "";
+  width: 3px;
+  height: 13px;
+  border-radius: 2px;
+  background: #2f6bff;
 }
 
 /* 위험 신호 유형별 요약 */
@@ -254,8 +283,9 @@
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  border: 1px solid #e5e8ef;
   border-radius: 10px;
+  background: #fff;
+  border: 1px solid #f0f2f5;
 }
 
 .sigLabel { flex: 0 0 auto; font-size: 13px; font-weight: 600; }
@@ -263,7 +293,7 @@
 .sigRow > span:last-child { margin-left: auto; }
 
 .rawToggle {
-  margin-left: 8px;
+  margin-left: auto;
   padding: 0;
   border: 0;
   background: none;
@@ -275,14 +305,42 @@
   cursor: pointer;
 }
 
+/* 최근 만족도 */
+.sat {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 14px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid #f0f2f5;
+}
+
+.satScore { font-size: 22px; font-weight: 800; color: #d98a06; font-variant-numeric: tabular-nums; }
+.satStars { color: #d98a06; font-size: 15px; letter-spacing: 2px; flex: 0 0 auto; }
+.satReason { flex: 1; min-width: 0; font-size: 12.5px; color: #626d80; }
+.satReason b { color: #171d2b; }
+.satDate { font-size: 11px; color: #8b94a5; flex: 0 0 auto; font-variant-numeric: tabular-nums; }
+
+/* 현재 관심 상품 (장바구니·찜) */
+.interestList { display: flex; flex-direction: column; border: 1px solid #f0f2f5; border-radius: 10px; overflow: hidden; }
+.interestItem { display: flex; align-items: center; gap: 10px; padding: 9px 12px; font-size: 12.5px; border-bottom: 1px solid #f0f2f5; }
+.interestItem:last-child { border-bottom: 0; }
+.srcTag { flex: 0 0 auto; padding: 1px 7px; border-radius: 6px; font-size: 10.5px; font-weight: 700; }
+.srcCart { background: #e9f0ff; color: #2f6bff; }
+.srcWish { background: #fce8e6; color: #e4453a; }
+.interestName { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.interestPrice { flex: 0 0 auto; color: #626d80; font-variant-numeric: tabular-nums; }
+
 /* 추천 처치 카드 */
 .suggest {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 14px;
-  border: 1px solid #e5e8ef;
   border-radius: 10px;
+  background: #fff;
+  border: 1px solid #f0f2f5;
 }
 
 .suggestIcon {
@@ -304,7 +362,8 @@
 
 /* 반응형 세부 조정은 추후 확정 — 우선 세로 스택만 */
 @media (max-width: 980px) {
-  .split { grid-template-columns: 1fr; }
-  .split > .card { height: auto; max-height: 560px; }
+  .split { grid-template-columns: 1fr; grid-template-rows: auto auto; min-height: 0; }
+  .listCol { max-height: 420px; }
+  .detailCol { border-left: 0; border-top: 1px solid #e5e8ef; padding: 0 16px; }
   .mGrid, .mGrid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

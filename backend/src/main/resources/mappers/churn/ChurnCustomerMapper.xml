@@ -127,6 +127,39 @@
         ORDER BY g.last_at DESC
     </select>
 
+    <!-- 최근 만족도 1건 (CHURN-17) -->
+    <select id="findLatestSatisfaction"
+            resultType="com.kopang.app.domain.churn.RiskCustomerDetailResponse$Satisfaction">
+        SELECT score, context, reason, created_at AS createdAt
+        FROM satisfaction_survey
+        WHERE user_id = #{userId}
+        ORDER BY created_at DESC
+        LIMIT 1
+    </select>
+
+    <!-- 현재 관심 상품 — 장바구니 + 찜 통합 (읽기 전용, products 조인) -->
+    <select id="findInterestProducts"
+            resultType="com.kopang.app.domain.churn.RiskCustomerDetailResponse$InterestProduct">
+        SELECT source, product_id AS productId, name, image_url AS imageUrl,
+               price, discount_price AS discountPrice, at
+        FROM (
+            SELECT 'CART' AS source, p.product_id, p.name, p.image_url,
+                   p.price, p.discount_price, ci.added_at AS at
+            FROM cart c
+            JOIN cart_item ci ON ci.cart_id = c.cart_id
+            JOIN products p ON p.product_id = ci.product_id
+            WHERE c.user_id = #{userId}
+            UNION ALL
+            SELECT 'WISHLIST' AS source, p.product_id, p.name, p.image_url,
+                   p.price, p.discount_price, w.created_at AS at
+            FROM wishlist w
+            JOIN products p ON p.product_id = w.product_id
+            WHERE w.user_id = #{userId}
+        ) u
+        ORDER BY at DESC
+        LIMIT #{limit}
+    </select>
+
     <!-- 이탈 점수 이력 최근순 -->
     <select id="findScoreHistory"
             resultType="com.kopang.app.domain.churn.RiskCustomerDetailResponse$ScorePoint">

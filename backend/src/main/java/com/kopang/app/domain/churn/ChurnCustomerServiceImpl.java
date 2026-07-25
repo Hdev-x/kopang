@@ -32,6 +32,8 @@ public class ChurnCustomerServiceImpl implements ChurnCustomerService {
         RiskCustomerDetailResponse detail = new RiskCustomerDetailResponse();
         detail.setProfile(profile);
         detail.setSignals(customerMapper.findSignalSummaries(userId));
+        detail.setSatisfaction(customerMapper.findLatestSatisfaction(userId));
+        detail.setInterestProducts(customerMapper.findInterestProducts(userId, 8));
         detail.setScoreHistory(customerMapper.findScoreHistory(userId, 20));
         detail.setInterventions(customerMapper.findCustomerInterventions(userId, 20));
         detail.setOrderSummary(customerMapper.findOrderSummary(userId));

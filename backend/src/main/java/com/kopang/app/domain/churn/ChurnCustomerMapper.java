@@ -39,6 +39,13 @@ public interface ChurnCustomerMapper {
         /** 위험 신호 유형별 요약 (전체 기간 집계 + 유형별 마지막 대응) */
         List<RiskCustomerDetailResponse.SignalSummary> findSignalSummaries(@Param("userId") long userId);
 
+        /** 최근 만족도 1건 (없으면 null) */
+        RiskCustomerDetailResponse.Satisfaction findLatestSatisfaction(@Param("userId") long userId);
+
+        /** 현재 관심 상품 — 장바구니 + 찜 (최근순, limit) */
+        List<RiskCustomerDetailResponse.InterestProduct> findInterestProducts(
+                        @Param("userId") long userId, @Param("limit") int limit);
+
         /** 이탈 점수 이력 최근순 */
         List<RiskCustomerDetailResponse.ScorePoint> findScoreHistory(
                         @Param("userId") long userId, @Param("limit") int limit);

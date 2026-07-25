@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { TicketPercent } from "lucide-react";
 import { AdminLayout } from "../../../components/AdminLayout";
-import { ChurnSubnav } from "../../../components/ChurnSubnav";
 import {
   getRiskCustomerDetail,
   getRiskCustomers,
@@ -68,8 +67,6 @@ const LEVEL_TABS = [
   { label: "중위험", value: "MID" },
 ];
 
-type TabKey = "overview" | "orders" | "history";
-
 // 첫 감지일로부터 오늘까지 경과일 (D+N 표기)
 function daysSince(iso: string) {
   return Math.floor((Date.now() - new Date(iso.slice(0, 10)).getTime()) / 86_400_000);
@@ -89,9 +86,9 @@ export function AdminChurnCustomersPage() {
 
   const [detail, setDetail] = useState<RiskCustomerDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [tab, setTab] = useState<TabKey>("overview");
   const [effect, setEffect] = useState<ChurnEffectRow[]>([]);
   const [showRaw, setShowRaw] = useState(false);
+  const [showAllInterest, setShowAllInterest] = useState(false);
 
   const selectedId = userId ? Number(userId) : null;
 
@@ -124,7 +121,8 @@ export function AdminChurnCustomersPage() {
   useEffect(() => {
     if (!selectedId) return;
     setDetailLoading(true);
-    setTab("overview");
+    setShowRaw(false);
+    setShowAllInterest(false);
     getRiskCustomerDetail(selectedId)
       .then(setDetail)
       .catch((err) => {
@@ -153,12 +151,11 @@ export function AdminChurnCustomersPage() {
   const listSummary = rows.find((r) => r.userId === selectedId);
 
   return (
-    <AdminLayout title="위험 고객">
-      <ChurnSubnav />
-
+    <AdminLayout title="위험 고객" fullBleed>
+      <div className={styles.page}>
       <div className={styles.split}>
         {/* 좌측: 목록 */}
-        <div className={styles.card}>
+        <div className={styles.listCol}>
           <div className={styles.listHead}>
             <div className={styles.listTitle}>
               <b>위험 고객</b>
@@ -200,12 +197,18 @@ export function AdminChurnCustomersPage() {
                 >
                   <span className={styles.av}>{c.name.slice(0, 1)}</span>
                   <span className={styles.who}>
-                    <b>{c.name}</b>
-                    <small>
-                      {c.isMember ? "멤버십" : "일반"} · {c.riskType ? RISK_TYPE_LABEL[c.riskType] ?? c.riskType : "ML 이탈 예측"} · {fmtDate(c.detectedAt)}
-                    </small>
+                    <b>
+                      {c.name}{" "}
+                      <span className={`${styles.memBadge} ${c.isMember ? styles.memOn : styles.memOff}`}>
+                        {c.isMember ? "멤버십" : "일반"}
+                      </span>
+                    </b>
+                    <span className={styles.liType}>{c.riskType ? RISK_TYPE_LABEL[c.riskType] ?? c.riskType : "ML 이탈 예측"}</span>
                   </span>
-                  <span className={`${styles.pb} ${pbClass(c.riskLevel)}`}>{c.score.toFixed(2)}</span>
+                  <span className={styles.liRight}>
+                    <small className={styles.liDate}>감지일: {fmtDate(c.detectedAt)}</small>
+                    <span className={`${styles.pb} ${pbClass(c.riskLevel)}`}>{c.score.toFixed(2)}</span>
+                  </span>
                 </button>
               ))
             )}
@@ -213,7 +216,7 @@ export function AdminChurnCustomersPage() {
         </div>
 
         {/* 우측: 상세 */}
-        <div className={styles.card}>
+        <div className={styles.detailCol}>
           {detailLoading ? (
             <p className={styles.emptyText}>상세 불러오는 중…</p>
           ) : !detail ? (
@@ -225,56 +228,37 @@ export function AdminChurnCustomersPage() {
                 <div className={styles.dName}>
                   <b>
                     {detail.profile.name}{" "}
+                    <span className={`${styles.memBadge} ${detail.profile.isMember ? styles.memOn : styles.memOff}`}>
+                      {detail.profile.isMember ? "멤버십" : "일반"}
+                    </span>{" "}
                     {latest && <span className={`${styles.pb} ${pbClass(latest.riskLevel)}`}>{latest.score.toFixed(2)}</span>}
                   </b>
                   <small>
-                    {detail.profile.isMember ? "멤버십" : "일반"} · {detail.profile.email} · 가입 {fmtDate(detail.profile.joinedAt)} · 최근 로그인 {fmtDate(detail.profile.lastLoginAt)}
+                    {detail.profile.email} · 가입 {fmtDate(detail.profile.joinedAt)} · 최근 로그인 {fmtDate(detail.profile.lastLoginAt)}
                   </small>
+                </div>
+                <div className={styles.headStats}>
+                  <div className={styles.headStat}>
+                    <p className={styles.mLabel}>총 구매액</p>
+                    <div className={styles.mValue}>{detail.orderSummary.totalSpent.toLocaleString()}원</div>
+                  </div>
+                  <div className={styles.headStat}>
+                    <p className={styles.mLabel}>주문 수</p>
+                    <div className={styles.mValue}>{detail.orderSummary.orderCount.toLocaleString()}건</div>
+                  </div>
+                  <div className={styles.headStat}>
+                    <p className={styles.mLabel}>평균 주문액</p>
+                    <div className={styles.mValue}>{detail.orderSummary.avgAmount.toLocaleString()}원</div>
+                  </div>
+                  <div className={styles.headStat}>
+                    <p className={styles.mLabel}>최근 주문</p>
+                    <div className={styles.mValue}>{fmtDate(detail.orderSummary.lastOrderedAt)}</div>
+                  </div>
                 </div>
               </div>
 
-              <div className={styles.dTabs}>
-                <button className={tab === "overview" ? styles.on : ""} onClick={() => setTab("overview")}>개요</button>
-                <button className={tab === "orders" ? styles.on : ""} onClick={() => setTab("orders")}>구매 행동</button>
-                <button className={tab === "history" ? styles.on : ""} onClick={() => setTab("history")}>대응 이력</button>
-              </div>
-
               <div className={styles.dBody}>
-              {tab === "overview" && (
-                <>
-                  <div className={styles.mGrid}>
-                    <div className={styles.mBox}>
-                      <p className={styles.mLabel}>최근 주문</p>
-                      <div className={styles.mValue}>{fmtDate(detail.orderSummary.lastOrderedAt)}</div>
-                    </div>
-                    <div className={styles.mBox}>
-                      <p className={styles.mLabel}>총 구매액</p>
-                      <div className={styles.mValue}>{detail.orderSummary.totalSpent.toLocaleString()}원</div>
-                    </div>
-                    <div className={styles.mBox}>
-                      <p className={styles.mLabel}>이탈 등급</p>
-                      <div className={`${styles.mValue} ${latest?.riskLevel === "HIGH" ? styles.critText : latest?.riskLevel === "MID" ? styles.warnText : styles.goodText}`}>
-                        {latest ? LEVEL_LABEL[latest.riskLevel] : "—"}
-                      </div>
-                    </div>
-                  </div>
-
                   <div className={styles.dSec}>
-                    <span className={styles.secLabel}>추천 처치</span>
-                    {bestAction ? (
-                      <div className={styles.suggest}>
-                        <span className={styles.suggestIcon}><TicketPercent size={17} /></span>
-                        <div className={styles.suggestBody}>
-                          <b>{ACTION_LABEL[bestAction.actionType] ?? bestAction.actionType}</b>
-                          <small>대응 효과 리포트 기준 순효과 +{(bestAction.treatPct - bestAction.controlPct).toFixed(1)}%p (처치군 {bestAction.treatPct}% vs 대조군 {bestAction.controlPct}%)</small>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className={sh.itemMeta}>순효과가 양수인 대응이 아직 없습니다.</p>
-                    )}
-                  </div>
-
-                  <div className={`${styles.dSec} ${styles.fillSec}`}>
                     <span className={styles.secLabel}>
                       위험 신호 (유형별 · 최근 이력 기준)
                       {detail.scoreHistory.length > 0 && (
@@ -286,7 +270,7 @@ export function AdminChurnCustomersPage() {
                     {detail.scoreHistory.length === 0 ? (
                       <p className={sh.itemMeta}>감지된 위험 신호가 없습니다.</p>
                     ) : showRaw ? (
-                      <div className={`${sh.tableWrap} ${styles.scrollTable}`}>
+                      <div className={sh.tableWrap}>
                         <table className={sh.table}>
                           <thead>
                             <tr><th>판정일시</th><th>점수</th><th>등급</th><th>위험 유형</th><th>출처</th></tr>
@@ -325,39 +309,72 @@ export function AdminChurnCustomersPage() {
                       </div>
                     )}
                   </div>
-                </>
-              )}
 
-              {tab === "orders" && (
-                <>
-                  <div className={`${styles.mGrid} ${styles.mGrid4}`}>
-                    <div className={styles.mBox}>
-                      <p className={styles.mLabel}>주문 수</p>
-                      <div className={styles.mValue}>{detail.orderSummary.orderCount.toLocaleString()}건</div>
-                    </div>
-                    <div className={styles.mBox}>
-                      <p className={styles.mLabel}>누적 결제액</p>
-                      <div className={styles.mValue}>{detail.orderSummary.totalSpent.toLocaleString()}원</div>
-                    </div>
-                    <div className={styles.mBox}>
-                      <p className={styles.mLabel}>평균 주문액</p>
-                      <div className={styles.mValue}>{detail.orderSummary.avgAmount.toLocaleString()}원</div>
-                    </div>
-                    <div className={styles.mBox}>
-                      <p className={styles.mLabel}>최근 주문일</p>
-                      <div className={styles.mValue}>{fmtDate(detail.orderSummary.lastOrderedAt)}</div>
-                    </div>
+                  <div className={styles.dSec}>
+                    <span className={styles.secLabel}>최근 만족도</span>
+                    {detail.satisfaction ? (
+                      <div className={styles.sat}>
+                        <span className={styles.satScore}>{detail.satisfaction.score.toFixed(1)}</span>
+                        <span className={styles.satStars}>{"★".repeat(detail.satisfaction.score)}{"☆".repeat(5 - detail.satisfaction.score)}</span>
+                        <span className={styles.satReason}>
+                          {detail.satisfaction.reason ? <><b>사유:</b> {detail.satisfaction.reason}</> : "사유 미선택"}
+                        </span>
+                        <span className={styles.satDate}>{fmtDate(detail.satisfaction.createdAt)}</span>
+                      </div>
+                    ) : (
+                      <p className={sh.itemMeta}>제출된 만족도 조사가 없습니다.</p>
+                    )}
                   </div>
-                  <p className={styles.emptyText}>결제 완료 주문 기준 집계입니다. 개별 주문은 주문·배송 메뉴에서 확인하세요.</p>
-                </>
-              )}
 
-              {tab === "history" && (
-                <div className={`${styles.dSec} ${styles.fillSec}`} style={{ paddingTop: 18 }}>
+                  <div className={styles.dSec}>
+                    <span className={styles.secLabel}>
+                      현재 관심 상품 (장바구니·찜)
+                      {detail.interestProducts.length > 3 && (
+                        <button type="button" className={styles.rawToggle} onClick={() => setShowAllInterest((v) => !v)}>
+                          {showAllInterest ? "접기" : `더보기 (+${detail.interestProducts.length - 3})`}
+                        </button>
+                      )}
+                    </span>
+                    {detail.interestProducts.length === 0 ? (
+                      <p className={sh.itemMeta}>장바구니·찜한 상품이 없습니다.</p>
+                    ) : (
+                      <div className={styles.interestList}>
+                        {(showAllInterest ? detail.interestProducts : detail.interestProducts.slice(0, 3)).map((p, i) => (
+                          <div key={`${p.source}-${p.productId}-${i}`} className={styles.interestItem}>
+                            <span className={`${styles.srcTag} ${p.source === "CART" ? styles.srcCart : styles.srcWish}`}>
+                              {p.source === "CART" ? "장바구니" : "찜"}
+                            </span>
+                            <span className={styles.interestName}>{p.name}</span>
+                            <span className={styles.interestPrice}>
+                              {(p.discountPrice ?? p.price).toLocaleString()}원
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className={styles.dSec}>
+                    <span className={styles.secLabel}>추천 처치</span>
+                    {bestAction ? (
+                      <div className={styles.suggest}>
+                        <span className={styles.suggestIcon}><TicketPercent size={17} /></span>
+                        <div className={styles.suggestBody}>
+                          <b>{ACTION_LABEL[bestAction.actionType] ?? bestAction.actionType}</b>
+                          <small>대응 효과 리포트 기준 순효과 +{(bestAction.treatPct - bestAction.controlPct).toFixed(1)}%p (처치군 {bestAction.treatPct}% vs 대조군 {bestAction.controlPct}%)</small>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className={sh.itemMeta}>순효과가 양수인 대응이 아직 없습니다.</p>
+                    )}
+                  </div>
+
+                <div className={styles.dSec}>
+                  <span className={styles.secLabel}>받은 대응 이력</span>
                   {detail.interventions.length === 0 ? (
                     <p className={sh.itemMeta}>받은 대응 이력이 없습니다.</p>
                   ) : (
-                    <div className={`${sh.tableWrap} ${styles.scrollTable}`}>
+                    <div className={sh.tableWrap}>
                       <table className={sh.table}>
                         <thead>
                           <tr><th>일시</th><th>위험 유형</th><th>대응</th><th>채널</th><th>결과</th></tr>
@@ -377,7 +394,6 @@ export function AdminChurnCustomersPage() {
                     </div>
                   )}
                 </div>
-              )}
 
               {listSummary && (
                 <p className={styles.emptyText} style={{ paddingTop: 0 }}>
@@ -388,6 +404,7 @@ export function AdminChurnCustomersPage() {
             </>
           )}
         </div>
+      </div>
       </div>
     </AdminLayout>
   );

@@ -68,6 +68,8 @@ export type RiskOrderSummary = {
 export type RiskCustomerDetail = {
   profile: RiskCustomerProfile;
   signals: RiskSignalSummary[];
+  satisfaction: RiskSatisfaction | null;
+  interestProducts: RiskInterestProduct[];
   scoreHistory: RiskScorePoint[];
   interventions: RiskInterventionItem[];
   orderSummary: RiskOrderSummary;

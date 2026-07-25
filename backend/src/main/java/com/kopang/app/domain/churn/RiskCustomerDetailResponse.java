@@ -15,9 +15,31 @@ public class RiskCustomerDetailResponse {
 
     private Profile profile;
     private List<SignalSummary> signals; // 유형별 요약 (전체 기간)
+    private Satisfaction satisfaction; // 최근 만족도 1건 (없으면 null)
+    private List<InterestProduct> interestProducts; // 현재 관심 상품 (장바구니·찜)
     private List<ScorePoint> scoreHistory; // 최근순
     private List<InterventionItem> interventions; // 최근순
     private OrderSummary orderSummary;
+
+    /** 최근 만족도 (CHURN-17 satisfaction_survey 최신 1건) */
+    @Data
+    public static class Satisfaction {
+        private Integer score; // 1~5
+        private String context;
+        private String reason; // 사유(선택) — null 가능
+        private LocalDateTime createdAt;
+    }
+
+    /** 현재 관심 상품 — 장바구니·찜 (source로 구분) */
+    @Data
+    public static class InterestProduct {
+        private String source; // CART / WISHLIST
+        private Long productId;
+        private String name;
+        private String imageUrl;
+        private Long price;
+        private Long discountPrice; // 할인 없으면 null
+    }
 
     /** 위험 신호 유형별 요약 — 첫/마지막 감지일·횟수·최신 점수 + 마지막 대응 */
     @Data
