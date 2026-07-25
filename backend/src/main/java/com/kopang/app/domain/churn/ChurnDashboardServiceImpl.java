@@ -19,6 +19,7 @@ public class ChurnDashboardServiceImpl implements ChurnDashboardService {
         ChurnSummaryResponse res = new ChurnSummaryResponse();
         res.setKpi(dashboardMapper.selectLatestKpi());
         res.setLevelCounts(dashboardMapper.selectLevelCounts());
+        res.setTypeCounts(dashboardMapper.selectTypeCounts());
         res.setSegments(dashboardMapper.selectSegmentCounts());
         res.setWeeklyChurnRate(dashboardMapper.selectWeeklyTrend(TREND_WEEKS));
         res.setEffect(dashboardMapper.selectEffect());

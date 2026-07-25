@@ -31,6 +31,22 @@
         GROUP BY risk_level
     </select>
 
+    <!-- ①-c 위험 유형별 인원.
+         ⚠ 집계 기준 = "현재 상태"(유저별 최신 1건) — 위험 고객 목록과 수치 일치를 위해 선택한 임시 기준.
+         "오늘 감지 기준"과의 선택은 팀 확정 전 (ml-run이 최신을 덮으면 룰 유형 수가 줄어드는 트레이드오프 있음) -->
+    <select id="selectTypeCounts"
+            resultType="com.kopang.app.domain.churn.ChurnSummaryResponse$TypeCount">
+        WITH latest AS (
+            SELECT DISTINCT ON (user_id) user_id, risk_type
+            FROM churn_score
+            ORDER BY user_id, scored_at DESC
+        )
+        SELECT risk_type AS riskType, COUNT(*) AS count
+        FROM latest
+        GROUP BY risk_type
+        ORDER BY count DESC
+    </select>
+
     <!-- ①-b 일반/멤버십 세그먼트별 고위험 -->
     <select id="selectSegmentCounts"
             resultType="com.kopang.app.domain.churn.ChurnSummaryResponse$SegmentCount">

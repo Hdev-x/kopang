@@ -30,4 +30,23 @@ public interface ChurnCustomerMapper {
                         @Param("type") String type,
                         @Param("memberType") String memberType,
                         @Param("level") String level);
+
+        // ===== 상세 (B-2) =====
+
+        /** 프로필 + 멤버십 여부. 없는 userId면 null */
+        RiskCustomerDetailResponse.Profile findCustomerProfile(@Param("userId") long userId);
+
+        /** 위험 신호 유형별 요약 (전체 기간 집계 + 유형별 마지막 대응) */
+        List<RiskCustomerDetailResponse.SignalSummary> findSignalSummaries(@Param("userId") long userId);
+
+        /** 이탈 점수 이력 최근순 */
+        List<RiskCustomerDetailResponse.ScorePoint> findScoreHistory(
+                        @Param("userId") long userId, @Param("limit") int limit);
+
+        /** 받은 대응 이력 최근순 (outcome 파생 포함) */
+        List<RiskCustomerDetailResponse.InterventionItem> findCustomerInterventions(
+                        @Param("userId") long userId, @Param("limit") int limit);
+
+        /** 결제 완료 주문 요약 (건수·누적·평균·최근 주문일) */
+        RiskCustomerDetailResponse.OrderSummary findOrderSummary(@Param("userId") long userId);
 }

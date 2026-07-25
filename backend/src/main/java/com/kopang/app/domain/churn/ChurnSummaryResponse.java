@@ -15,6 +15,7 @@ public class ChurnSummaryResponse {
 
     private Kpi kpi;                        // 상단 KPI 4지표 (최신 일별 스냅샷)
     private List<LevelCount> levelCounts;  // ① 위험도 분포 (HIGH/MID/LOW)
+    private List<TypeCount> typeCounts;    // ①-c 위험 유형별 인원 (현재 상태 기준 — 임시, 팀 확정 전)
     private List<SegmentCount> segments;   // ①-b 일반/멤버십 세그먼트별 고위험
     private List<TrendPoint> weeklyChurnRate; // ② 주간 이탈율 추이
     private List<EffectRow> effect;        // ③ 대응 효과 (처치군 vs 대조군)
@@ -33,6 +34,13 @@ public class ChurnSummaryResponse {
     @Data
     public static class LevelCount {
         private String riskLevel;          // HIGH / MID / LOW
+        private Integer count;
+    }
+
+    /** 위험 유형별 인원 — riskType null = ML 예측 */
+    @Data
+    public static class TypeCount {
+        private String riskType;
         private Integer count;
     }
 

@@ -12,4 +12,7 @@ public interface ChurnCustomerService {
      * @param size       페이지 크기
      */
     RiskCustomerListResponse getRiskCustomers(String type, String memberType, String level, int page, int size);
+
+    /** 위험 고객 상세 (B-2). 없는 userId면 null */
+    RiskCustomerDetailResponse getRiskCustomerDetail(long userId);
 }

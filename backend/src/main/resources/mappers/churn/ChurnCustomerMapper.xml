@@ -60,6 +60,118 @@
         LIMIT #{limit} OFFSET #{offset}
     </select>
 
+    <!-- ===== 상세 (B-2) : 전부 읽기 전용 ===== -->
+
+    <!-- 프로필 + 멤버십 여부 -->
+    <select id="findCustomerProfile"
+            resultType="com.kopang.app.domain.churn.RiskCustomerDetailResponse$Profile">
+        SELECT
+            u.user_id           AS userId,
+            u.name              AS name,
+            u.email             AS email,
+            (um.user_id IS NOT NULL) AS isMember,
+            u.created_at::date  AS joinedAt,
+            u.last_login_at     AS lastLoginAt
+        FROM users u
+        LEFT JOIN (
+            SELECT DISTINCT user_id FROM user_membership WHERE status = 'ACTIVE'
+        ) um ON um.user_id = u.user_id
+        WHERE u.user_id = #{userId}
+    </select>
+
+    <!-- 위험 신호 유형별 요약: 전체 기간 첫/마지막 감지·횟수 + 최신 기록 + 유형별 마지막 대응.
+         ML 예측은 risk_type이 NULL이라 별도 그룹으로 묶임 -->
+    <select id="findSignalSummaries"
+            resultType="com.kopang.app.domain.churn.RiskCustomerDetailResponse$SignalSummary">
+        SELECT
+            g.risk_type        AS riskType,
+            l.source           AS source,
+            l.score            AS latestScore,
+            l.risk_level       AS latestLevel,
+            g.first_at         AS firstDetectedAt,
+            g.last_at          AS lastDetectedAt,
+            g.cnt              AS detectCount,
+            ri.created_at      AS lastInterventionAt,
+            CASE
+                WHEN ri.created_at IS NULL THEN NULL
+                WHEN ri.is_control THEN 'CONTROL'
+                WHEN io.converted  THEN 'CONVERTED'
+                ELSE 'NO_RESPONSE'
+            END AS lastOutcome
+        FROM (
+            SELECT risk_type,
+                   MIN(scored_at) AS first_at,
+                   MAX(scored_at) AS last_at,
+                   COUNT(*)       AS cnt
+            FROM churn_score
+            WHERE user_id = #{userId}
+            GROUP BY risk_type
+        ) g
+        JOIN LATERAL (
+            SELECT score, risk_level, source
+            FROM churn_score cs
+            WHERE cs.user_id = #{userId}
+              AND cs.risk_type IS NOT DISTINCT FROM g.risk_type
+            ORDER BY cs.scored_at DESC
+            LIMIT 1
+        ) l ON true
+        LEFT JOIN LATERAL (
+            SELECT ri.created_at, ri.is_control, ri.intervention_id
+            FROM retention_intervention ri
+            WHERE ri.user_id = #{userId}
+              AND ri.risk_type = g.risk_type
+            ORDER BY ri.created_at DESC
+            LIMIT 1
+        ) ri ON true
+        LEFT JOIN intervention_outcome io ON io.intervention_id = ri.intervention_id
+        ORDER BY g.last_at DESC
+    </select>
+
+    <!-- 이탈 점수 이력 최근순 -->
+    <select id="findScoreHistory"
+            resultType="com.kopang.app.domain.churn.RiskCustomerDetailResponse$ScorePoint">
+        SELECT scored_at AS scoredAt, score, risk_level AS riskLevel,
+               risk_type AS riskType, source
+        FROM churn_score
+        WHERE user_id = #{userId}
+        ORDER BY scored_at DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 받은 대응 이력 최근순 (outcome 파생은 대응이력 화면과 같은 기준) -->
+    <select id="findCustomerInterventions"
+            resultType="com.kopang.app.domain.churn.RiskCustomerDetailResponse$InterventionItem">
+        SELECT
+            ri.created_at  AS createdAt,
+            ri.risk_type   AS riskType,
+            ri.action_type AS actionType,
+            ri.channel     AS channel,
+            ri.is_control  AS isControl,
+            CASE
+                WHEN ri.is_control THEN 'CONTROL'
+                WHEN io.converted  THEN 'CONVERTED'
+                ELSE 'NO_RESPONSE'
+            END AS outcome
+        FROM retention_intervention ri
+        LEFT JOIN intervention_outcome io ON io.intervention_id = ri.intervention_id
+        WHERE ri.user_id = #{userId}
+        ORDER BY ri.created_at DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 결제 완료 주문 요약 -->
+    <select id="findOrderSummary"
+            resultType="com.kopang.app.domain.churn.RiskCustomerDetailResponse$OrderSummary">
+        SELECT
+            COUNT(*)                            AS orderCount,
+            COALESCE(SUM(total_price), 0)       AS totalSpent,
+            COALESCE(AVG(total_price), 0)::bigint AS avgAmount,
+            MAX(ordered_at)                     AS lastOrderedAt
+        FROM orders
+        WHERE user_id = #{userId}
+          AND payment_status = 'PAID'
+    </select>
+
     <!-- 같은 필터의 총 건수 (목록엔 없는 users/발송상태 조인 생략) -->
     <select id="countRiskCustomers" resultType="long">
         WITH latest AS (
