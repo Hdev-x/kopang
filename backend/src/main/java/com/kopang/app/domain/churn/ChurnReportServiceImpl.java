@@ -17,6 +17,9 @@ public class ChurnReportServiceImpl implements ChurnReportService {
         ChurnReportResponse res = new ChurnReportResponse();
         res.setKpi(reportMapper.selectKpi(from, to));
         res.setEffect(reportMapper.selectEffect(from, to));
+        res.setTypeEffect(reportMapper.selectTypeEffect(from, to));
+        res.setDailyTrend(reportMapper.selectDailyTrend(from, to));
+        res.setCouponRoi(reportMapper.selectCouponRoi());
         return res;
     }
 }
