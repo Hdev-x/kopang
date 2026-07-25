@@ -22,10 +22,16 @@ public class ChurnController {
         churnScoreService.runAllRules();
     }
 
-    // [임시] 대응 자동 발송 수동 실행 — 검증 후 06 스케줄러에 편입
+    // 대응 발송 수동 실행 — 대시보드 실행 버튼용. 스케줄러 편입 시에도 같은 서비스 메서드 공유
     @PostMapping("/api/admin/churn/intervene")
-    public void runInterventions() {
-        churnScoreService.runInterventions();
+    public ResponseEntity<ApiResponse<InterventionRunResult>> runInterventions() {
+        return ResponseEntity.ok(ApiResponse.success(churnScoreService.runInterventions()));
+    }
+
+    // 발송 실행 전 대상 현황 (읽기 전용) — "오늘 처리할 일" 카운트 표시용
+    @GetMapping("/api/admin/churn/intervene/preview")
+    public ResponseEntity<ApiResponse<InterventionPreviewResponse>> interventionPreview() {
+        return ResponseEntity.ok(ApiResponse.success(churnScoreService.getInterventionPreview()));
     }
 
     // 쿠폰 만료 임박 대응 수동 실행 (CHURN-14)

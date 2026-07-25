@@ -179,10 +179,22 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
         }
     }
 
+    // 발송 실행 전 대상 현황 — 3갈래(통합·쿠폰만료·미로그인) 후보 수만 읽기 조회
+    @Transactional(readOnly = true)
+    @Override
+    public InterventionPreviewResponse getInterventionPreview() {
+        int integrated = (int) churnMapper.findInterventionTargets().stream()
+                .filter(t -> !"WISHLIST_IDLE".equals(t.getRiskType()))
+                .count();
+        int couponExpiring = churnMapper.findTargetsByRiskTypes(List.of("COUPON_EXPIRING")).size();
+        int loginInactive = churnMapper.findTargetsByRiskTypes(List.of("LOGIN_INACTIVE")).size();
+        return new InterventionPreviewResponse(integrated, couponExpiring, loginInactive);
+    }
+
     // 대응 발송 — 오늘자 감지 위험 대상에 대조군 분리 후 알림 발송 + 전원 기록
     @Transactional
     @Override
-    public void runInterventions() {
+    public InterventionRunResult runInterventions() {
         // 조회
         List<ChurnScoreDTO> targets = churnMapper.findInterventionTargets();
 
@@ -264,6 +276,8 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
             noti.setClicked(false);
             notificationMapper.insertNotification(noti);
         }
+
+        return new InterventionRunResult(reqs.size(), toSend.size(), reqs.size() - toSend.size());
     }
 
     @Transactional
