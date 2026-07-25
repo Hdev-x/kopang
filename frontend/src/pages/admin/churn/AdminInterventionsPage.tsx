@@ -147,7 +147,7 @@ export function AdminInterventionsPage() {
                 <tbody>
                   {pageRows.map((l, i) => (
                     <tr key={safePage * PAGE_SIZE + i}>
-                      <td className="num">{fmtDateTime(l.createdAt)}</td>
+                      <td className={styles.num}>{fmtDateTime(l.createdAt)}</td>
                       <td className={styles.name}>{l.userName}</td>
                       <td>{RISK_TYPE_LABEL[l.riskType] ?? l.riskType}</td>
                       <td>{ACTION_LABEL[l.actionType] ?? l.actionType}</td>
