@@ -83,7 +83,8 @@ export function AdminChurnPage() {
     );
   }
 
-  const { kpi, levelCounts, segments, weeklyChurnRate, effect, atRisk } = data;
+  const { kpi, levelCounts, typeCounts, segments, weeklyChurnRate, effect, atRisk } = data;
+  const typeMax = Math.max(...typeCounts.map((t) => t.count), 1);
 
   // KPI 4지표
   const kpiCards = [
@@ -159,6 +160,25 @@ export function AdminChurnPage() {
               <span className={styles.typeMeta}>
                 고위험 <strong>{t.high}</strong> / {t.total.toLocaleString()}명
               </span>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* ①-c 위험 유형별 인원 — 현재 상태 기준(유저별 최신 1건), 집계 기준은 팀 확정 전 임시 */}
+      <h2 className={styles.section}>①-c 위험 유형 분포</h2>
+      <Card>
+        <p className={sh.itemMeta} style={{ marginTop: 0 }}>현재 상태 기준 (고객별 최신 판정 1건) · 기준은 임시</p>
+        <div className={styles.hbarList}>
+          {typeCounts.map((t) => (
+            <div key={t.riskType ?? "ML"} className={styles.hbarRow}>
+              <span className={styles.hbarName}>
+                {t.riskType ? RISK_TYPE_LABEL[t.riskType] ?? t.riskType : "ML 이탈 예측"}
+              </span>
+              <div className={styles.hbarTrack}>
+                <span className={styles.hbarFill} style={{ width: `${(t.count / typeMax) * 100}%` }} />
+              </div>
+              <strong className={styles.hbarCount}>{t.count.toLocaleString()}명</strong>
             </div>
           ))}
         </div>

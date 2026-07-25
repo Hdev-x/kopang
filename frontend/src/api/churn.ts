@@ -14,6 +14,12 @@ export type ChurnLevelCount = {
   count: number;
 };
 
+// 위험 유형별 인원 — riskType null = ML 예측. 집계 기준: 현재 상태(유저별 최신 1건, 임시)
+export type ChurnTypeCount = {
+  riskType: string | null;
+  count: number;
+};
+
 export type ChurnSegmentCount = {
   segment: "MEMBER" | "NORMAL";
   total: number;
@@ -44,6 +50,7 @@ export type ChurnAtRiskCustomer = {
 export type ChurnSummary = {
   kpi: ChurnKpi;
   levelCounts: ChurnLevelCount[];
+  typeCounts: ChurnTypeCount[];
   segments: ChurnSegmentCount[];
   weeklyChurnRate: ChurnTrendPoint[];
   effect: ChurnEffectRow[];

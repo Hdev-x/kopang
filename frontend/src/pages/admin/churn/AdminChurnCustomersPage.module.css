@@ -1,0 +1,310 @@
+/* B-2 위험 고객 트리아지 (목록-상세) — 시안(2026-07-23 아티팩트) 기준 */
+
+.split {
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+/* PC 기준 두 카드 동일 고정 높이 — 내용은 카드 내부 스크롤 */
+.split > .card {
+  display: flex;
+  height: 720px;
+  flex-direction: column;
+}
+
+.card {
+  overflow: hidden;
+  border: 1px solid #e5e8ef;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(20, 30, 50, 0.04), 0 4px 16px rgba(20, 30, 50, 0.05);
+}
+
+/* 좌측 목록 */
+.listHead {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 14px 12px;
+  border-bottom: 1px solid #e5e8ef;
+}
+
+.listTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.listTitle b { font-size: 14px; }
+.listTitle small { color: #626d80; font-size: 12px; }
+
+.seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.seg button {
+  padding: 5px 10px;
+  border: 1px solid #e5e8ef;
+  border-radius: 999px;
+  background: #fff;
+  color: #626d80;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.seg .on {
+  border-color: #2f6bff;
+  background: #2f6bff;
+  color: #fff;
+}
+
+.typeSelect {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #e5e8ef;
+  border-radius: 8px;
+  background: #fff;
+  color: #626d80;
+  font-size: 12px;
+}
+
+.listBody { flex: 1; min-height: 0; overflow-y: auto; }
+
+/* 상세: 헤더·탭·요약은 고정, 이력 테이블만 내부 스크롤 */
+.dBody {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.fillSec {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.scrollTable { flex: 1; min-height: 0; overflow-y: auto; }
+
+/* 스크롤 시 테이블 헤더 고정 */
+.scrollTable th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #fff;
+  box-shadow: inset 0 -1px 0 #e5e8ef;
+}
+
+.li {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 14px;
+  border: 0;
+  border-bottom: 1px solid #e5e8ef;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.li:last-child { border-bottom: 0; }
+.li:hover { background: #fbfcfe; }
+
+.sel {
+  background: #e9f0ff;
+  box-shadow: inset 3px 0 0 #2f6bff;
+}
+
+.av {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  place-items: center;
+  border: 1px solid #e5e8ef;
+  border-radius: 50%;
+  background: #fbfcfe;
+  color: #626d80;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.who { min-width: 0; flex: 1; }
+.who b { display: block; font-size: 13px; }
+.who small { display: block; overflow: hidden; color: #626d80; font-size: 11.5px; text-overflow: ellipsis; white-space: nowrap; }
+
+.pb {
+  padding: 2px 8px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.hi { background: #fce8e6; color: #e4453a; }
+.mi { background: #fbf0d9; color: #d98a06; }
+.lo { background: #e3f6ec; color: #12a150; }
+
+/* 우측 상세 */
+.dHead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px 8px;
+}
+
+.lav {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  place-items: center;
+  border-radius: 50%;
+  background: #fce8e6;
+  color: #e4453a;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.dName b { font-size: 17px; }
+.dName small { display: block; margin-top: 2px; color: #626d80; font-size: 12px; }
+
+.dTabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 20px;
+  border-bottom: 1px solid #e5e8ef;
+}
+
+.dTabs button {
+  padding: 11px 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: #626d80;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dTabs .on {
+  border-bottom-color: #2f6bff;
+  color: #2f6bff;
+}
+
+.mGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 18px 20px;
+}
+
+.mGrid4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+.mBox {
+  padding: 13px;
+  border: 1px solid #e5e8ef;
+  border-radius: 10px;
+  background: #fbfcfe;
+}
+
+.mLabel {
+  margin: 0 0 6px;
+  color: #8b94a5;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.mValue { font-size: 19px; font-weight: 750; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.critText { color: #e4453a; }
+.warnText { color: #d98a06; }
+.goodText { color: #12a150; }
+
+.dSec { padding: 0 20px 18px; }
+
+.secLabel {
+  display: block;
+  margin-bottom: 10px;
+  color: #8b94a5;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+/* 위험 신호 유형별 요약 */
+.sigList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sigRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #e5e8ef;
+  border-radius: 10px;
+}
+
+.sigLabel { flex: 0 0 auto; font-size: 13px; font-weight: 600; }
+.sigMeta { flex: 1; min-width: 0; color: #626d80; font-size: 11.5px; }
+.sigRow > span:last-child { margin-left: auto; }
+
+.rawToggle {
+  margin-left: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #2f6bff;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+  cursor: pointer;
+}
+
+/* 추천 처치 카드 */
+.suggest {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #e5e8ef;
+  border-radius: 10px;
+}
+
+.suggestIcon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  place-items: center;
+  border-radius: 9px;
+  background: #e9f0ff;
+  color: #2f6bff;
+}
+
+.suggest b { display: block; font-size: 13px; }
+.suggest small { display: block; margin-top: 2px; color: #626d80; font-size: 11.5px; }
+.suggestBody { min-width: 0; flex: 1; }
+
+.emptyText { padding: 18px 20px; color: #8b94a5; font-size: 13px; }
+
+/* 반응형 세부 조정은 추후 확정 — 우선 세로 스택만 */
+@media (max-width: 980px) {
+  .split { grid-template-columns: 1fr; }
+  .split > .card { height: auto; max-height: 560px; }
+  .mGrid, .mGrid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

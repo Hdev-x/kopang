@@ -202,6 +202,7 @@ export function AppRouter() {
       {/* 관리자 · 이탈방지 */}
       <Route path="/admin/churn" element={<AdminRoute><AdminChurnPage /></AdminRoute>} />
       <Route path="/admin/churn/customers" element={<AdminRoute><AdminChurnCustomersPage /></AdminRoute>} />
+      <Route path="/admin/churn/customers/:userId" element={<AdminRoute><AdminChurnCustomersPage /></AdminRoute>} />
       <Route path="/admin/churn/report" element={<AdminRoute><AdminChurnReportPage /></AdminRoute>} />
       <Route path="/admin/interventions" element={<AdminRoute><AdminInterventionsPage /></AdminRoute>} />
 
