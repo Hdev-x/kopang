@@ -23,6 +23,7 @@ import {
   type InterventionPreview,
 } from "../../api/churn";
 import { getAdminOrders, type Order } from "../../api/order";
+import { getPurchaseStats, type PurchaseStats } from "../../api/adminPurchaseStats";
 import styles from "./AdminPage.module.css";
 
 // 큰 금액 축약 (억/만 단위)
@@ -99,6 +100,7 @@ export function AdminPage() {
   const [sales, setSales] = useState<SalesStats | null>(null);
   const [churn, setChurn] = useState<ChurnSummary | null>(null);
   const [orders, setOrders] = useState<Order[] | null>(null);
+  const [purchase, setPurchase] = useState<PurchaseStats | null>(null);
   const [preview, setPreview] = useState<InterventionPreview | null>(null);
   const [running, setRunning] = useState<string | null>(null);
   const [results, setResults] = useState<Record<string, string>>({});
@@ -111,6 +113,7 @@ export function AdminPage() {
     getSalesStats().then(setSales).catch((e) => console.error("매출 통계 로드 실패", e));
     getChurnSummary().then(setChurn).catch((e) => console.error("이탈 요약 로드 실패", e));
     getAdminOrders().then((list) => setOrders(list.slice(0, 4))).catch((e) => console.error("최근 주문 로드 실패", e));
+    getPurchaseStats().then(setPurchase).catch((e) => console.error("구매 분석 로드 실패", e));
     loadPreview();
   }, [loadPreview]);
 
@@ -135,28 +138,30 @@ export function AdminPage() {
   const weekMax = Math.max(...weekly.map((w) => w.amount), 1);
   const weekTotal = weekly.reduce((a, w) => a + w.amount, 0);
 
-  // 오늘 매출 전일 대비 증감률 — 주간 추이의 마지막 두 점으로 계산 (시안 delta)
+  // 오늘 매출 전일 대비 증감률 — 주간 추이의 마지막 두 점으로 계산
   let todayDelta: number | null = null;
   if (weekly.length >= 2) {
     const prev = weekly[weekly.length - 2].amount;
     if (prev > 0) todayDelta = ((weekly[weekly.length - 1].amount - prev) / prev) * 100;
   }
 
-  // 상단 KPI 4개 (시안 A-1) — 이탈 고위험은 도넛·액션센터에서 표시
+  // 상단 KPI 4개 — 이탈 고위험은 도넛·액션센터에서 표시
   const stats = [
     {
       label: "오늘 매출",
       value: sales ? `${fmtShort(sales.todaySales)}원` : "—",
       icon: CircleDollarSign,
+      color: "#2f6bff",
       sub: todayDelta === null ? null : `${todayDelta >= 0 ? "▲" : "▼"} 전일 대비 ${Math.abs(todayDelta).toFixed(1)}%`,
       subTone: todayDelta !== null && todayDelta >= 0 ? "up" : "down",
     },
-    { label: "이번 달 매출", value: sales ? `${fmtShort(sales.monthSales)}원` : "—", icon: Wallet, sub: null, subTone: "" },
-    { label: "총 매출", value: sales ? `${fmtShort(sales.totalSales)}원` : "—", icon: Sigma, sub: "누적 결제 완료", subTone: "" },
+    { label: "이번 달 매출", value: sales ? `${fmtShort(sales.monthSales)}원` : "—", icon: Wallet, color: "#2f6bff", sub: null, subTone: "" },
+    { label: "총 매출", value: sales ? `${fmtShort(sales.totalSales)}원` : "—", icon: Sigma, color: "#2f6bff", sub: "누적 결제 완료", subTone: "" },
     {
       label: "오늘 주문",
       value: sales ? `${sales.todayOrders.toLocaleString()}건` : "—",
       icon: ClipboardList,
+      color: "#12a150",
       sub: sales ? `신규 회원 ${sales.newMembers.toLocaleString()}명` : null,
       subTone: "",
     },
@@ -172,94 +177,93 @@ export function AdminPage() {
 
   const actionTotal = preview ? preview.integratedCount + preview.couponExpiringCount + preview.loginInactiveCount : null;
 
+  // 감지 배치 시각 — 액션센터 카운트가 "오늘 감지분" 기준임을 판단할 근거
+  const lastRun = churn?.lastRuleRunAt;
+  const batchLabel = lastRun ? `${lastRun.slice(5, 10).replace("-", "/")} ${lastRun.slice(11, 16)}` : "미실행";
+
   return (
-    <AdminLayout title="통합 대시보드">
-      <div className={styles.a1Grid}>
-        <div className={styles.mainCol}>
-          <section className={styles.stats} aria-label="오늘의 운영 현황">
-            {stats.map((stat) => {
-              const Icon = stat.icon;
-              return (
-                <article key={stat.label} className={styles.statCard}>
-                  <div className={styles.kpiTop}>
-                    <span className={styles.kpiIcon}><Icon size={15} /></span>
-                    <p className={styles.statLabel}>{stat.label}</p>
-                  </div>
-                  <strong className={styles.statValue}>{stat.value}</strong>
-                  {stat.sub && <span className={`${styles.delta} ${stat.subTone === "up" ? styles.up : stat.subTone === "down" ? styles.down : ""}`}>{stat.sub}</span>}
-                </article>
-              );
-            })}
-          </section>
-
-          <div className={styles.aTwo}>
-            <section className={styles.panel}>
-              <div className={styles.panelHead}>
-                <div>
-                  <h2>주간 매출 추이</h2>
-                  <p>최근 7일 결제 완료 기준</p>
-                </div>
-                <strong className={styles.total}>{fmtShort(weekTotal)}</strong>
+    <AdminLayout title="통합 대시보드" fullBleed>
+      <div className={styles.page}>
+        <div className={styles.railGrid}>
+          <div className={styles.mainCol}>
+        <div className={styles.pageHead}>
+          <p className={styles.caption}>오늘 상태와 처리할 일을 한눈에</p>
+          <span className={styles.basis}>
+            <i />매출·주문 실시간 · 이탈 지표: 현재 상태 기준 (임시) · 감지 배치 {batchLabel}
+          </span>
+        </div>
+        <div className={`${styles.fRow} ${styles.fKpis}`}>
+          {stats.map((stat) => {
+            const Icon = stat.icon;
+            return (
+              <div key={stat.label} className={styles.fCell}>
+                <span className={styles.kTop}><Icon size={14} className={styles.kIcon} color={stat.color} /><span className={styles.label}>{stat.label}</span></span>
+                <b className={styles.kValue}>{stat.value}</b>
+                {stat.sub && <span className={`${styles.kSub} ${stat.subTone === "up" ? styles.up : stat.subTone === "down" ? styles.down : ""}`}>{stat.sub}</span>}
               </div>
-              <div className={styles.chart}>
-                {weekly.length === 0 ? (
-                  <p className={styles.statLabel}>데이터를 불러오는 중…</p>
-                ) : (
-                  weekly.map((w) => (
-                    <div key={w.date} className={styles.bar}>
-                      <span className={styles.barAmount}>{fmtShort(w.amount)}</span>
-                      <div className={styles.barTrack}>
-                        <div className={styles.barFill} style={{ height: `${(w.amount / weekMax) * 100}%` }} />
-                      </div>
-                      <span className={styles.barLabel}>{w.date.slice(5)}</span>
+            );
+          })}
+        </div>
+          <div className={styles.subRow}>
+          <div className={styles.sec}>
+            <div className={styles.secHead}>
+              <h2>주간 매출 추이</h2>
+              <p>최근 7일 결제 완료 · 합계 <span className={styles.total}>{fmtShort(weekTotal)}</span></p>
+            </div>
+            <div className={styles.chart}>
+              {weekly.length === 0 ? (
+                <p className={styles.caption}>데이터를 불러오는 중…</p>
+              ) : (
+                weekly.map((w) => (
+                  <div key={w.date} className={styles.bar}>
+                    <span className={styles.barAmount}>{fmtShort(w.amount)}</span>
+                    <div className={styles.barTrack}>
+                      <div className={styles.barFill} style={{ height: `${(w.amount / weekMax) * 100}%` }} />
                     </div>
-                  ))
-                )}
-              </div>
-            </section>
-
-            <section className={styles.panel}>
-              <div className={styles.panelHead}>
-                <div>
-                  <h2>이탈 위험 분포</h2>
-                  <p>전체 분석 대상 {distTotal.toLocaleString()}명</p>
-                </div>
-                <Link to="/admin/churn" className={styles.textLink}>상세 <ChevronRight size={15} /></Link>
-              </div>
-              <div className={styles.donutWrap}>
-                <div className={styles.donut} style={{ background: donutBg }}>
-                  <div className={styles.donutHole}>
-                    <b>{counts.HIGH.toLocaleString()}</b>
-                    <span>고위험</span>
+                    <span className={styles.barLabel}>{w.date.slice(5)}</span>
                   </div>
-                </div>
-                <ul className={styles.legend}>
-                  {(["HIGH", "MID", "LOW"] as const).map((lv) => (
-                    <li key={lv}>
-                      <i style={{ background: RISK_META[lv].color }} />
-                      {RISK_META[lv].label}
-                      <b>{(counts[lv] ?? 0).toLocaleString()}</b>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </section>
+                ))
+              )}
+            </div>
           </div>
 
-          <section className={styles.panel}>
-            <div className={styles.panelHead}>
-              <div>
-                <h2>최근 주문</h2>
-                <p>새로 접수된 주문 현황</p>
+          <div className={styles.sec}>
+            <div className={styles.secHead}>
+              <h2>이탈 위험 분포</h2>
+              <p>대상 {distTotal.toLocaleString()}명 · <Link to="/admin/churn" className={styles.textLink}>상세 <ChevronRight size={13} /></Link></p>
+            </div>
+            <div className={styles.donutWrap}>
+              <div className={styles.donut} style={{ background: donutBg }}>
+                <div className={styles.donutHole}>
+                  <b>{counts.HIGH.toLocaleString()}</b>
+                  <span>고위험</span>
+                </div>
               </div>
-              <Link to="/admin/orders" className={styles.textLink}>전체 주문 <ChevronRight size={15} /></Link>
+              <ul className={styles.legend}>
+                {(["HIGH", "MID", "LOW"] as const).map((lv) => (
+                  <li key={lv}>
+                    <i style={{ background: RISK_META[lv].color }} />
+                    {RISK_META[lv].label}
+                    <b>{(counts[lv] ?? 0).toLocaleString()}</b>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          </div>
+
+          <div className={styles.subRow2}>
+          <div className={styles.sec}>
+            <div className={styles.secHead}>
+              <h2>최근 주문</h2>
+              <p><Link to="/admin/orders" className={styles.textLink}>전체 주문 <ChevronRight size={13} /></Link></p>
             </div>
             <div className={styles.orderTable}>
               <div className={styles.orderHeader}><span>주문번호</span><span>주문자</span><span>결제금액</span><span>상태</span></div>
               {orders === null ? (
-                <p className={styles.statLabel}>데이터를 불러오는 중…</p>
+                <p className={styles.caption}>데이터를 불러오는 중…</p>
               ) : orders.length === 0 ? (
-                <p className={styles.statLabel}>최근 주문이 없습니다.</p>
+                <p className={styles.caption}>최근 주문이 없습니다.</p>
               ) : (
                 orders.map((o) => {
                   const meta = orderStatusMeta(o);
@@ -274,14 +278,40 @@ export function AdminPage() {
                 })
               )}
             </div>
-          </section>
-        </div>
+          </div>
 
-        <aside className={styles.rail}>
-          <section className={styles.panel}>
-            <div className={styles.railHead}>
-              <span className={styles.railLabel}>오늘 처리할 일</span>
-              {actionTotal !== null && actionTotal > 0 && <span className={styles.critChip}>{actionTotal.toLocaleString()}</span>}
+          <div className={styles.sec}>
+            <div className={styles.secHead}>
+              <h2>인기 상품 Top 5</h2>
+              <p>판매량 기준 · <Link to="/admin/stats" className={styles.textLink}>구매 분석 <ChevronRight size={13} /></Link></p>
+            </div>
+            <div className={styles.orderTable}>
+              <div className={`${styles.orderHeader} ${styles.topGrid}`}><span>상품</span><span>판매량</span><span>재구매율</span></div>
+              {purchase === null ? (
+                <p className={styles.caption}>데이터를 불러오는 중…</p>
+              ) : (
+                purchase.topProducts.slice(0, 5).map((tp, i) => (
+                  <div key={tp.productId} className={`${styles.orderRow} ${styles.topGrid}`}>
+                    <strong className={styles.topName}>{i + 1}. {tp.name}</strong>
+                    <span>{tp.quantity.toLocaleString()}개</span>
+                    <span>{tp.repeatPurchaseRate}%</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+          </div>
+          </div>
+
+          <div className={styles.railCol}>
+          <div className={styles.sec}>
+            <div className={styles.secHead}>
+              <h2>오늘 처리할 일</h2>
+              <p>
+                {actionTotal !== null && actionTotal > 0 && <span className={styles.critChip}>{actionTotal.toLocaleString()}</span>}
+                {" "}
+                <Link to="/admin/churn/interventions" className={styles.textLink}>대응 이력 <ChevronRight size={13} /></Link>
+              </p>
             </div>
             <div className={styles.actionList}>
               {ACTIONS.map((action) => {
@@ -312,11 +342,12 @@ export function AdminPage() {
                 );
               })}
             </div>
-          </section>
+          </div>
 
-          <section className={styles.panel}>
-            <div className={styles.railHead}>
-              <span className={styles.railLabel}>빠른 업무</span>
+          <div className={styles.sec}>
+            <div className={styles.secHead}>
+              <h2>빠른 업무</h2>
+              <p>자주 쓰는 메뉴</p>
             </div>
             <div className={styles.quickLinks}>
               {QUICK_LINKS.map((item) => {
@@ -330,8 +361,9 @@ export function AdminPage() {
                 );
               })}
             </div>
-          </section>
-        </aside>
+          </div>
+          </div>
+        </div>
       </div>
     </AdminLayout>
   );
