@@ -204,7 +204,7 @@ export function AppRouter() {
       <Route path="/admin/churn/customers" element={<AdminRoute><AdminChurnCustomersPage /></AdminRoute>} />
       <Route path="/admin/churn/customers/:userId" element={<AdminRoute><AdminChurnCustomersPage /></AdminRoute>} />
       <Route path="/admin/churn/report" element={<AdminRoute><AdminChurnReportPage /></AdminRoute>} />
-      <Route path="/admin/interventions" element={<AdminRoute><AdminInterventionsPage /></AdminRoute>} />
+      <Route path="/admin/churn/interventions" element={<AdminRoute><AdminInterventionsPage /></AdminRoute>} />
 
       {/* 관리자 · 운영 */}
       <Route path="/admin/products" element={<AdminRoute><AdminProductsPage /></AdminRoute>} />

@@ -1,9 +1,8 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   BadgePercent,
   BarChart3,
-  Bell,
   Boxes,
   ChartPie,
   ChevronRight,
@@ -12,10 +11,10 @@ import {
   FileClock,
   Home,
   Menu,
-  Search,
   ShieldCheck,
   Sparkles,
   Store,
+  Target,
   TicketPercent,
   UserRound,
   UsersRound,
@@ -33,11 +32,11 @@ type Item = {
 
 const GROUPS: { title: string; items: Item[] }[] = [
   {
-    title: "OVERVIEW",
+    title: "개요",
     items: [{ to: "/admin", label: "통합 대시보드", exact: true, icon: BarChart3 }],
   },
   {
-    title: "COMMERCE",
+    title: "커머스",
     items: [
       { to: "/admin/products", label: "상품 관리", icon: Boxes },
       { to: "/admin/orders", label: "주문·배송", icon: ClipboardList },
@@ -47,7 +46,7 @@ const GROUPS: { title: string; items: Item[] }[] = [
     ],
   },
   {
-    title: "CUSTOMER",
+    title: "고객",
     items: [
       { to: "/admin/inquiries", label: "문의 관리", icon: CircleHelp },
       { to: "/admin/members", label: "회원 관리", icon: UsersRound },
@@ -55,22 +54,40 @@ const GROUPS: { title: string; items: Item[] }[] = [
     ],
   },
   {
-    title: "RETENTION",
+    title: "이탈 방지",
     items: [
-      { to: "/admin/churn", label: "이탈 방지", icon: ShieldCheck },
+      { to: "/admin/churn", label: "이탈 대시보드", exact: true, icon: ShieldCheck },
       { to: "/admin/churn/customers", label: "위험 고객", icon: UserRound },
-      { to: "/admin/interventions", label: "대응 이력", icon: FileClock },
-      { to: "/admin/churn/report", label: "효과 리포트", icon: BarChart3 },
+      { to: "/admin/churn/interventions", label: "대응 이력", icon: FileClock },
+      { to: "/admin/churn/report", label: "효과 리포트", icon: Target },
     ],
   },
   {
-    title: "CONTENT",
+    title: "콘텐츠",
     items: [{ to: "/admin/faqs", label: "FAQ 관리", icon: CircleHelp }],
   },
 ];
 
-export function AdminLayout({ title, children }: { title: string; children: ReactNode }) {
+export function AdminLayout({ title, children, fullBleed }: { title: string; children: ReactNode; fullBleed?: boolean }) {
   const [open, setOpen] = useState(false);
+  const workspaceRef = useRef<HTMLDivElement>(null);
+
+  // 스크롤 중인 요소에만 .scrolling 부여 → 스크롤할 때만 스크롤바 표시
+  useEffect(() => {
+    const el = workspaceRef.current;
+    if (!el) return;
+    const timers = new WeakMap<Element, number>();
+    const onScroll = (e: Event) => {
+      const t = e.target;
+      if (!(t instanceof Element)) return;
+      t.classList.add("scrolling");
+      const prev = timers.get(t);
+      if (prev) window.clearTimeout(prev);
+      timers.set(t, window.setTimeout(() => t.classList.remove("scrolling"), 400));
+    };
+    el.addEventListener("scroll", onScroll, true);
+    return () => el.removeEventListener("scroll", onScroll, true);
+  }, []);
   const path = useLocation().pathname;
   const active = (to: string, exact?: boolean) =>
     exact ? path === to : path === to || path.startsWith(`${to}/`);
@@ -82,10 +99,9 @@ export function AdminLayout({ title, children }: { title: string; children: Reac
       <aside className={`${styles.sidebar} ${open ? styles.sidebarOpen : ""}`}>
         <div className={styles.brandRow}>
           <Link to="/admin" className={styles.brand} onClick={() => setOpen(false)}>
-            <span className={styles.brandMark}>K</span>
             <span>
-              <strong>KOPANG</strong>
-              <small>ADMIN CONSOLE</small>
+              <strong>Kopang</strong>
+              <small>관리자 콘솔</small>
             </span>
           </Link>
           <button className={styles.closeBtn} onClick={() => setOpen(false)} aria-label="메뉴 닫기">
@@ -123,39 +139,21 @@ export function AdminLayout({ title, children }: { title: string; children: Reac
         </Link>
       </aside>
 
-      <div className={styles.workspace}>
+      <div className={styles.workspace} ref={workspaceRef}>
         <header className={styles.topbar}>
           <button className={styles.menuBtn} onClick={() => setOpen(true)} aria-label="관리자 메뉴 열기">
             <Menu size={22} />
           </button>
-          <div className={styles.searchBox}>
-            <Search size={18} />
-            <span>상품, 주문번호, 회원 검색</span>
-            <kbd>⌘ K</kbd>
-          </div>
+          <h1 className={styles.topTitle}>{title}</h1>
           <div className={styles.topActions}>
-            <button className={styles.noticeBtn} aria-label="알림">
-              <Bell size={20} />
-              <span>3</span>
-            </button>
             <div className={styles.profile}>
-              <span className={styles.avatar}>A</span>
-              <span>
-                <strong>관리자</strong>
-                <small>운영 계정</small>
-              </span>
+              <span className={styles.profileName}>관리자 님</span>
+              <span className={styles.avatar}>관</span>
             </div>
           </div>
         </header>
 
-        <main className={styles.main}>
-          <div className={styles.pageHead}>
-            <div>
-              <p className={styles.eyebrow}>ADMINISTRATION</p>
-              <h1 className={styles.title}>{title}</h1>
-            </div>
-            <p className={styles.updated}>마지막 업데이트 · 방금 전</p>
-          </div>
+        <main className={`${styles.main} ${fullBleed ? styles.mainFull : ""}`}>
           {children}
         </main>
       </div>

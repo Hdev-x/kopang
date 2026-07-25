@@ -6,7 +6,7 @@ const TABS = [
   { to: "/admin/churn", label: "대시보드" },
   { to: "/admin/churn/customers", label: "위험 고객" },
   { to: "/admin/churn/report", label: "효과 리포트" },
-  { to: "/admin/interventions", label: "대응 이력" },
+  { to: "/admin/churn/interventions", label: "대응 이력" },
 ];
 
 export function ChurnSubnav() {
