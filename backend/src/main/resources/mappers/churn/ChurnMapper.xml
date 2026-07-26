@@ -113,6 +113,15 @@
                     ELSE 0 
                 END
             ) * 0.5  -- 창B (직전 30일) × 0.5
+            AND
+            SUM(
+                CASE
+                    WHEN ordered_at &lt; NOW() - INTERVAL '30 days'
+                        AND ordered_at &gt; NOW() - INTERVAL '60 days'
+                    THEN total_price
+                    ELSE 0
+                END
+            ) &gt;= 30000  -- 직전 30일 최소 지출 — "쓰던 고객의 반토막"만. 0원 휴면은 LOGIN_INACTIVE 담당 (2026-07-25 정밀화)
 
     </select>
 

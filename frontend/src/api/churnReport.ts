@@ -15,11 +15,45 @@ export type ChurnReportEffect = {
   controlPct: number; // 대조군 전환율(%)
   conv: number; // 처치군 전환 명수
   revenue: number;
+  treatN: number; // 처치군 인원
+  controlN: number; // 대조군 인원
+  controlConv: number; // 대조군 전환 명수
+};
+
+// 위험 유형별 순효과 — 백엔드 TypeEffectRow와 1:1
+export type ChurnTypeEffect = {
+  riskType: string | null; // null = ML
+  treatPct: number;
+  controlPct: number;
+  treated: number; // = treatN
+  treatConv: number;
+  controlN: number;
+  controlConv: number;
+};
+
+// 일별 대응·전환 추이
+export type ChurnDailyPoint = {
+  day: string; // ISO date
+  sent: number;
+  converted: number;
+};
+
+// 이탈 대응 쿠폰 ROI (비용은 추정)
+export type ChurnCouponRoi = {
+  name: string;
+  discountType: "RATE" | "AMOUNT";
+  discountValue: number;
+  issued: number;
+  used: number;
+  estimatedCost: number;
 };
 
 export type ChurnReport = {
   kpi: ChurnReportKpi;
   effect: ChurnReportEffect[];
+  typeEffect: ChurnTypeEffect[];
+  dailyTrend: ChurnDailyPoint[];
+  couponRoi: ChurnCouponRoi[];
 };
 
 // 대응 효과 리포트 (GET /api/admin/churn/report?from=&to=)

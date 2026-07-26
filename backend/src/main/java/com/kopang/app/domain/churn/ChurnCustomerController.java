@@ -2,6 +2,7 @@ package com.kopang.app.domain.churn;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,5 +26,16 @@ public class ChurnCustomerController {
             @RequestParam(name = "size", defaultValue = "50") int size) {
         return ResponseEntity.ok(
                 ApiResponse.success(churnCustomerService.getRiskCustomers(type, memberType, level, page, size)));
+    }
+
+    // 위험 고객 상세 (B-2) — 프로필 + 점수 이력 + 대응 이력 + 주문 요약
+    @GetMapping("/api/admin/churn/customers/{userId}")
+    public ResponseEntity<ApiResponse<RiskCustomerDetailResponse>> customerDetail(
+            @PathVariable(name = "userId") long userId) {
+        RiskCustomerDetailResponse detail = churnCustomerService.getRiskCustomerDetail(userId);
+        if (detail == null) {
+            return ResponseEntity.status(404).body(ApiResponse.fail("존재하지 않는 회원입니다."));
+        }
+        return ResponseEntity.ok(ApiResponse.success(detail));
     }
 }

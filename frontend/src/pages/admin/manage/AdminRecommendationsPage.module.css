@@ -1,0 +1,48 @@
+/* AI 추천 관리 — 구분선 플랫 */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  padding: 24px 40px 32px;
+  background: #fff;
+  height: calc(100vh - 62px);
+}
+
+.caption { margin: 0 0 18px; color: #8b94a5; font-size: 12.5px; }
+
+.kpis { display: flex; border-top: 1px solid #e5e8ef; border-bottom: 1px solid #e5e8ef; }
+.kCell { flex: 1; padding: 20px 26px; }
+.kCell:first-child { padding-left: 0; }
+.kCell + .kCell { border-left: 1px solid #e5e8ef; }
+.kLabel { color: #8b94a5; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.kValue { font-size: 22px; font-weight: 750; letter-spacing: -0.02em; margin-top: 6px; font-variant-numeric: tabular-nums; }
+
+.note { margin: 16px 0 12px; color: #8b94a5; font-size: 12px; }
+.secHead { margin: 4px 0 12px; font-size: 14px; font-weight: 800; letter-spacing: -0.01em; }
+
+/* 추천 결과 테이블 (남는 높이 내부 스크롤) */
+.tableWrap { flex: 1; min-height: 0; overflow-y: auto; border: 1px solid #e5e8ef; border-radius: 12px; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tbl th { position: sticky; top: 0; z-index: 1; text-align: left; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: #8b94a5; font-weight: 700; padding: 11px 16px; background: #fbfcfe; border-bottom: 1px solid #e5e8ef; }
+.tbl td { padding: 11px 16px; border-bottom: 1px solid #f0f2f5; color: #3a4553; }
+.tbl tr:last-child td { border-bottom: 0; }
+.tbl tr:hover td { background: #fbfcfe; }
+.tbl .name { color: #171d2b; font-weight: 600; }
+.tbl .num { font-variant-numeric: tabular-nums; }
+.tbl .reason { color: #8b94a5; font-size: 12px; }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+.bOk { background: #e3f6ec; color: #12a150; }
+.bInfo { background: #e9f0ff; color: #2f6bff; }
+.bWarn { background: #fbf0d9; color: #d98a06; }
+.bMuted { background: #eef1f5; color: #626d80; }
+
+.muted { color: #8b94a5; font-size: 13px; padding: 20px 0; }
+
+@media (max-width: 980px) {
+  .page { height: auto; min-height: calc(100vh - 62px); padding: 20px; }
+  .tableWrap { overflow-x: auto; }
+  .kpis { flex-wrap: wrap; }
+  .kCell { flex: 1 1 50%; }
+  .kCell:first-child { padding-left: 26px; }
+}

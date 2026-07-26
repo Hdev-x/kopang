@@ -8,6 +8,7 @@ import org.apache.ibatis.annotations.Param;
 
 import com.kopang.app.domain.churn.ChurnReportResponse.EffectRow;
 import com.kopang.app.domain.churn.ChurnReportResponse.Kpi;
+import com.kopang.app.domain.churn.ChurnReportResponse.TypeEffectRow;
 
 /** 대응 효과 리포트 집계 매퍼 (읽기 전용, intervention_outcome 기반) */
 @Mapper
@@ -18,4 +19,10 @@ public interface ChurnReportMapper {
 
     // 액션별 순효과 (처치 vs 대조 전환율 + 전환 명수 + 매출)
     List<EffectRow> selectEffect(@Param("from") LocalDate from, @Param("to") LocalDate to);
+
+    List<TypeEffectRow> selectTypeEffect(@Param("from") LocalDate from, @Param("to") LocalDate to);
+
+    List<ChurnReportResponse.DailyPoint> selectDailyTrend(@Param("from") LocalDate from, @Param("to") LocalDate to);
+
+    List<ChurnReportResponse.CouponRoiRow> selectCouponRoi();
 }
