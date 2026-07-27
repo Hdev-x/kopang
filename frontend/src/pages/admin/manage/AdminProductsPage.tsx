@@ -69,6 +69,19 @@ export function AdminProductsPage() {
   // 탭 필터 메뉴는 "전체" + 1차 depth 루트 카테고리 이름들
   const filterCategories = ["전체", ...categories.map((c) => c.name)];
 
+  // 카테고리 트리 계층(대분류/소분류)에서 categoryId 경로 재귀 탐색
+  const findCategoryPath = (catList: Category[], catId?: number): Category[] => {
+    if (!catId) return [];
+    for (const c of catList) {
+      if (c.id === catId) return [c];
+      if (c.children && c.children.length > 0) {
+        const subPath = findCategoryPath(c.children, catId);
+        if (subPath.length > 0) return [c, ...subPath];
+      }
+    }
+    return [];
+  };
+
   return (
     <AdminLayout title="상품 관리">
       <div className={sh.toolbar}>
@@ -124,9 +137,9 @@ export function AdminProductsPage() {
         ) : (
           products.map((p) => {
             const statusInfo = getProductStatus(p.stock);
-            // categoryId와 매핑되는 한글 카테고리명 조회
-            const catObj = categories.find((c) => c.id === p.categoryId);
-            const categoryLabel = catObj ? catObj.name : "미분류";
+            // categoryId와 매핑되는 한글 카테고리명 계층 조회 (소분류/대분류 모두 대응)
+            const catPath = findCategoryPath(categories, p.categoryId);
+            const categoryLabel = catPath.length > 0 ? catPath.map((c) => c.name).join(" > ") : "미분류";
 
             return (
               <Card key={p.id} className={styles.card}>
