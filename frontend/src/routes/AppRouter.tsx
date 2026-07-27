@@ -6,6 +6,7 @@ import { SignupPage } from "../pages/auth/SignupPage";
 import { FindPasswordPage } from "../pages/auth/FindPasswordPage";
 import { FindEmailPage } from "../pages/auth/FindEmailPage";
 import { OAuth2CallbackPage } from "../pages/auth/OAuth2CallbackPage";
+import { AddPhonePage } from "../pages/auth/AddPhonePage";
 
 
 // ===== 마이페이지 (my) — 담당 A =====
@@ -38,6 +39,7 @@ import { WebLoginPage } from "../web/pages/WebLoginPage";
 import { WebSignupPage } from "../web/pages/WebSignupPage";
 import { WebFindPasswordPage } from "../web/pages/WebFindPasswordPage";
 import { WebFindEmailPage } from "../web/pages/WebFindEmailPage";
+import { WebAddPhonePage } from "../web/pages/WebAddPhonePage";
 import { WebSearchPage } from "../web/pages/WebSearchPage";
 import { WebCartPage } from "../web/pages/WebCartPage";
 import { WebCheckoutPage, WebOrderCompletePage, WebPaymentFailPage, WebPaymentSuccessPage, WebResumeCheckoutPage } from "../web/pages/WebOrderSkeletonPages";
@@ -103,6 +105,7 @@ export function AppRouter() {
       <Route path="/find-password" element={<FindPasswordPage />} />
       <Route path="/find-email" element={<FindEmailPage />} />
       <Route path="/oauth2/callback" element={<OAuth2CallbackPage />} />
+      <Route path="/add-phone" element={<AddPhonePage />} />
 
       {/* ---------- 마이페이지 ---------- */}
       <Route path="/my" element={<MyPage />} />
@@ -166,6 +169,7 @@ export function AppRouter() {
       <Route path="/web/qna/:id" element={<WebQnaDetailPage />} />
       <Route path="/web/qna/write" element={<WebQnaWritePage />} />
       <Route path="/web/oauth2/callback" element={<OAuth2CallbackPage />} />
+      <Route path="/web/add-phone" element={<WebAddPhonePage />} />
       {/* 기존 사용자 화면을 mobile 기준으로 유지하는 임시 진입점 */}
       <Route path="/mobile" element={<HomePage />} />
 

@@ -2,6 +2,7 @@ package com.kopang.app.global.security;
 
 import com.kopang.app.domain.user.UserDTO;
 import com.kopang.app.domain.user.UserMapper;
+import com.kopang.app.domain.user.UserService;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -21,10 +22,12 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final UserService userService;
 
-    public CustomOAuth2UserService(UserMapper userMapper, PasswordEncoder passwordEncoder) {
+    public CustomOAuth2UserService(UserMapper userMapper, PasswordEncoder passwordEncoder, UserService userService) {
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
+        this.userService = userService;
     }
 
     @Override
@@ -42,6 +45,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         Map<String, Object> attributes = oAuth2User.getAttributes();
         String email = "";
         String name = "";
+        String phone = "";
 
         if ("google".equals(registrationId)) {
             email = (String) attributes.get("email");
@@ -51,6 +55,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
             if (response != null) {
                 email = (String) response.get("email");
                 name = (String) response.get("name");
+                phone = (String) response.get("mobile"); // 네이버 연락처 (포맷: 010-XXXX-XXXX)
             }
         }
 
@@ -66,15 +71,27 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                     .email(email)
                     .password(passwordEncoder.encode(UUID.randomUUID().toString())) // 임의의 랜덤 비밀번호
                     .name(name != null ? name : "소셜회원")
-                    .phone("")
+                    .phone(phone != null ? phone : "")
                     .role("USER")
                     .status("ACTIVE")
                     .build();
             userMapper.create(user);
+
+            // 소셜 가입 완료 즉시 웰컴 혜택 자동 지급 (3000P & 10% 쿠폰)
+            userService.giveWelcomeBenefits(user.getUserId());
         } else {
-            // 기존 유저인 경우 이름 업데이트
+            // 기존 유저인 경우 정보 업데이트
+            boolean updated = false;
             if (name != null && !name.equals(user.getName())) {
                 user.setName(name);
+                updated = true;
+            }
+            if (phone != null && !phone.trim().isEmpty()
+                    && (user.getPhone() == null || user.getPhone().trim().isEmpty())) {
+                user.setPhone(phone);
+                updated = true;
+            }
+            if (updated) {
                 userMapper.update(user);
             }
         }

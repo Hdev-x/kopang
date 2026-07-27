@@ -46,6 +46,7 @@ const TERMS = {
 export function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
   const [phone1, setPhone1] = useState("010");
   const [phone2, setPhone2] = useState("");
@@ -104,6 +105,10 @@ export function SignupPage() {
     }
     if (password.length < 8) {
       alert("비밀번호는 최소 8자 이상이어야 합니다.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      alert("비밀번호가 일치하지 않습니다.");
       return;
     }
     if (!name.trim()) {
@@ -179,6 +184,13 @@ export function SignupPage() {
             placeholder="비밀번호 입력"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+          />
+          <Input
+            label="비밀번호 확인"
+            type="password"
+            placeholder="비밀번호 확인 입력"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
           />
           <Input
             label="이름"

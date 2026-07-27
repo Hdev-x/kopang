@@ -61,12 +61,15 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         // 마지막 로그인 업데이트
         userMapper.updateLastLogin(user.getUserId());
 
+        boolean hasPhone = user.getPhone() != null && !user.getPhone().trim().isEmpty();
+
         // React 프론트엔드의 OAuth 콜백 전용 화면으로 JWT를 실어서 리다이렉트 수행
         String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:5173/oauth2/callback")
                 .queryParam("accessToken", accessToken)
                 .queryParam("refreshToken", refreshToken)
                 .queryParam("name", URLEncoder.encode(user.getName(), StandardCharsets.UTF_8))
                 .queryParam("role", user.getRole())
+                .queryParam("hasPhone", hasPhone)
                 .build().toUriString();
 
         getRedirectStrategy().sendRedirect(request, response, targetUrl);

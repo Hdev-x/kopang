@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 import { resetPassword, sendVerificationCode } from "../../api/auth";
 import { WebAuthLayout } from "../components/WebAuthLayout";
 import styles from "./WebAuthPages.module.css";
@@ -11,6 +12,7 @@ export function WebFindPasswordPage() {
   const [newPassword, setNewPassword] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSendCode = async (event: FormEvent) => {
     event.preventDefault();
@@ -28,6 +30,10 @@ export function WebFindPasswordPage() {
 
   const handleReset = async (event: FormEvent) => {
     event.preventDefault();
+    if (newPassword.length < 8) {
+      window.alert("비밀번호는 최소 8자 이상이어야 합니다.");
+      return;
+    }
     setSubmitting(true);
     try {
       await resetPassword({ email, code, newPassword });
@@ -51,7 +57,40 @@ export function WebFindPasswordPage() {
       ) : (
         <form className={styles.form} onSubmit={handleReset}>
           <div className={styles.field}><label htmlFor="web-find-code">인증번호</label><input id="web-find-code" value={code} onChange={(event) => setCode(event.target.value)} placeholder="인증번호 6자리" inputMode="numeric" required /></div>
-          <div className={styles.field}><label htmlFor="web-find-password">새 비밀번호</label><input id="web-find-password" type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="새 비밀번호 입력" autoComplete="new-password" required /></div>
+          <div className={styles.field}>
+            <label htmlFor="web-find-password">새 비밀번호</label>
+            <div style={{ position: "relative", display: "flex", alignItems: "center", width: "100%" }}>
+              <input
+                id="web-find-password"
+                type={showPassword ? "text" : "password"}
+                value={newPassword}
+                onChange={(event) => setNewPassword(event.target.value)}
+                placeholder="새 비밀번호 입력"
+                autoComplete="new-password"
+                required
+                style={{ paddingRight: "40px", width: "100%" }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: "absolute",
+                  right: "12px",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: 0,
+                  color: "#888",
+                  zIndex: 2,
+                }}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
           <button className={styles.submit} type="submit" disabled={submitting}>{submitting ? "변경 중..." : "비밀번호 변경"}</button>
         </form>
       )}

@@ -38,6 +38,10 @@ export function FindPasswordPage() {
             alert("인증번호와 새 비밀번호를 모두 입력해 주세요.");
             return;
         }
+        if (newPassword.length < 8) {
+            alert("비밀번호는 최소 8자 이상이어야 합니다.");
+            return;
+        }
         setLoading(true);
         try {
             await resetPassword({

@@ -34,4 +34,7 @@ public interface UserService {
 
     // 전화번호 중복 체크
     boolean checkPhoneDuplicate(String phone);
+
+    // 신규 가입자 웰컴 혜택 지급
+    void giveWelcomeBenefits(Long userId);
 }

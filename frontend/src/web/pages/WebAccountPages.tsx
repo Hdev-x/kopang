@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { ChevronRight, Heart, MapPin, Package, Search, Star, Ticket, UserRound } from "lucide-react";
+import { ChevronRight, Heart, MapPin, Package, Search, Star, Ticket, UserRound, Eye, EyeOff } from "lucide-react";
+import { updateProfile } from "../../api/auth";
 import { Link, useParams } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { WebLayout } from "../components/WebLayout";
@@ -84,13 +85,124 @@ function PrefToggle({ label, desc, defaultOn }: { label: string; desc: string; d
 }
 
 function PasswordChange() {
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 8) {
+      window.alert("새 비밀번호는 최소 8자 이상이어야 합니다.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      window.alert("비밀번호가 일치하지 않습니다.");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await updateProfile({ password: newPassword });
+      window.alert("비밀번호가 성공적으로 변경되었습니다.");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      const msg = err.response?.data?.message || "비밀번호 변경에 실패했습니다.";
+      window.alert(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <main className={styles.settings}>
       <h1>비밀번호 변경</h1>
-      <label>현재 비밀번호<input type="password" autoComplete="current-password" /></label>
-      <label>새 비밀번호<input type="password" autoComplete="new-password" placeholder="8자 이상" /></label>
-      <label>새 비밀번호 확인<input type="password" autoComplete="new-password" /></label>
-      <button type="button" className={styles.save}>비밀번호 변경</button>
+      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "20px", maxWidth: "400px" }}>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          <label style={{ fontSize: "14px", fontWeight: 500 }}>새 비밀번호</label>
+          <div style={{ position: "relative", display: "flex", alignItems: "center", width: "100%" }}>
+            <input
+              type={showNewPassword ? "text" : "password"}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="8자 이상 입력"
+              autoComplete="new-password"
+              required
+              style={{
+                width: "100%",
+                padding: "10px 40px 10px 12px",
+                border: "1px solid var(--color-border, #ddd)",
+                borderRadius: "6px",
+                outline: "none"
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowNewPassword(!showNewPassword)}
+              style={{
+                position: "absolute",
+                right: "12px",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                color: "#888",
+                zIndex: 2,
+                padding: 0
+              }}
+            >
+              {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          <label style={{ fontSize: "14px", fontWeight: 500 }}>새 비밀번호 확인</label>
+          <div style={{ position: "relative", display: "flex", alignItems: "center", width: "100%" }}>
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="새 비밀번호 다시 입력"
+              autoComplete="new-password"
+              required
+              style={{
+                width: "100%",
+                padding: "10px 40px 10px 12px",
+                border: "1px solid var(--color-border, #ddd)",
+                borderRadius: "6px",
+                outline: "none"
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              style={{
+                position: "absolute",
+                right: "12px",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                color: "#888",
+                zIndex: 2,
+                padding: 0
+              }}
+            >
+              {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" disabled={submitting} className={styles.save} style={{ height: "45px", marginTop: "10px" }}>
+          {submitting ? "변경 중..." : "비밀번호 변경"}
+        </button>
+      </form>
     </main>
   );
 }
