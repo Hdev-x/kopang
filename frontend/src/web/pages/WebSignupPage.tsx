@@ -28,6 +28,8 @@ export function WebSignupPage() {
   const [openTerm, setOpenTerm] = useState<Term | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const allAgreed = serviceAgreed && privacyAgreed && marketingAgreed;
   const requiredAgreed = serviceAgreed && privacyAgreed;
 
@@ -64,6 +66,10 @@ export function WebSignupPage() {
     }
     if (password.length < 8) {
       window.alert("비밀번호는 최소 8자 이상이어야 합니다.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      window.alert("비밀번호가 일치하지 않습니다.");
       return;
     }
     if (!name.trim()) {
@@ -144,6 +150,41 @@ export function WebSignupPage() {
             </button>
           </div>
         </div>
+
+        <div className={styles.field}>
+          <label htmlFor="web-signup-confirm-password">비밀번호 확인</label>
+          <div style={{ position: "relative", display: "flex", alignItems: "center", width: "100%" }}>
+            <input
+              id="web-signup-confirm-password"
+              type={showConfirmPassword ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              placeholder="비밀번호 확인 입력"
+              autoComplete="new-password"
+              style={{ paddingRight: "40px", width: "100%" }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              style={{
+                position: "absolute",
+                right: "12px",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 0,
+                color: "#888",
+                zIndex: 2,
+              }}
+            >
+              {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+        </div>
+
         <div className={styles.field}><label htmlFor="web-signup-name">이름</label><input id="web-signup-name" value={name} onChange={(event) => setName(event.target.value)} placeholder="이름 입력" autoComplete="name" /></div>
 
         {/* 연락처 3분할 입력 필드 */}
