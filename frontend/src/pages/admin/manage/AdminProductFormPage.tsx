@@ -47,7 +47,7 @@ export function AdminProductFormPage() {
             setForm((f) => ({ ...f, categoryId: String(firstParent.children![0].id) }));
           } else {
             setSubCategories([]);
-            setForm((f) => ({ ...f, categoryId: "" }));
+            setForm((f) => ({ ...f, categoryId: String(firstParent.id) }));
           }
         }
       })
@@ -129,7 +129,7 @@ export function AdminProductFormPage() {
       setForm((f) => ({ ...f, categoryId: String(parentCat.children![0].id) }));
     } else {
       setSubCategories([]);
-      setForm((f) => ({ ...f, categoryId: "" }));
+      setForm((f) => ({ ...f, categoryId: parentId ? String(parentId) : "" }));
     }
   };
 
