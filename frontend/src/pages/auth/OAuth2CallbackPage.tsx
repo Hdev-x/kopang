@@ -11,6 +11,7 @@ export function OAuth2CallbackPage() {
         const refreshToken = searchParams.get("refreshToken");
         const nameRaw = searchParams.get("name");
         const roleParam = searchParams.get("role");
+        const hasPhone = searchParams.get("hasPhone") === "true";
         const role: AuthUser["role"] = roleParam === "ADMIN" ? "ADMIN" : "USER";
 
         if (accessToken && refreshToken && nameRaw) {
@@ -20,7 +21,11 @@ export function OAuth2CallbackPage() {
             alert(`${name}님, 소셜 로그인으로 반갑습니다!`);
             const preferredView = localStorage.getItem("kopang_login_view");
             localStorage.removeItem("kopang_login_view");
-            navigate(preferredView === "web" ? "/web" : "/");
+            if (hasPhone) {
+                navigate(preferredView === "web" ? "/web" : "/");
+            } else {
+                navigate(preferredView === "web" ? "/web/add-phone" : "/add-phone");
+            }
         } else {
             alert("소셜 로그인 인증에 실패했습니다.");
             navigate("/login");

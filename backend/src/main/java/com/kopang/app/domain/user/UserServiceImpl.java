@@ -1,6 +1,11 @@
 package com.kopang.app.domain.user;
 
 import com.kopang.app.global.security.JwtUtil;
+import com.kopang.app.domain.point.PointMapper;
+import com.kopang.app.domain.point.PointHistoryDTO;
+import com.kopang.app.domain.coupon.CouponMapper;
+import com.kopang.app.domain.coupon.CouponDTO;
+import com.kopang.app.domain.coupon.UserCouponDTO;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -17,6 +22,8 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final JavaMailSender mailSender;
+    private final PointMapper pointMapper;
+    private final CouponMapper couponMapper;
 
     // 인증 유효시간 정보 관리 캐시
     private final java.util.Map<String, VerificationInfo> verificationCache = new java.util.concurrent.ConcurrentHashMap<>();
@@ -41,20 +48,40 @@ public class UserServiceImpl implements UserService {
     }
 
     public UserServiceImpl(UserMapper userMapper, PasswordEncoder passwordEncoder, JwtUtil jwtUtil,
-            JavaMailSender mailSender) {
+            JavaMailSender mailSender, PointMapper pointMapper, CouponMapper couponMapper) {
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.mailSender = mailSender;
+        this.pointMapper = pointMapper;
+        this.couponMapper = couponMapper;
     }
 
     @Override
     public UserDTO create(UserDTO request) {
+        if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
+            throw new IllegalArgumentException("이메일을 입력해 주세요.");
+        }
         if (checkEmailDuplicate(request.getEmail())) {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다");
         }
-        if (request.getPhone() != null && checkPhoneDuplicate(request.getPhone())) {
-            throw new IllegalArgumentException("이미 등록된 전화번호입니다");
+
+        // 1. 이름 검증
+        if (request.getName() == null || request.getName().trim().isEmpty() || request.getName().length() > 50) {
+            throw new IllegalArgumentException("이름은 1자 이상 50자 이하로 입력해 주세요.");
+        }
+
+        // 2. 연락처 검증
+        if (request.getPhone() == null || !request.getPhone().matches("^01[016789]-\\d{3,4}-\\d{4}$")) {
+            throw new IllegalArgumentException("올바른 휴대폰 번호 형식이 아닙니다. (예: 010-1234-5678)");
+        }
+        if (checkPhoneDuplicate(request.getPhone())) {
+            throw new IllegalArgumentException("이미 있는 회원입니다");
+        }
+
+        // 3. 비밀번호 검증
+        if (request.getPassword() == null || request.getPassword().length() < 8) {
+            throw new IllegalArgumentException("비밀번호는 최소 8자 이상이어야 합니다.");
         }
 
         // 비밀번호 암호화
@@ -71,6 +98,10 @@ public class UserServiceImpl implements UserService {
                 .build();
 
         userMapper.create(user);
+
+        // 가입 완료 즉시 웰컴 혜택 자동 지급 (3000P & 10% 쿠폰)
+        giveWelcomeBenefits(user.getUserId());
+
         return user;
     }
 
@@ -288,6 +319,10 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("인증번호가 일치하지 않습니다");
         }
 
+        if (newPassword == null || newPassword.length() < 8) {
+            throw new IllegalArgumentException("비밀번호는 최소 8자 이상이어야 합니다.");
+        }
+
         // 검증 완료 후 캐시 삭제
         verificationCache.remove(email);
 
@@ -320,5 +355,50 @@ public class UserServiceImpl implements UserService {
             return false;
         }
         return userMapper.findByPhone(phone.trim()) != null;
+    }
+
+    @Override
+    @Transactional
+    public void giveWelcomeBenefits(Long userId) {
+        try {
+            // 1. 3000P 적립금 지급
+            PointHistoryDTO pointHistory = PointHistoryDTO.builder()
+                    .userId(userId)
+                    .amount(3000)
+                    .type("WELCOME")
+                    .description("신규 회원 가입 포인트 지급")
+                    .build();
+            pointMapper.insertPointHistory(pointHistory);
+
+            // 2. 신규가입 10% 쿠폰 (ID 1) 발급
+            Long welcomeCouponId = 1L;
+            int existingCoupon = couponMapper.countUserCouponByCouponId(userId, welcomeCouponId);
+            if (existingCoupon == 0) {
+                CouponDTO coupon = couponMapper.findCouponById(welcomeCouponId);
+                if (coupon != null && coupon.getQuantity() > 0) {
+                    couponMapper.decreaseCouponQuantity(welcomeCouponId);
+
+                    // 쿠폰 만료일 계산 (발급일로부터 30일 설정, 최대 쿠폰 만료일 내)
+                    java.util.Calendar cal = java.util.Calendar.getInstance();
+                    cal.add(java.util.Calendar.DAY_OF_MONTH, 30);
+                    java.util.Date expiresAt = cal.getTime();
+                    if (coupon.getEndDate() != null && coupon.getEndDate().before(expiresAt)) {
+                        expiresAt = coupon.getEndDate();
+                    }
+
+                    UserCouponDTO userCoupon = UserCouponDTO.builder()
+                            .userId(userId)
+                            .couponId(welcomeCouponId)
+                            .used(false)
+                            .issuedAt(new java.util.Date())
+                            .expiresAt(expiresAt)
+                            .build();
+                    couponMapper.insertUserCoupon(userCoupon);
+                }
+            }
+        } catch (Exception e) {
+            // 웰컴 혜택 지급 오류 시 로그 출력 후 가입 진행 자체는 정상 완료하도록 처리
+            System.err.println("[웰컴 혜택 지급 오류] userId: " + userId + " - " + e.getMessage());
+        }
     }
 }
