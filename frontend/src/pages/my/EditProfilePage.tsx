@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 import { Layout } from "../../components/Layout";
 import { PageHeader } from "../../components/PageHeader";
 import { Input } from "../../components/Input";
@@ -18,11 +19,15 @@ export function EditProfilePage() {
   const [phone3, setPhone3] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [nameError, setNameError] = useState("");
   const [phoneError, setPhoneError] = useState("");
   const [birthDateError, setBirthDateError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [confirmPasswordError, setConfirmPasswordError] = useState("");
 
   // 회원 정보 로드 (마운트 시 자동 실행)
   useEffect(() => {
@@ -93,9 +98,17 @@ export function EditProfilePage() {
     }
 
     // 4. 비밀번호 검증
-    if (newPassword && newPassword.length < 8) {
-      setPasswordError("비밀번호는 최소 8자 이상이어야 합니다.");
-      hasError = true;
+    setPasswordError("");
+    setConfirmPasswordError("");
+    if (newPassword) {
+      if (newPassword.length < 8) {
+        setPasswordError("비밀번호는 최소 8자 이상이어야 합니다.");
+        hasError = true;
+      }
+      if (newPassword !== confirmPassword) {
+        setConfirmPasswordError("비밀번호가 일치하지 않습니다.");
+        hasError = true;
+      }
     }
 
     if (hasError) {
@@ -228,7 +241,68 @@ export function EditProfilePage() {
         </div>
 
         <Input label="생년월일" type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} error={birthDateError} />
-        <Input label="새 비밀번호" type="password" placeholder="변경 시 입력 (최소 8자)" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} error={passwordError} />
+        
+        <div style={{ position: "relative", width: "100%" }}>
+          <Input
+            label="새 비밀번호"
+            type={showNewPassword ? "text" : "password"}
+            placeholder="변경 시 입력 (최소 8자)"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            error={passwordError}
+          />
+          <button
+            type="button"
+            onClick={() => setShowNewPassword(!showNewPassword)}
+            style={{
+              position: "absolute",
+              right: "12px",
+              bottom: passwordError ? "32px" : "12px",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 0,
+              color: "#888",
+              zIndex: 2,
+            }}
+          >
+            {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        </div>
+
+        <div style={{ position: "relative", width: "100%" }}>
+          <Input
+            label="새 비밀번호 확인"
+            type={showConfirmPassword ? "text" : "password"}
+            placeholder="새 비밀번호 재입력"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            error={confirmPasswordError}
+          />
+          <button
+            type="button"
+            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            style={{
+              position: "absolute",
+              right: "12px",
+              bottom: confirmPasswordError ? "32px" : "12px",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 0,
+              color: "#888",
+              zIndex: 2,
+            }}
+          >
+            {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        </div>
 
         <Button type="submit" className={s.submit}>
           저장하기
