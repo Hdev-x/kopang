@@ -137,9 +137,12 @@ public class MembershipController {
                     "MEMBERSHIP_CANCEL");
             Long churnScoreId = latestScore != null ? latestScore.getChurnScoreId() : null;
 
-            boolean isControl = (user.getUserId() % 5 == 0);
             int recentCount = churnMapper.countRecentIntervention(user.getUserId(), "MEMBERSHIP_CANCEL", "MODAL", 7);
 
+            // 대조군 판정은 recordAndCheckControl 의 결과를 그대로 쓴다.
+            // 여기서 userId % 5 로 따로 계산하면 실제 기록(유형별 해시 배정)과 어긋나
+            // 프론트가 받은 isControl 과 DB의 is_control 이 달라진다.
+            boolean isControl;
             if (recentCount == 0) {
                 InterventionRequest req = new InterventionRequest(
                         user.getUserId(),
@@ -147,7 +150,10 @@ public class MembershipController {
                         "MEMBERSHIP_CANCEL",
                         "MODAL",
                         "IN_APP");
-                interventionService.recordAndCheckControl(List.of(req));
+                isControl = interventionService.recordAndCheckControl(List.of(req)).control() > 0;
+            } else {
+                // 이미 기록된 건이 있으면 그 기록의 판정을 따른다
+                isControl = churnMapper.isControlRecorded(user.getUserId(), "MEMBERSHIP_CANCEL", "MODAL");
             }
 
             Map<String, Object> data = new HashMap<>();
