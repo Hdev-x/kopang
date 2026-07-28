@@ -146,7 +146,25 @@
 .workspace {
   min-width: 0;
   margin-left: 248px;
+  /* 스크롤이 끝에 닿았을 때 브라우저가 화면을 당겼다 놓는 반동(고무줄)을 막는다 */
+  overscroll-behavior: none;
 }
+
+/* 화면 높이 고정 페이지 전용 — 넘치는 소수점을 잘라 페이지가 흔들리지 않게 한다 */
+.workspaceFixed {
+  display: flex;
+  height: 100vh;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 좁은 화면에서는 각 페이지가 height:auto 로 풀리며 세로로 길어진다.
+   그때도 셸이 100vh 로 잠겨 있으면 넘친 부분에 닿을 방법이 없다. */
+@media (max-width: 1080px) {
+  .workspaceFixed { height: auto; min-height: 100vh; overflow: visible; }
+}
+
+.workspaceFixed .main { flex: 1; min-height: 0; }
 
 .topbar {
   position: sticky;
@@ -365,6 +383,12 @@
 
   .main {
     padding: 24px 16px;
+  }
+
+  /* 풀블리드 페이지는 스스로 여백을 관리한다 — 여기서 패딩이 붙으면
+     100vh 기준으로 잡은 페이지 높이를 넘어 하단이 잘린다. */
+  .mainFull {
+    padding: 0;
   }
 }
 

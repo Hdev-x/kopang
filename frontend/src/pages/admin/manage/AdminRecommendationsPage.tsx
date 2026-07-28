@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { AdminLayout } from "../../../components/AdminLayout";
+import { Skeleton, SkeletonRows } from "../../../components/Skeleton";
 import {
   getRecommendationPerformance,
   type RecommendationPerformance,
@@ -21,10 +22,10 @@ function formatRate(value: number | null) {
 function kpis(data: RecommendationPerformance | null) {
   if (!data) {
     return [
-      { label: "추천 노출(7일)", value: "—" },
-      { label: "추천 클릭률", value: "—" },
-      { label: "추천 전환율", value: "—" },
-      { label: "추천 매출(7일)", value: "—" },
+      { label: "추천 노출(7일)", value: null },
+      { label: "추천 클릭률", value: null },
+      { label: "추천 전환율", value: null },
+      { label: "추천 매출(7일)", value: null },
     ];
   }
   return [
@@ -54,7 +55,7 @@ export function AdminRecommendationsPage() {
           {kpis(data).map((k) => (
             <div key={k.label} className={styles.kCell}>
               <div className={styles.kLabel}>{k.label}</div>
-              <div className={styles.kValue}>{k.value}</div>
+              <div className={styles.kValue}>{k.value ?? <Skeleton w={92} h={22} />}</div>
             </div>
           ))}
         </div>
@@ -63,7 +64,14 @@ export function AdminRecommendationsPage() {
         {error ? (
           <p className={styles.muted}>추천 성과를 불러오지 못했습니다.</p>
         ) : items.length === 0 ? (
-          <p className={styles.muted}>추천 결과가 없습니다.</p>
+          <div className={styles.tableWrap}>
+            <table className={styles.tbl}>
+              <thead>
+                <tr><th>회원</th><th>추천 상품</th><th className={styles.num}>점수</th><th>사유</th><th>결과</th></tr>
+              </thead>
+              <tbody><SkeletonRows rows={10} cols={5} widths={["52%", "76%", "38%", "60%", "44%"]} /></tbody>
+            </table>
+          </div>
         ) : (
           <div className={styles.tableWrap}>
             <table className={styles.tbl}>

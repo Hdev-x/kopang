@@ -1,157 +1,183 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 import { AdminLayout } from "../../../components/AdminLayout";
-import { Card } from "../../../components/Card";
+import { SkeletonRows } from "../../../components/Skeleton";
 import { getAdminMembers, type AdminMemberResponse } from "../../../api/admin";
-import sh from "../adminShared.module.css";
+import styles from "../adminTable.module.css";
 
-function riskBadge(r: string) {
-  if (r === "고위험") return sh.bDanger;
-  if (r === "중위험") return sh.bWarn;
-  return sh.bOk;
+/*
+ * 회원 관리는 "찾기" 화면이다. 목록을 훑는 게 아니라 특정 회원을 찾아 확인한다.
+ * 그래서 검색을 앞세우고, 카드 대신 표를 쓴다(한 화면에 6~7명 → 15명 이상).
+ *
+ * 회원 데이터에 이미 위험도가 들어 있어서, 행을 누르면 이탈 고객 상세로 넘어간다.
+ * 표시만 하고 끝나면 "위험한 회원을 찾았는데 그다음이 없는" 화면이 된다.
+ */
+
+const FILTERS = ["전체", "멤버십", "고위험"] as const;
+type Filter = (typeof FILTERS)[number];
+
+function riskTone(level: string) {
+  if (level === "고위험") return styles.bRisk;
+  if (level === "중위험") return styles.bWait;
+  return styles.bDone;
+}
+
+function fmtDate(v: string) {
+  if (!v) return "";
+  const d = new Date(v);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 export function AdminMembersPage() {
-  const [loading, setLoading] = useState(true);
-  const [members, setMembers] = useState<AdminMemberResponse[]>([]);
+  const navigate = useNavigate();
+  const [members, setMembers] = useState<AdminMemberResponse[] | null>(null);
   const [q, setQ] = useState("");
+  const [filter, setFilter] = useState<Filter>("전체");
   const [sortBy, setSortBy] = useState("join_desc");
-  const [visibleCount, setVisibleCount] = useState(20);
-
-  const sentinelRef = useRef<HTMLDivElement>(null);
-
-  const loadData = async () => {
-    try {
-      const data = await getAdminMembers();
-      setMembers(data);
-    } catch (err) {
-      console.error("회원 리스트를 불러오는 데 실패했습니다.", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // 회원 수가 많아 한 번에 다 그리면 느리다. 스크롤을 따라 20명씩 늘린다.
+  const [visibleCount, setVisibleCount] = useState(30);
+  const sentinelRef = useRef<HTMLTableRowElement>(null);
 
   useEffect(() => {
-    loadData();
+    getAdminMembers()
+      .then(setMembers)
+      .catch((e) => { console.error("회원 리스트를 불러오지 못했습니다.", e); setMembers([]); });
   }, []);
 
-  // 검색이나 정렬 조건 변경 시 무한 스크롤 초기화
+  useEffect(() => { setVisibleCount(30); }, [q, filter, sortBy]);
+
+  const sorted = useMemo(() => {
+    if (!members) return [];
+    const kw = q.trim();
+    const rows = members.filter((m) => {
+      if (filter === "멤버십" && m.membershipType !== "멤버십") return false;
+      if (filter === "고위험" && m.riskLevel !== "고위험") return false;
+      if (!kw) return true;
+      return (m.name ?? "").includes(kw) || (m.email ?? "").includes(kw);
+    });
+    return rows.sort((a, b) => {
+      if (sortBy === "join_desc") return b.userId - a.userId;
+      if (sortBy === "join_asc") return a.userId - b.userId;
+      if (sortBy === "name_asc") return (a.name || "").localeCompare(b.name || "");
+      if (sortBy === "risk_desc") return b.churnProbability - a.churnProbability;
+      return 0;
+    });
+  }, [members, q, filter, sortBy]);
+
+  const shown = sorted.slice(0, visibleCount);
+  const hasMore = visibleCount < sorted.length;
+
+  // 목록 끝의 빈 행이 보이면 다음 묶음을 그린다
   useEffect(() => {
-    setVisibleCount(20);
-  }, [q, sortBy]);
-
-  // 무한 스크롤 감시자 등록
-  useEffect(() => {
-    if (loading) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setVisibleCount((prev) => prev + 20);
-        }
-      },
-      { rootMargin: "100px" }
+    if (!hasMore) return;
+    const el = sentinelRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) setVisibleCount((n) => n + 20); },
+      { rootMargin: "120px" },
     );
-    if (sentinelRef.current) {
-      observer.observe(sentinelRef.current);
-    }
-    return () => observer.disconnect();
-  }, [loading, members.length, q, sortBy]);
+    io.observe(el);
+    return () => io.disconnect();
+  }, [hasMore, shown.length]);
 
-  const rows = members.filter(
-    (m) =>
-      (m.name && m.name.includes(q)) ||
-      (m.email && m.email.includes(q))
-  );
-
-  const sortedRows = [...rows].sort((a, b) => {
-    if (sortBy === "join_desc") {
-      return b.userId - a.userId;
-    } else if (sortBy === "join_asc") {
-      return a.userId - b.userId;
-    } else if (sortBy === "name_asc") {
-      return (a.name || "").localeCompare(b.name || "");
-    }
-    return 0;
-  });
-
-  const displayedRows = sortedRows.slice(0, visibleCount);
-
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return "";
-    const d = new Date(dateStr);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  };
-
-  if (loading) {
-    return (
-      <AdminLayout title="회원 관리">
-        <div style={{ textAlign: "center", padding: "80px", color: "var(--color-text-muted)" }}>로딩 중...</div>
-      </AdminLayout>
-    );
-  }
+  const loading = members === null;
 
   return (
-    <AdminLayout title="회원 관리">
-      <div className={sh.toolbar} style={{ gap: "8px" }}>
-        <Search size={16} color="var(--color-text-muted)" />
-        <input
-          className={sh.search}
-          placeholder="이름 / 이메일 검색"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          style={{ flex: 1 }}
-        />
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-          style={{
-            padding: "8px var(--space-3, 12px)",
-            borderRadius: "var(--radius-md, 6px)",
-            border: "1px solid var(--color-border, #eee)",
-            fontSize: "var(--font-xs, 12px)",
-            backgroundColor: "#fff",
-            color: "var(--color-text)",
-            cursor: "pointer",
-            outline: "none"
-          }}
-        >
-          <option value="join_desc">최신 가입순</option>
-          <option value="join_asc">오래된 가입순</option>
-          <option value="name_asc">이름순</option>
-        </select>
-        <span className={sh.muted} style={{ fontSize: "13px", minWidth: "fit-content" }}>총 {rows.length}명</span>
-      </div>
+    <AdminLayout title="회원 관리" fullBleed>
+      <div className={styles.page}>
+        <div className={styles.toolbar}>
+          {/* 찾기가 목적이라 검색을 맨 앞에 넓게 둔다 */}
+          <label className={`${styles.search} ${styles.searchWide}`}>
+            <Search size={15} />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="이름 · 이메일 검색" />
+          </label>
 
-      <div className={sh.list}>
-        {displayedRows.length === 0 ? (
-          <div className={sh.empty} style={{ border: "1px solid var(--color-border, #eee)", borderRadius: "var(--radius-md, 8px)" }}>
-            검색 결과에 맞는 회원이 없습니다.
+          <div className={styles.chips}>
+            {FILTERS.map((f) => (
+              <button
+                key={f}
+                type="button"
+                className={`${styles.chip} ${filter === f ? styles.chipOn : ""}`}
+                onClick={() => setFilter(f)}
+              >
+                {f}
+              </button>
+            ))}
           </div>
-        ) : (
-          displayedRows.map((m) => (
-            <Card key={m.userId}>
-              <div className={sh.itemHead}>
-                <span className={sh.itemTitle}>
-                  {m.name}{" "}
-                  <span className={`${sh.badge} ${m.membershipType === "멤버십" ? sh.bInfo : sh.bMuted}`}>
-                    {m.membershipType}
-                  </span>
-                </span>
-                <span className={`${sh.badge} ${riskBadge(m.riskLevel)}`}>
-                  {m.riskLevel} ({m.churnProbability.toFixed(2)})
-                </span>
-              </div>
-              <p className={sh.itemMeta}>
-                {m.email} · 가입 {formatDate(m.createdAt)}
-              </p>
-            </Card>
-          ))
-        )}
-        {visibleCount < sortedRows.length && (
-          <div ref={sentinelRef} style={{ height: "60px", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--color-text-muted)", fontSize: "13px" }}>
-            목록 불러오는 중...
-          </div>
-        )}
+
+          <span className={styles.spacer} />
+          <span className={styles.caption}>{loading ? "" : `${sorted.length.toLocaleString()}명`}</span>
+          <select className={styles.select} value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+            <option value="join_desc">최신 가입순</option>
+            <option value="join_asc">오래된 가입순</option>
+            <option value="name_asc">이름순</option>
+            <option value="risk_desc">위험도순</option>
+          </select>
+        </div>
+
+        <div className={styles.tableWrap}>
+          <table className={styles.tbl}>
+            <thead>
+              <tr>
+                <th style={{ width: 150 }}>이름</th>
+                <th>이메일</th>
+                <th style={{ width: 100 }}>구분</th>
+                <th style={{ width: 150 }}>이탈 위험</th>
+                <th style={{ width: 120 }}>가입일</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <SkeletonRows rows={14} cols={5} widths={["54%", "76%", "50%", "62%", "70%"]} />
+              ) : shown.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className={styles.empty}>
+                    {(members?.length ?? 0) === 0 ? "회원이 없습니다." : "조건에 맞는 회원이 없습니다."}
+                  </td>
+                </tr>
+              ) : (
+                <>
+                  {shown.map((m) => (
+                    <tr
+                      key={m.userId}
+                      className={styles.rowLink}
+                      onClick={() => navigate(`/admin/churn/customers/${m.userId}`)}
+                      title="이탈 위험 상세 보기"
+                    >
+                      {/* 이동은 링크가 담당한다 — 행 onClick 만으로는 키보드로 도달할 수 없다 */}
+                      <td className={styles.name}>
+                        <Link
+                          to={`/admin/churn/customers/${m.userId}`}
+                          className={styles.cellLink}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {m.name}
+                        </Link>
+                      </td>
+                      <td><span className={styles.ellip}>{m.email}</span></td>
+                      <td>
+                        <span className={`${styles.badge} ${m.membershipType === "멤버십" ? styles.bInfo : styles.bMuted}`}>
+                          {m.membershipType}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`${styles.badge} ${riskTone(m.riskLevel)}`}>{m.riskLevel}</span>
+                        <span className={styles.num} style={{ marginLeft: 6 }}>{m.churnProbability.toFixed(2)}</span>
+                      </td>
+                      <td className={styles.num}>{fmtDate(m.createdAt)}</td>
+                    </tr>
+                  ))}
+                  {hasMore && (
+                    <tr ref={sentinelRef}>
+                      <td colSpan={5} className={styles.loadMore}>더 불러오는 중…</td>
+                    </tr>
+                  )}
+                </>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </AdminLayout>
   );

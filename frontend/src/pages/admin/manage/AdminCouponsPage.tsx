@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Plus, X } from "lucide-react";
 import { AdminLayout } from "../../../components/AdminLayout";
+import { SkeletonRows } from "../../../components/Skeleton";
 import { getAdminCoupons, createAdminCoupon, type AdminCouponResponse } from "../../../api/admin";
 import styles from "./AdminCouponsPage.module.css";
 
@@ -63,7 +64,14 @@ export function AdminCouponsPage() {
         </div>
 
         {loading ? (
-          <p className={styles.empty}>불러오는 중…</p>
+          <div className={styles.tableWrap}>
+            <table className={styles.tbl}>
+              <thead>
+                <tr><th>쿠폰명</th><th>대상</th><th>할인</th><th className={styles.r}>발급</th><th className={styles.r}>사용률</th><th className={styles.r}>재고</th><th>만료</th></tr>
+              </thead>
+              <tbody><SkeletonRows rows={10} cols={7} widths={["70%", "50%", "44%", "40%", "56%", "38%", "60%"]} /></tbody>
+            </table>
+          </div>
         ) : coupons.length === 0 ? (
           <p className={styles.empty}>생성된 쿠폰 정책이 없습니다.</p>
         ) : (

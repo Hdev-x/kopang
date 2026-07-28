@@ -139,7 +139,10 @@ export function AdminLayout({ title, children, fullBleed }: { title: string; chi
         </Link>
       </aside>
 
-      <div className={styles.workspace} ref={workspaceRef}>
+      {/* fullBleed 페이지는 화면 높이에 딱 맞춰 잡는다.
+          calc(100vh - 62px) 로 계산하다 보면 상단바 높이가 소수점(브라우저 배율)일 때
+          1px 미만이 넘쳐서 페이지가 미세하게 흔들린다. */}
+      <div className={`${styles.workspace} ${fullBleed ? styles.workspaceFixed : ""}`} ref={workspaceRef}>
         <header className={styles.topbar}>
           <button className={styles.menuBtn} onClick={() => setOpen(true)} aria-label="관리자 메뉴 열기">
             <Menu size={22} />

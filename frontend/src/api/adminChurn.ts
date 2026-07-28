@@ -81,6 +81,24 @@ export async function getRiskCustomerDetail(userId: number) {
   return res.data.data;
 }
 
+// 최근 만족도 1건 — 백엔드 Satisfaction과 1:1 (CHURN-17 satisfaction_survey 최신 1건)
+export type RiskSatisfaction = {
+  score: number; // 1~5
+  context: string;
+  reason: string | null; // 사유(선택) — null = 미선택
+  createdAt: string;
+};
+
+// 현재 관심 상품 — 백엔드 InterestProduct와 1:1 (장바구니·찜)
+export type RiskInterestProduct = {
+  source: "CART" | "WISHLIST";
+  productId: number;
+  name: string;
+  imageUrl: string;
+  price: number;
+  discountPrice: number | null; // 할인 없으면 null
+};
+
 // 위험 신호 유형별 요약 — 백엔드 SignalSummary와 1:1 (전체 기간 집계)
 export type RiskSignalSummary = {
   riskType: string | null; // null = ML 예측

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { AdminLayout } from "../../../components/AdminLayout";
+import { Skeleton, SkeletonRows } from "../../../components/Skeleton";
 import { getPurchaseStats, type PurchaseStats } from "../../../api/adminPurchaseStats";
 import styles from "./AdminStatsPage.module.css";
 
@@ -12,10 +13,10 @@ export function AdminStatsPage() {
   }, []);
 
   const kpis = [
-    { label: "이번달 매출", value: data ? `${data.monthSales.toLocaleString()}원` : "—" },
-    { label: "주문 수", value: data ? data.orderCount.toLocaleString() : "—" },
-    { label: "객단가", value: data ? `${data.averageOrderValue.toLocaleString()}원` : "—" },
-    { label: "재구매율", value: data ? `${data.repeatPurchaseRate.toFixed(1)}%` : "—" },
+    { label: "이번달 매출", value: data ? `${data.monthSales.toLocaleString()}원` : null },
+    { label: "주문 수", value: data ? data.orderCount.toLocaleString() : null },
+    { label: "객단가", value: data ? `${data.averageOrderValue.toLocaleString()}원` : null },
+    { label: "재구매율", value: data ? `${data.repeatPurchaseRate.toFixed(1)}%` : null },
   ];
   const monthly = data?.monthlySales ?? [];
   const maxSales = Math.max(...monthly.map((item) => item.amount), 1);
@@ -30,7 +31,7 @@ export function AdminStatsPage() {
           {kpis.map((k) => (
             <div key={k.label} className={styles.kCell}>
               <div className={styles.kLabel}>{k.label}</div>
-              <div className={styles.kValue}>{k.value}</div>
+              <div className={styles.kValue}>{k.value ?? <Skeleton w={92} h={22} />}</div>
             </div>
           ))}
         </div>
@@ -40,7 +41,15 @@ export function AdminStatsPage() {
           {error ? (
             <p className={styles.muted}>구매 분석을 불러오지 못했습니다.</p>
           ) : monthly.length === 0 ? (
-            <p className={styles.muted}>데이터를 불러오는 중…</p>
+            /* 축·높이를 유지한 빈 막대 — 값이 오면 그 자리에서 자란다 */
+            <div className={styles.chart}>
+              {Array.from({ length: 6 }, (_, i) => (
+                <div key={i} className={styles.bar}>
+                  <div className={styles.barTrack} />
+                  <span className={styles.barLabel}><Skeleton w={22} h={10} /></span>
+                </div>
+              ))}
+            </div>
           ) : (
             <div className={styles.chart}>
               {monthly.map((sale) => (
@@ -58,7 +67,14 @@ export function AdminStatsPage() {
         <div className={styles.sec}>
           <h2 className={styles.secHead}>인기 상품 · 재구매율</h2>
           {top.length === 0 ? (
-            <p className={styles.muted}>데이터가 없습니다.</p>
+            <div className={styles.tableWrap}>
+              <table className={styles.tbl}>
+                <thead>
+                  <tr><th>상품</th><th className={styles.r}>판매량</th><th className={styles.r}>재구매율</th></tr>
+                </thead>
+                <tbody><SkeletonRows rows={8} cols={3} widths={["74%", "46%", "44%"]} /></tbody>
+              </table>
+            </div>
           ) : (
             <div className={styles.tableWrap}>
               <table className={styles.tbl}>
