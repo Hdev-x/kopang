@@ -13,6 +13,10 @@ public interface CouponMapper {
     // 2. 회원이 보유한 쿠폰 목록 조회 (조인 포함)
     List<UserCouponDTO> findUserCouponsByUserId(@Param("userId") Long userId);
 
+    // 2-1. 회원의 단건 보유 쿠폰 상세 조회
+    UserCouponDTO findUserCouponById(@Param("userCouponId") Long userCouponId);
+
+
     // 3. 단건 쿠폰 상세 정보 조회
     CouponDTO findCouponById(@Param("couponId") Long couponId);
 

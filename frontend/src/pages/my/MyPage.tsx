@@ -49,7 +49,14 @@ export function MyPage() {
     ])
       .then(([pointData, couponData, orderData, recentData]) => {
         setPoints(pointData.balance);
-        setCouponsCount(couponData.filter((c) => !c.used).length);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const validCoupons = couponData.filter((c) => {
+          if (c.used) return false;
+          if (!c.expiresAt) return true;
+          return new Date(c.expiresAt) >= today;
+        });
+        setCouponsCount(validCoupons.length);
         setOrdersCount(orderData.length);
         setRecentViews(recentData);
       })

@@ -14,6 +14,14 @@
         user_coupons uc INNER JOIN coupons c ON uc.coupon_id = c.coupon_id WHERE uc.user_id =
         #{userId} ORDER BY uc.user_coupon_id DESC </select>
 
+    <select id="findUserCouponById" resultType="com.kopang.app.domain.coupon.UserCouponDTO">
+        SELECT uc.user_coupon_id AS userCouponId, uc.user_id AS userId, uc.coupon_id AS couponId,
+        uc.used AS used, uc.issued_at AS issuedAt, uc.expires_at AS expiresAt, uc.used_at AS usedAt,
+        c.name AS name, c.discount_type AS discountType, c.discount_value AS discountValue FROM
+        user_coupons uc INNER JOIN coupons c ON uc.coupon_id = c.coupon_id WHERE uc.user_coupon_id =
+        #{userCouponId} </select>
+
+
     <select id="findCouponById" resultType="com.kopang.app.domain.coupon.CouponDTO"> SELECT
         coupon_id AS couponId, name AS name, discount_type AS discountType, discount_value AS
         discountValue, start_date AS startDate, end_date AS endDate, quantity AS quantity FROM

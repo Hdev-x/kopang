@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { ChevronRight, Heart, MapPin, Package, Search, Star, Ticket, UserRound, Eye, EyeOff } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ChevronRight, Download, Heart, MapPin, Package, Search, Star, Ticket, UserRound, Eye, EyeOff } from "lucide-react";
 import { updateProfile } from "../../api/auth";
+import { getAvailableCoupons, getMyCoupons, downloadCoupon, type CouponResponse, type UserCouponResponse } from "../../api/coupon";
 import { Link, useParams } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { WebLayout } from "../components/WebLayout";
@@ -22,7 +23,7 @@ export function WebAccountPage({ kind }: { kind: AccountKind }) {
 
   return <WebLayout>
     {shopping ? <WebShoppingNav activeKind={kind} /> : tabs.length > 0 && <nav className={styles.localNav}>{tabs.map((item) => <Link key={item.to} to={item.to} className={isActive(kind, item.to) ? styles.active : ""}>{item.label}</Link>)}</nav>}
-    {kind === "home" ? <ProfileHome name={user?.name ?? "Kopang 사용자"} /> : review ? <ReviewPage write={kind === "review-write"} /> : setting ? <SettingsBody kind={kind} name={user?.name ?? ""} /> : <ShoppingPage kind={kind} suffix={kind === "order" ? no : kind === "inquiry" ? id : undefined} />}
+    {kind === "home" ? <ProfileHome name={user?.name ?? "Kopang 사용자"} /> : review ? <ReviewPage write={kind === "review-write"} /> : setting ? <SettingsBody kind={kind} name={user?.name ?? ""} /> : kind === "coupons" ? <WebCouponsTab /> : <ShoppingPage kind={kind} suffix={kind === "order" ? no : kind === "inquiry" ? id : undefined} />}
   </WebLayout>;
 }
 
@@ -216,6 +217,178 @@ function AddressBook() {
         <strong>등록된 배송지가 없어요.</strong>
         <p>자주 쓰는 배송지를 등록해두면 주문이 빨라져요.</p>
         <button type="button" className={styles.addBtn}>새 배송지 추가</button>
+      </div>
+    </main>
+  );
+}
+
+function WebCouponsTab() {
+  const [loading, setLoading] = useState(true);
+  const [myCoupons, setMyCoupons] = useState<UserCouponResponse[]>([]);
+  const [availableCoupons, setAvailableCoupons] = useState<CouponResponse[]>([]);
+
+  const loadData = async () => {
+    try {
+      const [myData, availableData] = await Promise.all([
+        getMyCoupons(),
+        getAvailableCoupons(),
+      ]);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const validMy = myData.filter((c) => {
+        if (c.used) return false;
+        if (!c.expiresAt) return true;
+        return new Date(c.expiresAt) >= today;
+      });
+      setMyCoupons(validMy);
+      setAvailableCoupons(availableData);
+    } catch (err) {
+      console.error("웹 쿠폰 데이터 로드 실패", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const handleDownload = async (couponId: number) => {
+    try {
+      await downloadCoupon(couponId);
+      window.alert("쿠폰이 다운로드되어 쿠폰함에 발급되었습니다!");
+      loadData();
+    } catch (err: any) {
+      window.alert(err.response?.data?.message || "이미 다운로드받았거나 소진된 쿠폰입니다.");
+    }
+  };
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    return `~ ${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
+  };
+
+  if (loading) {
+    return (
+      <main className={styles.shopping}>
+        <div style={{ textAlign: "center", padding: "60px 0", color: "var(--color-text-muted, #888)" }}>
+          쿠폰 정보를 불러오는 중...
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className={styles.shopping}>
+      <section className={styles.summary}>
+        <span><Ticket />사용 가능 쿠폰 <b>{myCoupons.length}장</b></span>
+        <span><Download />다운로드 가능 쿠폰 <b>{availableCoupons.length}장</b></span>
+      </section>
+
+      <div style={{ marginBottom: "40px" }}>
+        <h2 style={{ fontSize: "18px", fontWeight: 700, marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+          <Ticket size={20} color="var(--color-primary, #007bff)" />
+          보유 중인 쿠폰 ({myCoupons.length})
+        </h2>
+        {myCoupons.length === 0 ? (
+          <div className={styles.empty} style={{ minHeight: "140px", border: "1px dashed var(--color-border, #ddd)", borderRadius: "8px" }}>
+            보유 중인 미사용 쿠폰이 없습니다.
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "16px" }}>
+            {myCoupons.map((c) => (
+              <div
+                key={c.userCouponId}
+                style={{
+                  border: "1px solid var(--color-border, #eee)",
+                  borderRadius: "12px",
+                  padding: "20px",
+                  backgroundColor: "#fff",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  position: "relative",
+                  overflow: "hidden"
+                }}
+              >
+                <div style={{ position: "absolute", top: 0, left: 0, width: "4px", height: "100%", backgroundColor: "var(--color-primary, #007bff)" }} />
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+                    <span style={{ fontSize: "16px", fontWeight: 700, color: "#333" }}>{c.name}</span>
+                    <span style={{ fontSize: "12px", fontWeight: 700, color: "#007bff", backgroundColor: "#e6f0ff", padding: "4px 8px", borderRadius: "4px" }}>
+                      {c.discountType === "RATE" ? `${c.discountValue}%` : `${c.discountValue.toLocaleString()}원`}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: "13px", color: "#666", margin: "4px 0 12px" }}>
+                    {c.discountType === "RATE" ? "결제 금액 비율 할인" : "정액 할인 쿠폰"}
+                  </p>
+                </div>
+                <div style={{ fontSize: "12px", color: "#888", borderTop: "1px solid #f0f0f0", paddingTop: "10px", marginTop: "10px" }}>
+                  유효기간: {formatDate(c.expiresAt)}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <h2 style={{ fontSize: "18px", fontWeight: 700, marginBottom: "16px", color: "var(--color-primary, #007bff)", display: "flex", alignItems: "center", gap: "8px" }}>
+          🔥 쿠폰 다운로드 존
+        </h2>
+        {availableCoupons.length === 0 ? (
+          <div className={styles.empty} style={{ minHeight: "140px" }}>
+            다운로드 가능한 쿠폰이 없습니다.
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "16px" }}>
+            {availableCoupons.map((c) => {
+              const isDownloaded = myCoupons.some((mc) => mc.couponId === c.couponId);
+              return (
+                <div
+                  key={c.couponId}
+                  style={{
+                    border: "1px solid var(--color-border, #eee)",
+                    borderRadius: "12px",
+                    padding: "20px",
+                    backgroundColor: "#fafafa",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between"
+                  }}
+                >
+                  <div>
+                    <span style={{ fontSize: "16px", fontWeight 700, color: "#333", display: "block", marginBottom: "6px" }}>{c.name}</span>
+                    <span style={{ fontSize: "12px", color: "#888" }}>
+                      선착순 잔여: {c.quantity.toLocaleString()}개 | {formatDate(c.endDate)} 만료
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={isDownloaded}
+                    onClick={() => handleDownload(c.couponId)}
+                    style={{
+                      marginTop: "16px",
+                      height: "40px",
+                      borderRadius: "6px",
+                      border: "none",
+                      backgroundColor: isDownloaded ? "#ccc" : "var(--color-primary, #007bff)",
+                      color: "#fff",
+                      fontWeight: 600,
+                      fontSize: "14px",
+                      cursor: isDownloaded ? "default" : "pointer"
+                    }}
+                  >
+                    {isDownloaded ? "발급 완료" : "다운로드"}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </main>
   );

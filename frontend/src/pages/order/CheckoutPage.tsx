@@ -137,7 +137,13 @@ export function CheckoutPage() {
       .catch(() => setIsMembership(false));
     getMyCoupons()
       .then((list) => {
-        const available = list.filter((c) => !c.used);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const available = list.filter((c) => {
+          if (c.used) return false;
+          if (!c.expiresAt) return true;
+          return new Date(c.expiresAt) >= today;
+        });
         setMyCoupons(available);
         // 장바구니 방치 5% 할인 쿠폰(couponId=3 또는 5% RATE 쿠폰)이 존재하면 자동 선택
         const autoCoupon = available.find(

@@ -9,7 +9,7 @@
         um.cancelled_at AS cancelledAt, m.name AS name, m.price AS price, m.discount_rate AS
         discountRate, m.description AS description FROM user_membership um INNER JOIN membership m
         ON um.membership_id = m.membership_id WHERE um.user_id = #{userId} AND um.status IN
-        ('ACTIVE', 'CANCELLED') ORDER BY um.user_membership_id DESC LIMIT 1 </select>
+        ('ACTIVE', 'CANCELLED') AND um.end_date >= CURRENT_DATE ORDER BY um.user_membership_id DESC LIMIT 1 </select>
 
     <insert id="insertUserMembership" useGeneratedKeys="true" keyProperty="userMembershipId"> INSERT
         INTO user_membership (user_id, membership_id, start_date, end_date, status, cancelled_at)
