@@ -45,11 +45,11 @@ export function LoginPage() {
       <PageHeader />
       <div className={styles.wrap}>
         <h1 className={styles.title}>로그인</h1>
-        <form className={styles.form} onSubmit={handleSubmit}>
+        <form className={styles.form} onSubmit={handleSubmit} noValidate>
           <Input
             label="이메일"
-            type="email"
-            placeholder="email@example.com"
+            type="text"
+            placeholder="email@example.com 또는 admin"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />

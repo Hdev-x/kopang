@@ -38,8 +38,8 @@ export function WebLoginPage() {
   return (
     <WebAuthLayout eyebrow="WELCOME BACK" title="다시 만나서 반가워요" description="로그인하고 장바구니, 주문 내역, 찜한 상품을 Web 화면에서 이어서 확인하세요.">
       <div className={styles.heading}><h2>로그인</h2><p>Kopang 계정 정보를 입력해 주세요.</p></div>
-      <form className={styles.form} onSubmit={handleSubmit}>
-        <div className={styles.field}><label htmlFor="web-login-email">이메일</label><input id="web-login-email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="email@example.com" autoComplete="email" /></div>
+      <form className={styles.form} onSubmit={handleSubmit} noValidate>
+        <div className={styles.field}><label htmlFor="web-login-email">이메일</label><input id="web-login-email" type="text" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="email@example.com 또는 admin" autoComplete="username" /></div>
         <div className={styles.field}>
           <label htmlFor="web-login-password">비밀번호</label>
           <div style={{ position: "relative", display: "flex", alignItems: "center", width: "100%" }}>
