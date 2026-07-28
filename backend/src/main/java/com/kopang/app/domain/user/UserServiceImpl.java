@@ -62,6 +62,9 @@ public class UserServiceImpl implements UserService {
         if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
             throw new IllegalArgumentException("이메일을 입력해 주세요.");
         }
+        if (!request.getEmail().matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+            throw new IllegalArgumentException("올바른 이메일 형식이 아닙니다.");
+        }
         if (checkEmailDuplicate(request.getEmail())) {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다");
         }
@@ -290,11 +293,8 @@ public class UserServiceImpl implements UserService {
             mailSender.send(mimeMessage);
             System.out.println("[EMAIL SUCCESS] Verification code sent to " + email);
         } catch (Exception e) {
-            // 발송 실패 시 콘솔 로그 출력 및 예외 전송 (실제 SMTP 키 등록 유도용 우회 제공)
             System.err.println("[EMAIL ERROR] Failed to send email to " + email + ": " + e.getMessage());
-            verificationCache.put(email, new VerificationInfo("123456", System.currentTimeMillis() + 300000));
-            throw new RuntimeException("이메일 발송에 실패했습니다. (메일 서버 설정 미비 또는 네트워크 오류)\n"
-                    + "[개발 테스트용 우회 기능]: 구글/네이버 키 설정 전이므로, 테스트용 번호 '123456'을 입력하시면 즉시 비밀번호를 변경해 보실 수 있습니다.");
+            throw new RuntimeException("이메일 발송에 실패했습니다. 메일 서버 설정 및 이메일 주소를 확인해 주세요.");
         }
     }
 
