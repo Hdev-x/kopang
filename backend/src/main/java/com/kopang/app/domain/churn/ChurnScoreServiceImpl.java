@@ -160,23 +160,42 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
                 "IN_APP");
     }
 
-    // 쿠폰 자동 지급 헬퍼 메서드
-    private void autoIssueCoupon(Long userId, Long couponId) {
+    /**
+     * 발송 대상을 앞에서 n 명만 남긴다 (limit <= 0 이면 그대로).
+     * 검증용 경로다 — 수천 명에게 실제 알림·쿠폰이 나가기 전에 소수로 확인한다.
+     */
+    private static List<ChurnScoreDTO> capped(List<ChurnScoreDTO> targets, int limit) {
+        if (limit <= 0 || targets.size() <= limit) {
+            return targets;
+        }
+        return new ArrayList<>(targets.subList(0, limit));
+    }
+
+    /**
+     * 쿠폰 자동 지급. **발급했는지 여부를 돌려준다.**
+     *
+     * 반환값이 필요한 이유: 이미 가지고 있거나 품절이면 발급을 건너뛰는데,
+     * 호출부가 그걸 모르고 "쿠폰이 발급되었습니다" 알림을 보내면
+     * 고객은 알림을 받고 쿠폰함에서 아무것도 못 찾는다.
+     */
+    private boolean autoIssueCoupon(Long userId, Long couponId) {
         try {
             int existingCount = couponMapper.countUserCouponByCouponId(userId, couponId);
             if (existingCount > 0) {
-                return; // 이미 발급받았으면 패스
+                return false; // 이미 발급받았으면 패스
             }
             CouponDTO coupon = couponMapper.findCouponById(couponId);
             if (coupon == null || coupon.getQuantity() <= 0) {
-                return; // 쿠폰이 없거나 품절이면 패스
+                return false; // 쿠폰이 없거나 품절이면 패스
             }
             couponMapper.decreaseCouponQuantity(couponId);
             // issued_by='CHURN' 을 남긴다 — 원복이 이 배치가 발급한 쿠폰만 회수하려면
             // 출처가 필요하다. 없으면 같은 날 받은 이벤트 쿠폰까지 삭제된다.
             churnMapper.insertChurnUserCoupon(userId, couponId, coupon.getEndDate());
+            return true;
         } catch (Exception e) {
             System.err.println("[자동 쿠폰 발급 오류] userId: " + userId + ", couponId: " + couponId + " - " + e.getMessage());
+            return false;
         }
     }
 
@@ -196,8 +215,14 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
     @Transactional
     @Override
     public InterventionRunResult runInterventions() {
+        return runInterventions(0);
+    }
+
+    @Transactional
+    @Override
+    public InterventionRunResult runInterventions(int limit) {
         // 조회
-        List<ChurnScoreDTO> targets = churnMapper.findInterventionTargets();
+        List<ChurnScoreDTO> targets = capped(churnMapper.findInterventionTargets(), limit);
 
         // ① 판정 + 로그 (전원, bulk 1번) — 반환 = 발송해야 할 처치군 userId
         List<InterventionRequest> reqs = new ArrayList<>();
@@ -241,9 +266,12 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
             switch (target.getRiskType()) {
                 case "FIRST_ORDER_ONLY" -> {
                     type = "COMEBACK";
-                    message = "돌아오신 것을 환영해요! 복귀 기념 특별 5,000원 할인 쿠폰이 발급되었습니다. 💖";
                     refId = 4L; // 복귀 5000원 쿠폰 ID
-                    autoIssueCoupon(target.getUserId(), refId);
+                    // 이미 갖고 있으면 발급되지 않는다. 그때도 발급됐다고 알리면
+                    // 고객은 쿠폰함에서 아무것도 찾지 못한다.
+                    message = autoIssueCoupon(target.getUserId(), refId)
+                            ? "돌아오신 것을 환영해요! 복귀 기념 특별 5,000원 할인 쿠폰이 발급되었습니다. 💖"
+                            : "돌아오신 것을 환영해요! 받아두신 복귀 쿠폰이 아직 남아 있어요. 만료 전에 사용해 보세요. 💖";
                 }
                 default -> {
                     // 대상 조회가 FIRST_ORDER_ONLY 로 좁혀져 있어 여기 도달하지 않는다.
@@ -270,7 +298,13 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
     @Transactional
     @Override
     public void runCouponExpiringInterventions() {
-        List<ChurnScoreDTO> targets = churnMapper.findTargetsByRiskTypes(List.of("COUPON_EXPIRING"));
+        runCouponExpiringInterventions(0);
+    }
+
+    @Transactional
+    @Override
+    public void runCouponExpiringInterventions(int limit) {
+        List<ChurnScoreDTO> targets = capped(churnMapper.findTargetsByRiskTypes(List.of("COUPON_EXPIRING")), limit);
         if (targets.isEmpty()) {
             return;
         }
@@ -308,7 +342,13 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
     @Transactional
     @Override
     public void runLoginInactiveInterventions() {
-        List<ChurnScoreDTO> targets = churnMapper.findTargetsByRiskTypes(List.of("LOGIN_INACTIVE"));
+        runLoginInactiveInterventions(0);
+    }
+
+    @Transactional
+    @Override
+    public void runLoginInactiveInterventions(int limit) {
+        List<ChurnScoreDTO> targets = capped(churnMapper.findTargetsByRiskTypes(List.of("LOGIN_INACTIVE")), limit);
         List<InterventionRequest> reqs = new ArrayList<>();
         for (ChurnScoreDTO target : targets) {
             reqs.add(new InterventionRequest(
@@ -326,13 +366,15 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
             if (!toSend.contains(target.getUserId())) {
                 continue;
             }
-            // 복귀 5,000원 쿠폰 지급
-            autoIssueCoupon(target.getUserId(), 4L);
+            // 복귀 5,000원 쿠폰 지급. 이미 갖고 있으면 발급되지 않으므로 문구를 나눈다.
+            boolean issued = autoIssueCoupon(target.getUserId(), 4L);
 
             NotificationDTO noti = new NotificationDTO();
             noti.setUserId(target.getUserId());
             noti.setType("COMEBACK");
-            noti.setMessage("오랜만에 뵙네요! 복귀 기념 특별 5,000원 할인 쿠폰이 발급되었습니다. 💖");
+            noti.setMessage(issued
+                    ? "오랜만에 뵙네요! 복귀 기념 특별 5,000원 할인 쿠폰이 발급되었습니다. 💖"
+                    : "오랜만에 뵙네요! 받아두신 복귀 쿠폰이 아직 남아 있어요. 만료 전에 사용해 보세요. 💖");
             noti.setRefId(4L);
             noti.setIsRead(false);
             noti.setClicked(false);

@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequiredArgsConstructor
@@ -24,8 +25,10 @@ public class ChurnController {
 
     // 대응 발송 수동 실행 — 대시보드 실행 버튼용. 스케줄러 편입 시에도 같은 서비스 메서드 공유
     @PostMapping("/api/admin/churn/intervene")
-    public ResponseEntity<ApiResponse<InterventionRunResult>> runInterventions() {
-        return ResponseEntity.ok(ApiResponse.success(churnScoreService.runInterventions()));
+    // limit: 검증용 소량 발송 (기본 0 = 제한 없음)
+    public ResponseEntity<ApiResponse<InterventionRunResult>> runInterventions(
+            @RequestParam(defaultValue = "0") int limit) {
+        return ResponseEntity.ok(ApiResponse.success(churnScoreService.runInterventions(limit)));
     }
 
     // 일 배치 수동 실행 — 스케줄러(매일 03:00)와 **같은 메서드**를 호출한다.
@@ -67,8 +70,9 @@ public class ChurnController {
 
     // 쿠폰 만료 임박 대응 수동 실행 (CHURN-14)
     @PostMapping("/api/admin/churn/intervene/coupon-expiring")
-    public ResponseEntity<ApiResponse<java.util.Map<String, String>>> runCouponExpiringInterventions() {
-        churnScoreService.runCouponExpiringInterventions();
+    public ResponseEntity<ApiResponse<java.util.Map<String, String>>> runCouponExpiringInterventions(
+            @RequestParam(defaultValue = "0") int limit) {
+        churnScoreService.runCouponExpiringInterventions(limit);
         java.util.Map<String, String> data = new java.util.HashMap<>();
         data.put("message", "쿠폰 만료 임박 대응이 성공적으로 실행되었습니다.");
         return ResponseEntity.ok(ApiResponse.success(data));
@@ -76,8 +80,9 @@ public class ChurnController {
 
     // 미로그인 회원 복귀 유도 대응 수동 실행 (CHURN-16)
     @PostMapping("/api/admin/churn/intervene/login-inactive")
-    public ResponseEntity<ApiResponse<java.util.Map<String, String>>> runLoginInactiveInterventions() {
-        churnScoreService.runLoginInactiveInterventions();
+    public ResponseEntity<ApiResponse<java.util.Map<String, String>>> runLoginInactiveInterventions(
+            @RequestParam(defaultValue = "0") int limit) {
+        churnScoreService.runLoginInactiveInterventions(limit);
         java.util.Map<String, String> data = new java.util.HashMap<>();
         data.put("message", "미로그인 회원 복귀 유도 대응이 성공적으로 실행되었습니다.");
         return ResponseEntity.ok(ApiResponse.success(data));
