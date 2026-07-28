@@ -7,12 +7,10 @@ import java.util.Set;
 
 import com.kopang.app.domain.intervention.InterventionRequest;
 import com.kopang.app.domain.intervention.InterventionService;
-import com.kopang.app.domain.intervention.InterventionDTO;
 import com.kopang.app.domain.notification.NotificationDTO;
 import com.kopang.app.domain.notification.NotificationMapper;
 import com.kopang.app.domain.coupon.CouponMapper;
 import com.kopang.app.domain.coupon.CouponDTO;
-import com.kopang.app.domain.coupon.UserCouponDTO;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +25,14 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
     private final NotificationMapper notificationMapper;
     private final InterventionService interventionService;
     private final CouponMapper couponMapper;
+    private final ChurnMetricMapper churnMetricMapper;
+    private final com.kopang.app.domain.intervention.InterventionOutcomeMapper outcomeMapper;
+    private final ChurnMlService churnMlService;
+
+    // 자동 발송 스위치. false면 배치가 감지·측정·지표만 하고 발송은 건너뛴다.
+    // (관리자 화면의 개별 발송 버튼은 이 값과 무관하게 동작한다)
+    @org.springframework.beans.factory.annotation.Value("${churn.intervention.enabled}")
+    private boolean interventionEnabled;
 
     // ============================================
     // 감지 (룰별 → churn_score 저장)
@@ -166,14 +172,9 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
                 return; // 쿠폰이 없거나 품절이면 패스
             }
             couponMapper.decreaseCouponQuantity(couponId);
-            UserCouponDTO userCoupon = UserCouponDTO.builder()
-                    .userId(userId)
-                    .couponId(couponId)
-                    .used(false)
-                    .issuedAt(new java.util.Date())
-                    .expiresAt(coupon.getEndDate())
-                    .build();
-            couponMapper.insertUserCoupon(userCoupon);
+            // issued_by='CHURN' 을 남긴다 — 원복이 이 배치가 발급한 쿠폰만 회수하려면
+            // 출처가 필요하다. 없으면 같은 날 받은 이벤트 쿠폰까지 삭제된다.
+            churnMapper.insertChurnUserCoupon(userId, couponId, coupon.getEndDate());
         } catch (Exception e) {
             System.err.println("[자동 쿠폰 발급 오류] userId: " + userId + ", couponId: " + couponId + " - " + e.getMessage());
         }
@@ -206,7 +207,8 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
             }
             reqs.add(toRequest(target));
         }
-        Set<Long> toSend = new HashSet<>(interventionService.recordAndCheckControl(reqs));
+        var split = interventionService.recordAndCheckControl(reqs);
+        Set<Long> toSend = new HashSet<>(split.treatment());
 
         // ② 발송 (처치군만) — riskType별 알림 만들어 notifications INSERT
         for (ChurnScoreDTO target : targets) {
@@ -220,49 +222,32 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
             String message;
             Long refId = null;
 
+            /*
+             * 통합 발송이 처리하는 유형은 FIRST_ORDER_ONLY 하나다
+             * (findInterventionTargets 의 risk_type IN ('FIRST_ORDER_ONLY')).
+             *
+             * 나머지 7종을 여기서 뺀 이유 — 회의 결정(2026-07-24)과 담당 분리:
+             *   CART_ABANDON       배너 노출이 의도된 설계로 확인, 발송 목록에서 제외
+             *   BAD_EXPERIENCE     발송 전체 제외(사과 알림·쿠폰 모두), 수집 전용으로 전환
+             *   SPENDING_DROP      과대 집계 문제로 발송 대상에서 제외
+             *   WISHLIST_IDLE      찜 할인 알림(CHURN-13)이 담당 — 독촉 중복 방지
+             *   MEMBERSHIP_CANCEL  실시간 만류 모달(FR-MSHIP-06)이 담당
+             *   COUPON_EXPIRING    전용 메서드 runCouponExpiringInterventions()
+             *   LOGIN_INACTIVE     전용 메서드 runLoginInactiveInterventions()
+             *
+             * 제외된 유형의 case 를 남겨두면 "이 유형에도 쿠폰이 나간다"고 읽혀
+             * 회의 결정과 코드가 어긋나 보인다. 감지값은 대시보드·ML 피처로 계속 쓴다.
+             */
             switch (target.getRiskType()) {
-                case "CART_ABANDON" -> {
-                    type = "ABANDON";
-                    message = "장바구니에 상품이 남아있어요. 잊지 말고 구매해 보세요! 🛒";
-                    refId = 3L; // 장바구니 리마인드 5% 쿠폰 ID
-                    autoIssueCoupon(target.getUserId(), refId);
-                }
-                case "MEMBERSHIP_CANCEL" -> {
-                    type = "COMEBACK";
-                    message = "와우 멤버십 혜택을 계속 이용해 보세요! 혜택 유지 특별 쿠폰이 지급되었습니다. 🎁";
-                    refId = 6L; // 멤버십 갱신 15% 쿠폰 ID
-                    autoIssueCoupon(target.getUserId(), refId);
-                }
                 case "FIRST_ORDER_ONLY" -> {
                     type = "COMEBACK";
                     message = "돌아오신 것을 환영해요! 복귀 기념 특별 5,000원 할인 쿠폰이 발급되었습니다. 💖";
                     refId = 4L; // 복귀 5000원 쿠폰 ID
                     autoIssueCoupon(target.getUserId(), refId);
                 }
-                case "COUPON_EXPIRING" -> {
-                    type = "COUPON_EXPIRE";
-                    message = "[리마인드] 보유하신 미사용 쿠폰이 곧 만료됩니다! 만료 전에 꼭 사용해 보세요. 🎟️";
-                }
-                case "BAD_EXPERIENCE" -> {
-                    type = "APOLOGY";
-                    message = "이용에 불편을 드려 죄송합니다. 사과의 마음을 담은 특별 할인 쿠폰이 도착했습니다. 🙇";
-                    refId = 5L; // 사과 쿠폰 10%
-                    autoIssueCoupon(target.getUserId(), refId);
-                }
-                case "LOGIN_INACTIVE" -> {
-                    type = "COMEBACK";
-                    message = "오랜만에 뵙네요! 복귀 기념 특별 5,000원 할인 쿠폰이 발급되었습니다. 💖";
-                    refId = 4L; // 복귀 5000원 쿠폰 ID
-                    autoIssueCoupon(target.getUserId(), refId);
-                }
-                case "SPENDING_DROP" -> {
-                    type = "REBUY";
-                    message = "요즘 뜸하셨네요, 다시 찾아주신 감사함으로 재구매 할인 쿠폰을 드립니다. 🛍️";
-                    refId = 8L; // 재구매 감사 5%
-                    autoIssueCoupon(target.getUserId(), refId);
-                }
                 default -> {
-                    // 예외 처리 대신 기본값 처리로 예기치 못한 타입에 대한 오류 방지
+                    // 대상 조회가 FIRST_ORDER_ONLY 로 좁혀져 있어 여기 도달하지 않는다.
+                    // 조회 조건이 넓어지면 이 분기가 살아나므로 안전한 기본값을 둔다.
                     type = "NOTICE";
                     message = "코팡이 준비한 맞춤형 특별 혜택을 확인해 보세요!";
                 }
@@ -277,7 +262,9 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
             notificationMapper.insertNotification(noti);
         }
 
-        return new InterventionRunResult(reqs.size(), toSend.size(), reqs.size() - toSend.size());
+        // 대조군은 "기록만 남기고 발송하지 않은 인원"이다. 상한에 걸려 기록조차 안 된 인원
+        // (split.skipped())과 섞으면 대조군이 실제의 수십 배로 부풀려 보인다.
+        return new InterventionRunResult(reqs.size(), toSend.size(), split.control());
     }
 
     @Transactional
@@ -288,23 +275,26 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
             return;
         }
 
-        List<InterventionDTO> logs = new ArrayList<>();
+        // 다른 대응과 동일하게 경유한다. 이전에는 "운영성 안내"라는 이유로 100% 발송했는데,
+        // 그러면 다른 실험에서 대조군으로 분류된 사람도 이 경로로 쿠폰 알림을 받아
+        // "아무 처치도 받지 않은 대조군"이 성립하지 않는다(대조군 오염).
+        List<InterventionRequest> reqs = new ArrayList<>();
         for (ChurnScoreDTO target : targets) {
-            InterventionDTO log = new InterventionDTO();
-            log.setUserId(target.getUserId());
-            log.setChurnScoreId(target.getChurnScoreId());
-            log.setRiskType("COUPON_EXPIRING");
-            log.setActionType("PUSH");
-            log.setIsControl(false); // 운영성 안내로 대조군 제외
-            log.setChannel("IN_APP");
-            logs.add(log);
+            reqs.add(new InterventionRequest(
+                    target.getUserId(),
+                    target.getChurnScoreId(),
+                    "COUPON_EXPIRING",
+                    "PUSH",
+                    "IN_APP"));
         }
 
-        // 1. 대조군 없이 100% 벌크 저장
-        churnMapper.insertInterventions(logs);
+        var split = interventionService.recordAndCheckControl(reqs);
+        Set<Long> toSend = new HashSet<>(split.treatment());
 
-        // 2. 100% 알림 전송
         for (ChurnScoreDTO target : targets) {
+            if (!toSend.contains(target.getUserId())) {
+                continue; // 대조군·상한 제외분
+            }
             NotificationDTO noti = new NotificationDTO();
             noti.setUserId(target.getUserId());
             noti.setType("COUPON_EXPIRE");
@@ -329,7 +319,8 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
                     "IN_APP"));
         }
 
-        Set<Long> toSend = new HashSet<>(interventionService.recordAndCheckControl(reqs));
+        var split = interventionService.recordAndCheckControl(reqs);
+        Set<Long> toSend = new HashSet<>(split.treatment());
 
         for (ChurnScoreDTO target : targets) {
             if (!toSend.contains(target.getUserId())) {
@@ -347,5 +338,101 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
             noti.setClicked(false);
             notificationMapper.insertNotification(noti);
         }
+    }
+
+    /**
+     * 일 배치 전체 — 스케줄러와 관리자 수동 실행이 공유한다.
+     * "매일 새벽에 도는 것과 같은 코드"임을 보장하려면 경로가 하나여야 한다.
+     *
+     * 순서에 이유가 있다: 발송은 감지 결과를 대상으로 하므로 뒤여야 하고,
+     * 지표는 측정 결과를 반영해야 하므로 맨 마지막이다.
+     */
+    @Transactional
+    @Override
+    public BatchRunResult runDailyBatch(boolean forceSend) {
+        runAllRules();
+        int detected = churnMapper.countTodayRuleScores();
+        int mlScored = runMlScoringQuietly();
+
+        // 스케줄러는 스위치를 따르고(밤사이 임의 발송 방지), 관리자 수동 실행은 스위치를 무시한다
+        // (사람이 대상 수를 확인하고 누른 것이므로 실행 의도가 분명하다).
+        boolean willSend = forceSend || interventionEnabled;
+        int sent = 0;
+        int control = 0;
+        if (willSend) {
+            // 발송은 세 경로다(통합·쿠폰만료·미로그인복귀). 통합의 반환값만 쓰면
+            // 나머지 둘이 누락된다 — 실측에서 2,754명이 나갔는데 14로 표시됐다.
+            // 전용 메서드는 void 라, 실행 전후의 기록 수 차이로 실제 발송량을 센다.
+            int before = churnMapper.countTodayInterventions();
+            int beforeControl = churnMapper.countTodayControls();
+            runInterventions();
+            runCouponExpiringInterventions();
+            runLoginInactiveInterventions();
+            control = churnMapper.countTodayControls() - beforeControl;
+            sent = (churnMapper.countTodayInterventions() - before) - control;
+        }
+
+        int measured = measureOutcomes();
+        recordDailyMetric();
+        return new BatchRunResult(detected, mlScored, willSend, sent, control, measured);
+    }
+
+    /** ML 서빙(:8000)이 꺼져 있어도 룰·대응·지표는 진행되어야 한다. */
+    private int runMlScoringQuietly() {
+        try {
+            return churnMlService.runMlScoring();
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    /**
+     * 오늘 실행분 원복 — 대응 이력·측정·알림·발급 쿠폰을 되돌린다.
+     * 발송 상한(1일 1건·유형별 7일 중복)이 걸려 재실행 시 대상이 0이 되므로,
+     * 여러 사람이 시연·테스트하려면 이 경로가 필요하다.
+     *
+     * 감지(churn_score)는 지우지 않는다 — 배치를 다시 돌리면 어차피 재생성되고,
+     * 위험 고객 화면이 빈 채로 남는 것을 막기 위해서다.
+     */
+    @Transactional
+    @Override
+    public BatchResetResult resetTodayBatch() {
+        // 쿠폰 재고를 먼저 복구한다(삭제 후에는 몇 장이었는지 알 수 없다)
+        int coupons = 0;
+        for (java.util.Map<String, Object> row : churnMapper.countTodayIssuedCouponsByCoupon()) {
+            Long couponId = ((Number) row.get("couponId")).longValue();
+            int cnt = ((Number) row.get("cnt")).intValue();
+            churnMapper.restoreCouponQuantity(couponId, cnt);
+            coupons += cnt;
+        }
+        churnMapper.deleteTodayIssuedCoupons();
+
+        int notifications = churnMapper.deleteTodayInterventionNotifications();
+        int outcomes = churnMapper.deleteTodayOutcomes();
+        int interventions = churnMapper.deleteTodayInterventions();
+        recordDailyMetric();   // 지표도 되돌린 상태로 다시 집계
+        return new BatchResetResult(interventions, outcomes, notifications, coupons);
+    }
+
+    /**
+     * 대응 효과를 측정해 기록한다 (CHURN-08).
+     * 전환은 창 안에 주문이 확인되면 즉시 확정하고, 미전환은 창(7일)이 끝나야 확정한다.
+     * 대조군도 같은 기준으로 판정해야 처치군과 비교(순효과)가 성립한다.
+     */
+    @Override
+    public int measureOutcomes() {
+        return outcomeMapper.insertConvertedOutcomes() + outcomeMapper.insertNotConvertedOutcomes();
+    }
+
+    /**
+     * 오늘자 일별 지표를 집계해 적재한다.
+     * 대시보드 KPI·주간 추이가 이 테이블을 읽으므로, 배치가 매일 채워야 화면이 오늘을 가리킨다.
+     * 같은 날 재실행하면 최신 집계로 덮어쓴다.
+     */
+    @Override
+    public void recordDailyMetric() {
+        // 전환 창(7일)보다 넉넉하게 최근 10일을 재집계한다.
+        // 오늘 1행만 쓰면 며칠 뒤 발생한 전환이 어느 날짜 지표에도 반영되지 않는다.
+        churnMetricMapper.upsertRecentMetrics(10);
     }
 }

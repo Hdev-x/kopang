@@ -4,5 +4,5 @@ package com.kopang.app.domain.churn;
 public record InterventionRunResult(
         int targetCount, // 오늘 발송 후보 전원
         int sentCount, // 처치군(실제 발송)
-        int controlCount) { // 대조군 + 정책 제외(상한·배타)로 발송하지 않은 수
+        int controlCount) { // 순수 대조군 수 (상한·배타로 제외된 인원은 여기 포함되지 않는다)
 }

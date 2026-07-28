@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kopang.app.domain.intervention.InterventionOutcomeMapper">
+
+    <!--
+      측정 창 7일 — 대응 후 7일 안의 결제 완료 주문을 전환으로 본다.
+      30일이 아닌 이유: 리텐션 캠페인의 통상 관측 기간이 7~14일이고, 창이 길수록
+      대응과 무관한 반복 구매까지 실적으로 빨려 들어간다.
+
+      기여 매출은 창 안 "첫 주문" 금액만 잡는다. 창 내 전체를 더하면 과대평가된다.
+
+      **한 주문은 하나의 대응에만 귀속된다.** 같은 유저에게 유형이 다른 대응이 나가면
+      창이 겹치는데, dedup 이 없으면 하나의 주문이 양쪽 전환·매출로 이중 계상된다.
+      귀속 우선순위는 "그 주문에 가장 가까운(직전) 대응" — 인과적으로 가장 그럴듯하다.
+    -->
+
+    <!-- ① 전환 확정 : 창 안에 주문이 있으면 창이 안 끝나도 즉시 확정 -->
+    <insert id="insertConvertedOutcomes">
+        INSERT INTO intervention_outcome
+            (intervention_id, converted, order_id, revenue_amount, retained, window_days, measured_at)
+        SELECT intervention_id, TRUE, order_id, total_price, TRUE, 7, NOW()
+        FROM (
+            -- ②단계: 한 대응이 여러 주문의 직전 대응일 수 있으므로 그중 첫 주문만
+            SELECT DISTINCT ON (intervention_id) intervention_id, order_id, total_price
+            FROM (
+                -- ①단계: 주문 1건은 그 주문 직전에 나간 대응 하나에만 귀속
+                SELECT DISTINCT ON (o.order_id)
+                       r.intervention_id, o.order_id, o.total_price, o.ordered_at
+                FROM retention_intervention r
+                JOIN orders o
+                  ON o.user_id = r.user_id
+                 AND o.payment_status = 'PAID'
+                 AND o.ordered_at &gt; r.created_at
+                 AND o.ordered_at &lt;= r.created_at + INTERVAL '7 days'
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM intervention_outcome io
+                    WHERE io.intervention_id = r.intervention_id
+                )
+                <!-- 이미 다른 대응에 귀속된 주문은 후보에서 뺀다.
+                     이 조건이 없으면 실행 간 중복이 생긴다: 유형X(1일) → 유형Y(3일) → 주문(4일)
+                     일 때 5일 배치는 Y에 귀속하고, 6일 배치는 Y가 판정 완료라 제외되어
+                     같은 주문을 X에도 귀속시킨다. 매일 도는 배치에서 반드시 발생한다. -->
+                  AND NOT EXISTS (
+                    SELECT 1 FROM intervention_outcome io2
+                    WHERE io2.order_id = o.order_id
+                )
+                ORDER BY o.order_id, r.created_at DESC, r.intervention_id DESC
+            ) per_order
+            ORDER BY intervention_id, ordered_at
+        ) per_intervention
+        ON CONFLICT (intervention_id) DO NOTHING
+    </insert>
+
+    <!-- ② 미전환 확정 : 창이 끝났는데 귀속된 주문이 없는 건만 -->
+    <insert id="insertNotConvertedOutcomes">
+        INSERT INTO intervention_outcome
+            (intervention_id, converted, order_id, revenue_amount, retained, window_days, measured_at)
+        SELECT r.intervention_id, FALSE, NULL, 0,
+               -- retained : 사지는 않았어도 돌아오긴 했는가(재방문).
+               -- converted 와 같은 값이면 별도 지표일 이유가 없다.
+               EXISTS (SELECT 1 FROM users u
+                        WHERE u.user_id = r.user_id
+                          AND u.last_login_at &gt; r.created_at),
+               7, NOW()
+        FROM retention_intervention r
+        WHERE r.created_at + INTERVAL '7 days' &lt;= NOW()
+          AND NOT EXISTS (
+              SELECT 1 FROM intervention_outcome io WHERE io.intervention_id = r.intervention_id
+          )
+        ON CONFLICT (intervention_id) DO NOTHING
+    </insert>
+
+</mapper>

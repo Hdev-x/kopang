@@ -151,11 +151,22 @@
     </insert>
 
 
-    <!-- 재실행 대비 멱등성 확보 -->
+    <!-- 재실행 대비 멱등성 확보.
+         두 가지를 남긴다:
+           ① 대응이 참조 중인 판정 — retention_intervention.churn_score_id 가 FK로 물고 있어
+              지우면 발송 후 재실행에서 FK violation 이 난다
+           ② 시연 데이터(demo_tag='SIM') — 실제 배치가 시연 데이터를 지우면 안 된다
+         ①·②로 남은 행 위에 새 감지가 쌓이면 같은 날 중복이 생기지만, 인원 지표는
+         모두 DISTINCT ON (최신 1건) 이라 영향이 없다. -->
     <delete id="deleteTodayRuleScores">
-        DELETE FROM churn_score
-        WHERE source = 'RULE'
-            AND scored_at::date = CURRENT_DATE
+        DELETE FROM churn_score cs
+        WHERE cs.source = 'RULE'
+            AND cs.scored_at::date = CURRENT_DATE
+            AND cs.demo_tag IS NULL
+            AND NOT EXISTS (
+                SELECT 1 FROM retention_intervention ri
+                WHERE ri.churn_score_id = cs.churn_score_id
+            )
     </delete>
 
 
@@ -228,6 +239,7 @@
             #{i.actionType},
             #{i.isControl},
             #{i.channel}
+        )
         </foreach>
     </insert>
     <!-- 특정 회원의 특정 위험 유형에 대한 최신 이탈 점수 조회 -->
@@ -255,12 +267,115 @@
           AND created_at &gt; NOW() - CAST(#{days} || ' days' AS INTERVAL)
     </select>
 
+    <!-- ============================================= -->
+    <!-- 오늘 배치 실행분 원복 (시연·테스트 재실행용)      -->
+    <!-- 발송 상한 때문에 한 번 실행하면 대상이 사라지므로 -->
+    <!-- 여러 번 시연하려면 되돌릴 수 있어야 한다.        -->
+    <!-- ============================================= -->
+
+    <!-- 이번 실행이 감지한 수. 시연 데이터(SIM)를 빼야 배치 결과가 실제 값이 된다.
+         고유 회원 수로 세는 이유: 한 회원이 여러 룰에 걸리면 행이 여러 개라
+         "7,128명 감지"가 실제 인원보다 부풀어 보인다. -->
+    <select id="countTodayRuleScores" resultType="int">
+        SELECT COUNT(DISTINCT user_id) FROM churn_score
+         WHERE source = 'RULE' AND scored_at::date = CURRENT_DATE AND demo_tag IS NULL
+    </select>
+
+    <!--
+      원복 범위는 **실제 배치가 만든 것**(demo_tag IS NULL)으로 한정한다.
+      created_at 만으로 자르면 같은 날 만든 시연 데이터(demo_tag='SIM')까지 쓸어간다.
+      실측: 배치가 18건 만들었는데 원복이 2,527건을 지웠다.
+    -->
+
+    <!-- 발송량 집계 — 통합·쿠폰만료·미로그인 세 경로의 합을 실행 전후 차이로 센다 -->
+    <select id="countTodayInterventions" resultType="int">
+        SELECT COUNT(*) FROM retention_intervention
+         WHERE created_at::date = CURRENT_DATE AND demo_tag IS NULL
+    </select>
+
+    <select id="countTodayControls" resultType="int">
+        SELECT COUNT(*) FROM retention_intervention
+         WHERE created_at::date = CURRENT_DATE AND demo_tag IS NULL AND is_control
+    </select>
+
+    <!-- 오늘 대응받은 회원에게 오늘 발급된 쿠폰 (원복 전 집계·재고 복구용) -->
+    <!-- 이탈 대응 쿠폰 발급 — issued_by='CHURN' 을 남겨 원복 때 이것만 회수한다.
+         공용 CouponMapper.insertUserCoupon 을 쓰면 출처를 구분할 수 없다. -->
+    <insert id="insertChurnUserCoupon">
+        INSERT INTO user_coupons (user_id, coupon_id, used, issued_at, expires_at, issued_by)
+        VALUES (#{userId}, #{couponId}, FALSE, NOW(), CAST(#{expiresAt} AS DATE), 'CHURN')
+    </insert>
+
+    <select id="countTodayIssuedCouponsByCoupon" resultType="map">
+        SELECT uc.coupon_id AS "couponId", COUNT(*) AS "cnt"
+        FROM user_coupons uc
+        WHERE uc.issued_at::date = CURRENT_DATE
+          AND uc.issued_by = 'CHURN'          <!-- 이탈 대응이 발급한 것만. 이벤트·가입 쿠폰은 건드리지 않는다 -->
+          AND EXISTS (SELECT 1 FROM retention_intervention r
+                       WHERE r.user_id = uc.user_id
+                         AND r.created_at::date = CURRENT_DATE
+                         AND r.demo_tag IS NULL)
+        GROUP BY uc.coupon_id
+    </select>
+
+    <delete id="deleteTodayIssuedCoupons">
+        DELETE FROM user_coupons uc
+        WHERE uc.issued_at::date = CURRENT_DATE
+          AND uc.issued_by = 'CHURN'          <!-- 이탈 대응이 발급한 것만. 이벤트·가입 쿠폰은 건드리지 않는다 -->
+          AND EXISTS (SELECT 1 FROM retention_intervention r
+                       WHERE r.user_id = uc.user_id
+                         AND r.created_at::date = CURRENT_DATE
+                         AND r.demo_tag IS NULL)
+    </delete>
+
+    <update id="restoreCouponQuantity">
+        UPDATE coupons SET quantity = quantity + #{cnt} WHERE coupon_id = #{couponId}
+    </update>
+
+    <!-- 오늘 대응으로 발송된 알림. 대응 이력이 있는 회원의 당일 알림만 지운다
+         (공지·주문 알림 등 다른 경로 알림은 건드리지 않도록 type 을 한정) -->
+    <delete id="deleteTodayInterventionNotifications">
+        DELETE FROM notifications n
+        WHERE n.created_at::date = CURRENT_DATE
+          AND n.demo_tag IS NULL              <!-- 시연 데이터(SIM) 보존 -->
+          AND n.type IN ('COMEBACK', 'COUPON_EXPIRE', 'ABANDON', 'APOLOGY', 'REBUY',
+                         'WELCOME_BACK', 'RECOMMEND', 'WISHLIST')
+          AND EXISTS (SELECT 1 FROM retention_intervention r
+                       WHERE r.user_id = n.user_id
+                         AND r.created_at::date = CURRENT_DATE
+                         AND r.demo_tag IS NULL)
+    </delete>
+
+    <delete id="deleteTodayOutcomes">
+        DELETE FROM intervention_outcome io
+        WHERE io.intervention_id IN (
+            SELECT intervention_id FROM retention_intervention
+             WHERE created_at::date = CURRENT_DATE AND demo_tag IS NULL)
+    </delete>
+
+    <delete id="deleteTodayInterventions">
+        DELETE FROM retention_intervention
+         WHERE created_at::date = CURRENT_DATE AND demo_tag IS NULL
+    </delete>
+
+    <!-- 이미 기록된 대응의 대조군 여부. 응답용 판정을 따로 계산하면 실제 기록과 어긋난다. -->
+    <select id="isControlRecorded" resultType="boolean">
+        SELECT COALESCE(
+            (SELECT is_control FROM retention_intervention
+              WHERE user_id = #{userId}
+                AND risk_type = #{riskType}
+                AND action_type = #{actionType}
+              ORDER BY created_at DESC
+              LIMIT 1), FALSE)
+    </select>
+
     <!-- 상한①: 오늘 이미 실제 대응(처치군)을 받은 회원 (1일 1건 상한) -->
+    <!-- 상한①: 오늘 이미 대응 대상이 된 회원. 대조군도 포함한다 —
+         처치군만 세면 대조군은 같은 사람이 매일 무제한 기록되어 두 군의 구성이 달라진다. -->
     <select id="findTodayTreatedUserIds" resultType="long">
         SELECT DISTINCT user_id
         FROM retention_intervention
         WHERE created_at::date = CURRENT_DATE
-            AND is_control = false
     </select>
 
     <!-- 상한②: 웰컴백·복귀 쿠폰을 받은 적 있는 회원 (두 쿠폰 상호 배타 - 하나 받으면 다른 것 불가) -->
@@ -268,7 +383,6 @@
         SELECT DISTINCT user_id
         FROM retention_intervention
         WHERE risk_type IN ('FIRST_ORDER_ONLY', 'LOGIN_INACTIVE')
-            AND is_control = false
     </select>
 
 </mapper>

@@ -7,6 +7,9 @@
 
     <!-- 기간 필터 (from/to 있을 때만 붙음). to는 당일 포함(< to+1일) -->
     <sql id="dateFilter">
+        <!-- 측정 창(7일)이 닫힌 대응만 본다. 창 안의 대응은 "전환한 건만" 판정이 끝나 있어
+             함께 세면 전환율이 부풀려진다(지표 적재 ChurnMetricMapper와 같은 기준). -->
+        AND ri.created_at + INTERVAL '7 days' &lt;= NOW()
         <if test="from != null">
             AND ri.created_at &gt;= #{from}
         </if>
@@ -24,7 +27,9 @@
             COALESCE(SUM(io.revenue_amount) FILTER (WHERE NOT ri.is_control AND io.converted), 0) AS revenue,
             COUNT(*) FILTER (WHERE NOT ri.is_control AND io.retained) AS defended
         FROM retention_intervention ri
-        LEFT JOIN intervention_outcome io ON io.intervention_id = ri.intervention_id
+        <!-- INNER JOIN : 아직 판정이 끝나지 않은 대응은 분모에서 뺀다.
+             LEFT JOIN 이면 "결과를 모르는" 최근 대응이 미전환처럼 계산돼 전환율이 낮아진다. -->
+        JOIN intervention_outcome io ON io.intervention_id = ri.intervention_id
         <where>
             <include refid="dateFilter"/>
         </where>
@@ -45,7 +50,9 @@
             COUNT(*) FILTER (WHERE ri.is_control) AS controlN,
             COUNT(*) FILTER (WHERE ri.is_control AND io.converted) AS controlConv
         FROM retention_intervention ri
-        LEFT JOIN intervention_outcome io ON io.intervention_id = ri.intervention_id
+        <!-- INNER JOIN : 아직 판정이 끝나지 않은 대응은 분모에서 뺀다.
+             LEFT JOIN 이면 "결과를 모르는" 최근 대응이 미전환처럼 계산돼 전환율이 낮아진다. -->
+        JOIN intervention_outcome io ON io.intervention_id = ri.intervention_id
         <where>
             <include refid="dateFilter"/>
         </where>
@@ -67,7 +74,9 @@
             COUNT(*) FILTER (WHERE ri.is_control) AS controlN,
             COUNT(*) FILTER (WHERE ri.is_control AND io.converted) AS controlConv
         FROM retention_intervention ri
-        LEFT JOIN intervention_outcome io ON io.intervention_id = ri.intervention_id
+        <!-- INNER JOIN : 아직 판정이 끝나지 않은 대응은 분모에서 뺀다.
+             LEFT JOIN 이면 "결과를 모르는" 최근 대응이 미전환처럼 계산돼 전환율이 낮아진다. -->
+        JOIN intervention_outcome io ON io.intervention_id = ri.intervention_id
         <where>
             <include refid="dateFilter"/>
         </where>
@@ -83,7 +92,9 @@
             COUNT(*) FILTER (WHERE NOT ri.is_control) AS sent,
             COUNT(*) FILTER (WHERE NOT ri.is_control AND io.converted) AS converted
         FROM retention_intervention ri
-        LEFT JOIN intervention_outcome io ON io.intervention_id = ri.intervention_id
+        <!-- INNER JOIN : 아직 판정이 끝나지 않은 대응은 분모에서 뺀다.
+             LEFT JOIN 이면 "결과를 모르는" 최근 대응이 미전환처럼 계산돼 전환율이 낮아진다. -->
+        JOIN intervention_outcome io ON io.intervention_id = ri.intervention_id
         WHERE ri.created_at &gt;= COALESCE(CAST(#{from} AS timestamp), NOW() - INTERVAL '30 days')
         <if test="to != null">
             AND ri.created_at &lt; (CAST(#{to} AS date) + INTERVAL '1 day')

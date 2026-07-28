@@ -45,7 +45,10 @@ public class ChurnSummaryResponse {
     public static class OpsSummary {
         private Integer sentToday;        // 오늘 실제 발송(처치군)
         private Integer sentPushToday;    // 오늘 발송 중 PUSH
-        private Integer sentCouponToday;  // 오늘 발송 중 COUPON
+        // 오늘 실제 발급된 쿠폰 수. action_type='COUPON' 을 세지 않는 이유:
+        // 대응은 전부 action_type='PUSH' 로 기록되고(발송 채널), 쿠폰은 autoIssueCoupon()
+        // 으로 따로 발급된다. 채널로 세면 쿠폰이 나가도 항상 0이 된다.
+        private Integer sentCouponToday;
         private Integer controlToday;     // 오늘 대조군
         private Long totalCount;          // 누적 대응 기록
         private Long convertedCount;      // 전환(처치군, 7일 귀속)

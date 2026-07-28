@@ -69,4 +69,34 @@ public interface ChurnMapper {
     int countRecentIntervention(@Param("userId") Long userId, @Param("riskType") String riskType,
             @Param("actionType") String actionType, @Param("days") int days);
 
+    // 이미 기록된 대응의 대조군 여부 (프론트 응답과 DB 값을 일치시키기 위해 조회)
+    boolean isControlRecorded(@Param("userId") Long userId, @Param("riskType") String riskType,
+            @Param("actionType") String actionType);
+
+    // 오늘 감지된 룰 판정 수 (배치 실행 결과 표시용)
+    int countTodayRuleScores();
+
+    // 발송량 집계용 — 전용 발송 메서드가 void 라 실행 전후 차이로 센다
+    int countTodayInterventions();
+
+    int countTodayControls();
+
+    // ===== 오늘 배치 실행분 원복 (시연·테스트 재실행용) =====
+    /** 이탈 대응이 발급하는 쿠폰. 공용 CouponMapper 대신 여기서 넣는 이유는 issued_by 를 남기기 위해서다. */
+    int insertChurnUserCoupon(@Param("userId") Long userId,
+                              @Param("couponId") Long couponId,
+                              @Param("expiresAt") java.util.Date expiresAt);
+
+    List<java.util.Map<String, Object>> countTodayIssuedCouponsByCoupon();
+
+    int deleteTodayIssuedCoupons();
+
+    int restoreCouponQuantity(@Param("couponId") Long couponId, @Param("cnt") int cnt);
+
+    int deleteTodayInterventionNotifications();
+
+    int deleteTodayOutcomes();
+
+    int deleteTodayInterventions();
+
 }

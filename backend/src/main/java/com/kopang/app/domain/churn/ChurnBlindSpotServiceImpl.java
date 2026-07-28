@@ -59,7 +59,8 @@ public class ChurnBlindSpotServiceImpl implements ChurnBlindSpotService {
             return new ChurnBlindSpotResult(targets.size(), 0);
         }
 
-        Set<Long> treatmentUsers = new HashSet<>(interventionService.recordAndCheckControl(requests));
+        Set<Long> treatmentUsers = new HashSet<>(
+                interventionService.recordAndCheckControl(requests).treatment());
         for (Long userId : treatmentUsers) {
             NotificationDTO notification = new NotificationDTO();
             notification.setUserId(userId);
