@@ -18,6 +18,7 @@ export function EditProfilePage() {
   const [phone2, setPhone2] = useState("");
   const [phone3, setPhone3] = useState("");
   const phone3Ref = useRef<HTMLInputElement>(null);
+  const [email, setEmail] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -34,6 +35,7 @@ export function EditProfilePage() {
   useEffect(() => {
     getProfile()
       .then((data) => {
+        setEmail(data.email || "");
         setName(data.name || "");
         const phoneStr = data.phone || "";
         const parts = phoneStr.split("-");
@@ -170,6 +172,13 @@ export function EditProfilePage() {
     <Layout>
       <PageHeader title="회원정보 수정" />
       <form className={s.form} onSubmit={handleSubmit}>
+        <Input
+          label="이메일 (변경 불가)"
+          value={email || "로딩 중..."}
+          disabled
+          readOnly
+          style={{ backgroundColor: "var(--color-bg-muted, #f5f5f5)", color: "var(--color-text-muted, #888)", cursor: "not-allowed" }}
+        />
         <Input label="이름" value={name} onChange={(e) => setName(e.target.value)} error={nameError} />
 
         {/* 연락처 3분할 입력 필드 */}
@@ -248,7 +257,15 @@ export function EditProfilePage() {
           )}
         </div>
 
-        <Input label="생년월일" type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} error={birthDateError} />
+        <Input
+          label="생년월일"
+          type="date"
+          value={birthDate}
+          max={new Date().toISOString().substring(0, 10)}
+          min="1900-01-01"
+          onChange={(e) => setBirthDate(e.target.value)}
+          error={birthDateError}
+        />
 
         <div style={{ position: "relative", width: "100%" }}>
           <Input

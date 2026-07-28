@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, Crown } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { cancelMembership, getMembershipStatus, getSavedShippingFee, keepMembership, subscribeMembership, type UserMembershipResponse } from "../../api/membership";
+import { cancelMembership, getMembershipStatus, getSavedShippingFee, keepMembership, recordMembershipCancelModal, subscribeMembership, type UserMembershipResponse } from "../../api/membership";
 import { useAuth } from "../../hooks/useAuth";
 import { WebLayout } from "../components/WebLayout";
 import styles from "./WebMembershipPages.module.css";
@@ -15,6 +15,7 @@ export function WebMembershipPage() {
   const [membership, setMembership] = useState<UserMembershipResponse>(null);
   const [savedFee, setSavedFee] = useState(0);
   const [loading, setLoading] = useState(Boolean(user));
+  const [modalOpen, setModalOpen] = useState(false);
 
   const reload = () => Promise.all([getMembershipStatus(), getSavedShippingFee()]).then(([status, fee]) => { setMembership(status); setSavedFee(fee.savedFee); });
   useEffect(() => { if (user) reload().catch(() => undefined).finally(() => setLoading(false)); }, [user]);
@@ -26,16 +27,94 @@ export function WebMembershipPage() {
     } catch { window.alert("결제를 시작하지 못했어요."); }
   };
 
+  const handleOpenCancelModal = () => {
+    setModalOpen(true);
+    recordMembershipCancelModal().catch((err) => console.error(err));
+  };
+
+  const handleConfirmCancel = async () => {
+    try {
+      await cancelMembership();
+      setModalOpen(false);
+      reload();
+    } catch {
+      window.alert("해지 예약에 실패했어요.");
+    }
+  };
+
   if (!user) return <WebLayout><div className={styles.center}><Crown size={42} /><h1>로그인이 필요한 혜택이에요.</h1><Link to="/web/login">로그인하기</Link></div></WebLayout>;
   if (loading) return <WebLayout><div className={styles.center}>멤버십 정보를 불러오는 중이에요.</div></WebLayout>;
   const active = membership?.status === "ACTIVE";
   const cancelled = membership?.status === "CANCELLED";
 
-  return <WebLayout><section className={styles.hero}><Crown size={32} /><p>KOPANG MEMBERSHIP</p><h1>매달 누리는 쇼핑 혜택</h1><strong>월 4,990원</strong></section>
-    <div className={styles.benefits}>{BENEFITS.map((benefit) => <article key={benefit}><Check size={20} /><span>{benefit}</span></article>)}</div>
-    <section className={styles.statusCard}><div><p>현재 멤버십 상태</p><h2>{active ? "이용 중" : cancelled ? "해지 예약" : "미가입"}</h2>{membership?.endDate && <span>혜택 만료일 {membership.endDate.slice(0, 10)}</span>}</div><div><p>이번 달 절약한 배송비</p><strong>{savedFee.toLocaleString()}원</strong></div></section>
-    <div className={styles.actions}>{active ? <button type="button" className={styles.secondary} onClick={() => cancelMembership().then(reload).catch(() => window.alert("해지 예약에 실패했어요."))}>멤버십 해지 예약</button> : cancelled ? <button type="button" onClick={() => keepMembership().then(reload).catch(() => window.alert("혜택 유지에 실패했어요."))}>멤버십 유지하기</button> : <button type="button" onClick={subscribe}>멤버십 시작하기</button>}<button type="button" className={styles.secondary} onClick={() => navigate("/web")}>쇼핑홈으로</button></div>
-  </WebLayout>;
+  return (
+    <WebLayout>
+      <section className={styles.hero}>
+        <Crown size={32} />
+        <p>KOPANG MEMBERSHIP</p>
+        <h1>매달 누리는 쇼핑 혜택</h1>
+        <strong>월 4,990원</strong>
+      </section>
+      <div className={styles.benefits}>
+        {BENEFITS.map((benefit) => (
+          <article key={benefit}>
+            <Check size={20} />
+            <span>{benefit}</span>
+          </article>
+        ))}
+      </div>
+      <section className={styles.statusCard}>
+        <div>
+          <p>현재 멤버십 상태</p>
+          <h2>{active ? "이용 중" : cancelled ? "해지 예약" : "미가입"}</h2>
+          {membership?.endDate && <span>혜택 만료일 {membership.endDate.slice(0, 10)}</span>}
+        </div>
+        <div>
+          <p>이번 달 절약한 배송비</p>
+          <strong>{savedFee.toLocaleString()}원</strong>
+        </div>
+      </section>
+      <div className={styles.actions}>
+        {active ? (
+          <button type="button" className={styles.secondary} onClick={handleOpenCancelModal}>
+            멤버십 해지 예약
+          </button>
+        ) : cancelled ? (
+          <button type="button" onClick={() => keepMembership().then(reload).catch(() => window.alert("혜택 유지에 실패했어요."))}>
+            멤버십 유지하기
+          </button>
+        ) : (
+          <button type="button" onClick={subscribe}>
+            멤버십 시작하기
+          </button>
+        )}
+        <button type="button" className={styles.secondary} onClick={() => navigate("/web")}>
+          쇼핑홈으로
+        </button>
+      </div>
+
+      {/* 이탈 방지 멤버십 해지 만류 모달 (PC 웹) */}
+      {modalOpen && (
+        <div className={styles.overlay} onClick={() => setModalOpen(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalTitle}>정말 KOPANG WOW 멤버십을 해지하시겠어요?</div>
+            <div className={styles.modalBody}>
+              이번 달 멤버십으로 아낀 배송비가 <span className={styles.highlightFee}>{savedFee.toLocaleString()}원</span>이에요.<br />
+              지금 해지하시면 다음 달부터 모든 무료배송 및 회원 전용 적립 혜택이 만료돼요.
+            </div>
+            <div className={styles.modalActions}>
+              <button type="button" className={styles.keepBtn} onClick={() => setModalOpen(false)}>
+                혜택 유지하기
+              </button>
+              <button type="button" className={styles.confirmCancelBtn} onClick={handleConfirmCancel}>
+                그래도 해지하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </WebLayout>
+  );
 }
 
 export function WebMembershipSuccessPage() {

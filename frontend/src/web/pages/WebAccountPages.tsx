@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { ChevronRight, Download, Heart, MapPin, Package, Search, Star, Ticket, UserRound, Eye, EyeOff } from "lucide-react";
-import { updateProfile } from "../../api/auth";
+import { getProfile, updateProfile } from "../../api/auth";
 import { getAvailableCoupons, getMyCoupons, downloadCoupon, type CouponResponse, type UserCouponResponse } from "../../api/coupon";
+import { getPointBalance } from "../../api/point";
+import { getOrders } from "../../api/order";
+import { getWishlist } from "../../api/wishlist";
 import { Link, useParams } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { WebLayout } from "../components/WebLayout";
@@ -32,20 +35,269 @@ export function WebShoppingNav({ activeKind }: { activeKind: string }) {
 }
 
 function ProfileHome({ name }: { name: string }) {
-  return <div className={styles.profileLayout}><aside className={styles.profileCard}><div className={styles.avatar}><UserRound size={42} /></div><h1>{name}</h1><div className={styles.profileStats}><span><Heart />찜<b>0</b></span><span><Ticket />쿠폰<b>0</b></span><span><Package />주문<b>0</b></span></div></aside><main className={styles.profileContent}><section><h2>찜한 상품</h2><div className={styles.uploadEmpty}>관심 상품을 저장하면 여기에 표시됩니다.</div></section></main></div>;
+  const [couponsCount, setCouponsCount] = useState(0);
+  const [ordersCount, setOrdersCount] = useState(0);
+  const [wishlistCount, setWishlistCount] = useState(0);
+
+  useEffect(() => {
+    Promise.all([
+      getMyCoupons().catch(() => []),
+      getOrders().catch(() => []),
+      getWishlist().catch(() => []),
+    ]).then(([couponData, orderData, wishlistData]) => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const validCoupons = couponData.filter((c) => {
+        if (c.used) return false;
+        if (!c.expiresAt) return true;
+        return new Date(c.expiresAt) >= today;
+      });
+      setCouponsCount(validCoupons.length);
+      setOrdersCount(orderData.length);
+      setWishlistCount(wishlistData.length);
+    }).catch(console.error);
+  }, []);
+
+  return (
+    <div className={styles.profileLayout}>
+      <aside className={styles.profileCard}>
+        <div className={styles.avatar}>
+          <UserRound size={42} />
+        </div>
+        <h1>{name}</h1>
+        <div className={styles.profileStats}>
+          <Link to="/web/my/wishlist" style={{ textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <span><Heart />찜<b>{wishlistCount}</b></span>
+          </Link>
+          <Link to="/web/my/coupons" style={{ textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <span><Ticket />쿠폰<b>{couponsCount}</b></span>
+          </Link>
+          <Link to="/web/my/orders" style={{ textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <span><Package />주문<b>{ordersCount}</b></span>
+          </Link>
+        </div>
+      </aside>
+      <main className={styles.profileContent}>
+        <section>
+          <h2>찜한 상품</h2>
+          <div className={styles.uploadEmpty}>관심 상품을 저장하면 여기에 표시됩니다.</div>
+        </section>
+      </main>
+    </div>
+  );
 }
 
 function ReviewPage({ write }: { write: boolean }) {
   return <main className={styles.reviewPage}>{write ? <><h1>내가 사용한 상품 리뷰쓰기</h1><div className={styles.reviewSearch}><input placeholder="브랜드명 혹은 상품명 입력" /><button type="button"><Search size={18} />검색</button></div><div className={styles.empty}><Star size={36} /><strong>작성 가능한 리뷰가 없어요.</strong><p>구매 확정된 상품이 생기면 리뷰를 작성할 수 있어요.</p></div></> : <div className={styles.empty}><Star size={36} /><strong>내가 남긴 리뷰가 없어요.</strong><p>상품을 사용한 경험을 다른 사용자와 공유해 보세요.</p></div>}</main>;
 }
 
-function SettingsPage({ name }: { name: string }) {
-  return <main className={styles.settings}><div className={styles.avatar}><UserRound size={34} /></div><h1>회원정보 수정</h1><label>닉네임<input defaultValue={name} /></label><label>이메일<input value="로그인 계정에서 제공되는 정보" disabled readOnly /></label><label>휴대폰 번호<button type="button">내 번호 인증하기</button></label><label>생년월일<input type="date" /></label><button type="button" className={styles.save}>저장하기</button></main>;
+function SettingsPage({ name: initialName }: { name: string }) {
+  const user = useAuth();
+  const [email, setEmail] = useState(user?.email || "");
+  const [name, setName] = useState(user?.name || initialName || "");
+  const [phone1, setPhone1] = useState("010");
+  const [phone2, setPhone2] = useState("");
+  const [phone3, setPhone3] = useState("");
+  const [birthDate, setBirthDate] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const phone3Ref = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (user?.email) setEmail(user.email);
+    if (user?.name) setName(user.name);
+    getProfile()
+      .then((profile) => {
+        if (profile.email) setEmail(profile.email);
+        if (profile.name) setName(profile.name);
+        if (profile.birthDate) setBirthDate(profile.birthDate.substring(0, 10));
+        if (profile.phone) {
+          const parts = profile.phone.split("-");
+          if (parts.length === 3) {
+            setPhone1(parts[0]);
+            setPhone2(parts[1]);
+            setPhone3(parts[2]);
+          } else {
+            setPhone2(profile.phone);
+          }
+        }
+      })
+      .catch((err) => console.error("프로필 정보 로드 실패", err));
+  }, [user]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const phoneFull = `${phone1}-${phone2}-${phone3}`;
+    const phoneRegex = /^01[016789]-\d{3,4}-\d{4}$/;
+    if (phone2 || phone3) {
+      if (!phoneRegex.test(phoneFull)) {
+        window.alert("올바른 휴대폰 번호 형식이 아닙니다 (예: 010-1234-5678)");
+        return;
+      }
+    }
+
+    try {
+      setSubmitting(true);
+      await updateProfile({
+        name,
+        phone: phone2 && phone3 ? phoneFull : undefined,
+        birthDate: birthDate || undefined,
+      });
+      window.alert("회원 정보가 성공적으로 수정되었습니다.");
+    } catch (err: any) {
+      window.alert(err.response?.data?.message || "회원 정보 수정 중 오류가 발생했습니다.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <main className={styles.settings}>
+      <div className={styles.avatar}>
+        <UserRound size={42} />
+      </div>
+      <h1>회원정보 수정</h1>
+      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column" }}>
+        <label>
+          닉네임(이름)
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="이름 입력"
+            required
+          />
+        </label>
+        <label>
+          이메일 (변경 불가)
+          <input
+            value={email || "로그인 계정 이메일"}
+            disabled
+            readOnly
+            style={{ backgroundColor: "var(--color-bg-muted, #f5f5f5)", color: "#888", cursor: "not-allowed" }}
+          />
+        </label>
+        <label>
+          휴대폰 번호
+          <div style={{ display: "flex", gap: "8px", alignItems: "center", marginTop: "6px" }}>
+            <select
+              value={phone1}
+              onChange={(e) => setPhone1(e.target.value)}
+              style={{ flex: 1, height: "44px", padding: "0 8px", borderRadius: "4px", border: "1px solid var(--color-border, #ccc)" }}
+            >
+              <option value="010">010</option>
+              <option value="011">011</option>
+              <option value="016">016</option>
+              <option value="017">017</option>
+              <option value="018">018</option>
+              <option value="019">019</option>
+            </select>
+            <span style={{ color: "#888" }}>-</span>
+            <input
+              type="text"
+              maxLength={4}
+              value={phone2}
+              onChange={(e) => {
+                const val = e.target.value.replace(/[^0-9]/g, "");
+                setPhone2(val);
+                if (val.length === 4 && phone3Ref.current) {
+                  phone3Ref.current.focus();
+                }
+              }}
+              placeholder="중간 4자리"
+              style={{ flex: 1.5, height: "44px", padding: "0 8px", textAlign: "center" }}
+            />
+            <span style={{ color: "#888" }}>-</span>
+            <input
+              type="text"
+              ref={phone3Ref}
+              maxLength={4}
+              value={phone3}
+              onChange={(e) => setPhone3(e.target.value.replace(/[^0-9]/g, ""))}
+              placeholder="끝 4자리"
+              style={{ flex: 1.5, height: "44px", padding: "0 8px", textAlign: "center" }}
+            />
+          </div>
+        </label>
+        <label>
+          생년월일
+          <input
+            type="date"
+            value={birthDate}
+            max={new Date().toISOString().substring(0, 10)}
+            min="1900-01-01"
+            onChange={(e) => setBirthDate(e.target.value)}
+          />
+        </label>
+        <button type="submit" disabled={submitting} className={styles.save}>
+          {submitting ? "저장 중..." : "저장하기"}
+        </button>
+      </form>
+    </main>
+  );
 }
 
 function ShoppingPage({ kind, suffix }: { kind: AccountKind; suffix?: string }) {
-  const titleMap: Partial<Record<AccountKind, string>> = { orders: "주문배송목록", order: `주문 상세 #${suffix ?? ""}`, addresses: "배송지 관리", wishlist: "상품 스크랩북", points: "포인트", coupons: "쿠폰", inquiries: "나의 문의내역", inquiry: `문의 상세 #${suffix ?? ""}` };
-  return <main className={styles.shopping}><section className={styles.summary}><span><Ticket />쿠폰 <b>0</b></span><span><Star />포인트 <b>0P</b></span><span><Package />진행 중인 주문 <b>0</b></span></section><h1>{titleMap[kind] ?? "나의 쇼핑"}</h1><div className={styles.orderSteps}>{["입금대기", "결제완료", "배송준비", "배송중", "배송완료", "구매확정"].map((step, index) => <span key={step}>{step}<b>0</b>{index < 5 && <ChevronRight />}</span>)}</div><div className={styles.empty}><Package size={36} /><strong>표시할 내역이 없어요.</strong><p>실제 API가 연결되면 이 영역에 최신 내역이 표시됩니다.</p></div></main>;
+  const [points, setPoints] = useState(0);
+  const [couponsCount, setCouponsCount] = useState(0);
+  const [ordersCount, setOrdersCount] = useState(0);
+
+  useEffect(() => {
+    Promise.all([
+      getPointBalance().catch(() => ({ balance: 0 })),
+      getMyCoupons().catch(() => []),
+      getOrders().catch(() => []),
+    ]).then(([pointData, couponData, orderData]) => {
+      setPoints(pointData.balance);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const validCoupons = couponData.filter((c) => {
+        if (c.used) return false;
+        if (!c.expiresAt) return true;
+        return new Date(c.expiresAt) >= today;
+      });
+      setCouponsCount(validCoupons.length);
+      setOrdersCount(orderData.length);
+    }).catch(console.error);
+  }, []);
+
+  const titleMap: Partial<Record<AccountKind, string>> = {
+    orders: "주문배송목록",
+    order: `주문 상세 #${suffix ?? ""}`,
+    addresses: "배송지 관리",
+    wishlist: "상품 스크랩북",
+    points: "포인트",
+    coupons: "쿠폰",
+    inquiries: "나의 문의내역",
+    inquiry: `문의 상세 #${suffix ?? ""}`
+  };
+
+  return (
+    <main className={styles.shopping}>
+      <section className={styles.summary}>
+        <Link to="/web/my/coupons" style={{ display: "contents", textDecoration: "none", color: "inherit" }}>
+          <span><Ticket />쿠폰 <b>{couponsCount}</b></span>
+        </Link>
+        <Link to="/web/my/points" style={{ display: "contents", textDecoration: "none", color: "inherit" }}>
+          <span><Star />포인트 <b>{points.toLocaleString()}P</b></span>
+        </Link>
+        <Link to="/web/my/orders" style={{ display: "contents", textDecoration: "none", color: "inherit" }}>
+          <span><Package />진행 중인 주문 <b>{ordersCount}</b></span>
+        </Link>
+      </section>
+      <h1>{titleMap[kind] ?? "나의 쇼핑"}</h1>
+      <div className={styles.orderSteps}>
+        {["입금대기", "결제완료", "배송준비", "배송중", "배송완료", "구매확정"].map((step, index) => (
+          <span key={step}>
+            {step}<b>{index === 1 ? ordersCount : 0}</b>{index < 5 && <ChevronRight />}
+          </span>
+        ))}
+      </div>
+      <div className={styles.empty}>
+        <Package size={36} />
+        <strong>표시할 내역이 없어요.</strong>
+        <p>실제 API가 연결되면 이 영역에 최신 내역이 표시됩니다.</p>
+      </div>
+    </main>
+  );
 }
 
 function SettingsBody({ kind, name }: { kind: AccountKind; name: string }) {
