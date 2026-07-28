@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { checkEmail, signup } from "../../api/auth";
@@ -20,6 +20,7 @@ export function WebSignupPage() {
   const [phone1, setPhone1] = useState("010");
   const [phone2, setPhone2] = useState("");
   const [phone3, setPhone3] = useState("");
+  const phone3Ref = useRef<HTMLInputElement>(null);
 
   const [checkedEmail, setCheckedEmail] = useState("");
   const [serviceAgreed, setServiceAgreed] = useState(false);
@@ -218,7 +219,13 @@ export function WebSignupPage() {
               type="text"
               maxLength={4}
               value={phone2}
-              onChange={(e) => setPhone2(e.target.value.replace(/[^0-9]/g, ""))}
+              onChange={(e) => {
+                const val = e.target.value.replace(/[^0-9]/g, "");
+                setPhone2(val);
+                if (val.length === 4 && phone3Ref.current) {
+                  phone3Ref.current.focus();
+                }
+              }}
               placeholder="중간 4자리"
               style={{
                 flex: 1.5,
@@ -235,6 +242,7 @@ export function WebSignupPage() {
             <span style={{ color: "var(--color-text-muted, #888)" }}>-</span>
             <input
               type="text"
+              ref={phone3Ref}
               maxLength={4}
               value={phone3}
               onChange={(e) => setPhone3(e.target.value.replace(/[^0-9]/g, ""))}

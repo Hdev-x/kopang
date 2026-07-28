@@ -361,7 +361,7 @@ function WebCouponsTab() {
                   }}
                 >
                   <div>
-                    <span style={{ fontSize: "16px", fontWeight 700, color: "#333", display: "block", marginBottom: "6px" }}>{c.name}</span>
+                    <span style={{ fontSize: "16px", fontWeight: 700, color: "#333", display: "block", marginBottom: "6px" }}>{c.name}</span>
                     <span style={{ fontSize: "12px", color: "#888" }}>
                       선착순 잔여: {c.quantity.toLocaleString()}개 | {formatDate(c.endDate)} 만료
                     </span>
