@@ -89,6 +89,21 @@ public class CouponServiceImpl implements CouponService {
 
     @Override
     public void useCoupon(Long userCouponId) {
-        couponMapper.useUserCoupon(userCouponId, new Date());
+        if (userCouponId == null) {
+            return;
+        }
+        UserCouponDTO userCoupon = couponMapper.findUserCouponById(userCouponId);
+        if (userCoupon == null) {
+            throw new IllegalArgumentException("존재하지 않는 쿠폰입니다");
+        }
+        if (userCoupon.isUsed()) {
+            throw new IllegalStateException("이미 사용 처리된 쿠폰입니다");
+        }
+        Date today = new Date();
+        if (userCoupon.getExpiresAt() != null && userCoupon.getExpiresAt().before(today)) {
+            throw new IllegalArgumentException("유효기간이 만료된 쿠폰입니다");
+        }
+        couponMapper.useUserCoupon(userCouponId, today);
     }
 }
+

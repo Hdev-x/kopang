@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "../../components/Layout";
 import { PageHeader } from "../../components/PageHeader";
@@ -12,6 +12,7 @@ export function AddPhonePage() {
     const [phone3, setPhone3] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const navigate = useNavigate();
+    const phone3Ref = useRef<HTMLInputElement>(null);
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -84,7 +85,13 @@ export function AddPhonePage() {
                                 type="tel"
                                 maxLength={4}
                                 value={phone2}
-                                onChange={(e) => setPhone2(e.target.value.replace(/[^0-9]/g, ""))}
+                                onChange={(e) => {
+                                    const val = e.target.value.replace(/[^0-9]/g, "");
+                                    setPhone2(val);
+                                    if (val.length === 4 && phone3Ref.current) {
+                                        phone3Ref.current.focus();
+                                    }
+                                }}
                                 placeholder="1234"
                                 style={{
                                     flex: 1.2,
@@ -100,6 +107,7 @@ export function AddPhonePage() {
                             <span style={{ color: "#aaa" }}>-</span>
                             <input
                                 type="tel"
+                                ref={phone3Ref}
                                 maxLength={4}
                                 value={phone3}
                                 onChange={(e) => setPhone3(e.target.value.replace(/[^0-9]/g, ""))}

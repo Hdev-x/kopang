@@ -1,5 +1,6 @@
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 import { Layout } from "../../components/Layout";
 import { PageHeader } from "../../components/PageHeader";
 import { Input } from "../../components/Input";
@@ -46,11 +47,14 @@ const TERMS = {
 export function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [name, setName] = useState("");
   const [phone1, setPhone1] = useState("010");
   const [phone2, setPhone2] = useState("");
   const [phone3, setPhone3] = useState("");
+  const phone3Ref = useRef<HTMLInputElement>(null);
 
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
@@ -178,20 +182,64 @@ export function SignupPage() {
             </p>
           )}
 
-          <Input
-            label="비밀번호"
-            type="password"
-            placeholder="비밀번호 입력"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <Input
-            label="비밀번호 확인"
-            type="password"
-            placeholder="비밀번호 확인 입력"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-          />
+          <div style={{ position: "relative", width: "100%", marginBottom: "15px" }}>
+            <Input
+              label="비밀번호"
+              type={showPassword ? "text" : "password"}
+              placeholder="비밀번호 입력"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: "absolute",
+                right: "12px",
+                bottom: "12px",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 0,
+                color: "#888",
+                zIndex: 2,
+              }}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+          <div style={{ position: "relative", width: "100%", marginBottom: "15px" }}>
+            <Input
+              label="비밀번호 확인"
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder="비밀번호 확인 입력"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              style={{
+                position: "absolute",
+                right: "12px",
+                bottom: "12px",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 0,
+                color: "#888",
+                zIndex: 2,
+              }}
+            >
+              {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
           <Input
             label="이름"
             placeholder="이름 입력"
@@ -230,7 +278,13 @@ export function SignupPage() {
                 type="text"
                 maxLength={4}
                 value={phone2}
-                onChange={(e) => setPhone2(e.target.value.replace(/[^0-9]/g, ""))}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^0-9]/g, "");
+                  setPhone2(val);
+                  if (val.length === 4 && phone3Ref.current) {
+                    phone3Ref.current.focus();
+                  }
+                }}
                 placeholder="중간 4자리"
                 style={{
                   flex: 1.5,
@@ -247,6 +301,7 @@ export function SignupPage() {
               <span style={{ color: "var(--color-text-muted, #888)" }}>-</span>
               <input
                 type="text"
+                ref={phone3Ref}
                 maxLength={4}
                 value={phone3}
                 onChange={(e) => setPhone3(e.target.value.replace(/[^0-9]/g, ""))}

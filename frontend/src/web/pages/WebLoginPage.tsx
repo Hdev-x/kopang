@@ -17,7 +17,7 @@ export function WebLoginPage() {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (email !== "admin" && !email.includes("@")) {
-      window.alert("올바른 이메일을 입력해 주세요.");
+      window.alert("올바른 이메일 형식(@ 포함)을 입력해 주세요.");
       return;
     }
 
@@ -85,8 +85,8 @@ export function WebLoginPage() {
       </form>
       <div className={styles.divider}>또는 소셜 계정으로 로그인</div>
       <div className={styles.socials}>
-        <a className={styles.google} href="http://localhost:8080/oauth2/authorization/google" onClick={rememberWebOAuth}>Google 계정으로 로그인</a>
-        <a className={styles.naver} href="http://localhost:8080/oauth2/authorization/naver" onClick={rememberWebOAuth}>Naver 계정으로 로그인</a>
+        <a className={styles.google} href="/oauth2/authorization/google" onClick={rememberWebOAuth}>Google 계정으로 로그인</a>
+        <a className={styles.naver} href="/oauth2/authorization/naver" onClick={rememberWebOAuth}>Naver 계정으로 로그인</a>
       </div>
       <p className={styles.switch}><span>아직 회원이 아니신가요?</span><Link to="/web/signup">회원가입</Link></p>
     </WebAuthLayout>

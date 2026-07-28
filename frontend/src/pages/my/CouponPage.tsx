@@ -21,8 +21,17 @@ export function CouponPage() {
     try {
       const myData = await getMyCoupons();
       const availableData = await getAvailableCoupons();
-      // 미사용된 쿠폰 위주로 필터링
-      setMyCoupons(myData.filter((c) => !c.used));
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // 미사용 및 미만료(당일 자정 기준 포함) 쿠폰 위주로 필터링
+      setMyCoupons(
+        myData.filter((c) => {
+          if (c.used) return false;
+          if (!c.expiresAt) return true;
+          return new Date(c.expiresAt) >= today;
+        })
+      );
       setAvailableCoupons(availableData);
     } catch (err) {
       console.error("쿠폰 정보를 불러오지 못했습니다.", err);

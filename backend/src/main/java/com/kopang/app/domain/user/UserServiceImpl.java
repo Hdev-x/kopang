@@ -6,6 +6,8 @@ import com.kopang.app.domain.point.PointHistoryDTO;
 import com.kopang.app.domain.coupon.CouponMapper;
 import com.kopang.app.domain.coupon.CouponDTO;
 import com.kopang.app.domain.coupon.UserCouponDTO;
+import com.kopang.app.domain.notification.NotificationMapper;
+import com.kopang.app.domain.notification.NotificationDTO;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -24,6 +26,7 @@ public class UserServiceImpl implements UserService {
     private final JavaMailSender mailSender;
     private final PointMapper pointMapper;
     private final CouponMapper couponMapper;
+    private final NotificationMapper notificationMapper;
 
     // 인증 유효시간 정보 관리 캐시
     private final java.util.Map<String, VerificationInfo> verificationCache = new java.util.concurrent.ConcurrentHashMap<>();
@@ -48,19 +51,24 @@ public class UserServiceImpl implements UserService {
     }
 
     public UserServiceImpl(UserMapper userMapper, PasswordEncoder passwordEncoder, JwtUtil jwtUtil,
-            JavaMailSender mailSender, PointMapper pointMapper, CouponMapper couponMapper) {
+            JavaMailSender mailSender, PointMapper pointMapper, CouponMapper couponMapper,
+            NotificationMapper notificationMapper) {
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.mailSender = mailSender;
         this.pointMapper = pointMapper;
         this.couponMapper = couponMapper;
+        this.notificationMapper = notificationMapper;
     }
 
     @Override
     public UserDTO create(UserDTO request) {
         if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
             throw new IllegalArgumentException("이메일을 입력해 주세요.");
+        }
+        if (!request.getEmail().matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+            throw new IllegalArgumentException("올바른 이메일 형식이 아닙니다.");
         }
         if (checkEmailDuplicate(request.getEmail())) {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다");
@@ -290,11 +298,8 @@ public class UserServiceImpl implements UserService {
             mailSender.send(mimeMessage);
             System.out.println("[EMAIL SUCCESS] Verification code sent to " + email);
         } catch (Exception e) {
-            // 발송 실패 시 콘솔 로그 출력 및 예외 전송 (실제 SMTP 키 등록 유도용 우회 제공)
             System.err.println("[EMAIL ERROR] Failed to send email to " + email + ": " + e.getMessage());
-            verificationCache.put(email, new VerificationInfo("123456", System.currentTimeMillis() + 300000));
-            throw new RuntimeException("이메일 발송에 실패했습니다. (메일 서버 설정 미비 또는 네트워크 오류)\n"
-                    + "[개발 테스트용 우회 기능]: 구글/네이버 키 설정 전이므로, 테스트용 번호 '123456'을 입력하시면 즉시 비밀번호를 변경해 보실 수 있습니다.");
+            throw new RuntimeException("이메일 발송에 실패했습니다. 메일 서버 설정 및 이메일 주소를 확인해 주세요.");
         }
     }
 
@@ -396,6 +401,17 @@ public class UserServiceImpl implements UserService {
                     couponMapper.insertUserCoupon(userCoupon);
                 }
             }
+
+            // 3. 인앱 웰컴 알림 발송
+            NotificationDTO welcomeNotification = NotificationDTO.builder()
+                    .userId(userId)
+                    .type("WELCOME_BACK")
+                    .message("회원가입을 환영합니다! 웰컴 3,000P 적립금과 10% 신규 가입 쿠폰이 지급되었습니다. 지금 혜택을 확인해 보세요!")
+                    .refId(null)
+                    .isRead(false)
+                    .clicked(false)
+                    .build();
+            notificationMapper.insertNotification(welcomeNotification);
         } catch (Exception e) {
             // 웰컴 혜택 지급 오류 시 로그 출력 후 가입 진행 자체는 정상 완료하도록 처리
             System.err.println("[웰컴 혜택 지급 오류] userId: " + userId + " - " + e.getMessage());

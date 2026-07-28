@@ -162,7 +162,7 @@ public class UserController {
             userService.sendVerificationCode(email);
 
             Map<String, Object> data = new HashMap<>();
-            data.put("message", "인증번호가 발송되었습니다. (테스트용 인증번호: 123456)");
+            data.put("message", "인증번호가 입력하신 이메일로 발송되었습니다.");
 
             return ResponseEntity.ok(ApiResponse.success(data));
         } catch (IllegalArgumentException e) {
@@ -218,8 +218,12 @@ public class UserController {
         String local = email.substring(0, atIdx);
         String domain = email.substring(atIdx + 1);
 
-        if (local.length() <= 2) {
-            return "**@" + domain;
+        if (local.length() == 0) {
+            return email;
+        } else if (local.length() == 1) {
+            return "*@" + domain;
+        } else if (local.length() == 2) {
+            return local.charAt(0) + "*@" + domain;
         }
         return local.substring(0, 2) + "*".repeat(local.length() - 2) + "@" + domain;
     }

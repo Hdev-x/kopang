@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 import { Layout } from "../../components/Layout";
 import { PageHeader } from "../../components/PageHeader";
 import { Input } from "../../components/Input";
@@ -11,6 +12,7 @@ import styles from "../../styles/LoginPage.module.css";
 export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
 
@@ -46,18 +48,40 @@ export function LoginPage() {
         <form className={styles.form} onSubmit={handleSubmit}>
           <Input
             label="이메일"
-            type="text"
+            type="email"
             placeholder="email@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
-          <Input
-            label="비밀번호"
-            type="password"
-            placeholder="비밀번호 입력"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <div style={{ position: "relative", width: "100%", marginBottom: "15px" }}>
+            <Input
+              label="비밀번호"
+              type={showPassword ? "text" : "password"}
+              placeholder="비밀번호 입력"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: "absolute",
+                right: "12px",
+                bottom: "12px",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 0,
+                color: "#888",
+                zIndex: 2,
+              }}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
           <div style={{ display: "flex", alignItems: "center", marginBottom: "15px" }}>
             <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", cursor: "pointer", color: "var(--color-text)" }}>
               <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
@@ -80,7 +104,7 @@ export function LoginPage() {
 
         <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "20px" }}>
           <a
-            href="http://localhost:8080/oauth2/authorization/google"
+            href="/oauth2/authorization/google"
             style={{
               display: "flex",
               alignItems: "center",
@@ -99,7 +123,7 @@ export function LoginPage() {
             Google 계정으로 로그인
           </a>
           <a
-            href="http://localhost:8080/oauth2/authorization/naver"
+            href="/oauth2/authorization/naver"
             style={{
               display: "flex",
               alignItems: "center",
@@ -121,3 +145,4 @@ export function LoginPage() {
     </Layout>
   );
 }
+

@@ -5,6 +5,7 @@ import com.kopang.app.domain.user.UserMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -22,6 +23,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     private final JwtUtil jwtUtil;
     private final UserMapper userMapper;
+
+    @Value("${app.frontend.url:http://localhost:5173}")
+    private String frontendUrl;
 
     public OAuth2AuthenticationSuccessHandler(JwtUtil jwtUtil, UserMapper userMapper) {
         this.jwtUtil = jwtUtil;
@@ -50,7 +54,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         UserDTO user = userMapper.detailByEmail(email);
         if (user == null) {
-            response.sendRedirect("http://localhost:5173/login?error=user_not_found");
+            response.sendRedirect(frontendUrl + "/login?error=user_not_found");
             return;
         }
 
@@ -64,7 +68,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         boolean hasPhone = user.getPhone() != null && !user.getPhone().trim().isEmpty();
 
         // React 프론트엔드의 OAuth 콜백 전용 화면으로 JWT를 실어서 리다이렉트 수행
-        String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:5173/oauth2/callback")
+        String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl + "/oauth2/callback")
                 .queryParam("accessToken", accessToken)
                 .queryParam("refreshToken", refreshToken)
                 .queryParam("name", URLEncoder.encode(user.getName(), StandardCharsets.UTF_8))
@@ -75,3 +79,4 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 }
+
