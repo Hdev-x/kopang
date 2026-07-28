@@ -7,8 +7,8 @@ from datetime import date, datetime, timedelta
 
 random.seed(42)
 TODAY = date(2026, 7, 2)
-ML = os.path.dirname(os.path.abspath(__file__))          # ml/
-V1 = os.path.join(ML, '_')                                # v1 원본 (ml/_)
+ML = os.path.dirname(os.path.abspath(__file__))          # ml/seed/ — csv 생성 위치
+V1 = os.path.join(os.path.dirname(ML), '_')               # v1 원본 (ml/_ — 한 단계 위)
 BCRYPT = '$2a$10$7zB3qQzEcbB7mU5eL2n9fO0xH98o2tYpM.2s5lR7wE.2F8u7y6X1.'  # v1과 동일 해시(비번 통일)
 
 # ---------- 1. categories_v2 ----------
