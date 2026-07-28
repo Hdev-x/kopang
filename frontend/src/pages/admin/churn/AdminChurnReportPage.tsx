@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AdminLayout } from "../../../components/AdminLayout";
+import { Skeleton } from "../../../components/Skeleton";
 import { getChurnReport, type ChurnReport } from "../../../api/churnReport";
 import styles from "./AdminChurnReportPage.module.css";
 
@@ -132,8 +133,24 @@ export function AdminChurnReportPage() {
   return (
     <AdminLayout title="대응 효과 리포트" fullBleed>
       {loading || error || !kpi ? (
-        <div style={{ padding: 40 }}>
-          <p className={styles.caption}>{loading ? "불러오는 중…" : "대응 효과 리포트를 불러오지 못했습니다."}</p>
+        // 빈 화면 대신 같은 틀을 그려둔다 — 데이터가 오는 순간 화면이 통째로 바뀌지 않도록
+        <div className={styles.page}>
+          <div className={styles.wide}>
+            <div className={styles.pageHead}>
+              <p className={styles.caption}>
+                {error ? "대응 효과 리포트를 불러오지 못했습니다." : "대조군 대비 순효과로 본 대응 성과"}
+              </p>
+            </div>
+            <div className={styles.kpis}>
+              {["대응한 위험 고객", "전환 (재구매)", "귀속 매출", "방어한 이탈 (추정)"].map((label) => (
+                <div key={label} className={styles.kCell}>
+                  <div className={styles.kLabel}>{label}</div>
+                  <div className={styles.kValue}><Skeleton w={96} h={24} /></div>
+                </div>
+              ))}
+            </div>
+            <div className={styles.wideBody} />
+          </div>
         </div>
       ) : (
         <div className={styles.page}>
@@ -141,6 +158,11 @@ export function AdminChurnReportPage() {
               <div className={styles.wide}>
                 <div className={styles.pageHead}>
                   <p className={styles.caption}>대조군 대비 순효과로 본 대응 성과</p>
+                  {/* 시연 데이터임을 화면에 명시한다 — 실사용 성과로 오독되면 안 된다 */}
+                  <p className={styles.demoNote}>
+                    ※ 현재 수치는 <b>시연용 생성 데이터</b>를 측정 배치가 판정한 결과입니다.
+                    실제 사용자 성과가 아니며, 효과 검증은 운영 데이터 축적 후에 가능합니다.
+                  </p>
                   <div className={styles.period}>
                     {PERIODS.map((p) => (
                       <button key={p.label} className={period === p.label ? styles.on : ""} onClick={() => { setPeriod(p.label); load(p.days); }}>

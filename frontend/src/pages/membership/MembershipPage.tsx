@@ -111,6 +111,22 @@ export function MembershipPage() {
     }
   };
 
+  // 해지 버튼 클릭 — 대조군에게는 만류 모달을 띄우지 않는다.
+  // 응답의 isControl 을 버리고 무조건 띄우면 "대응받지 않은 군"이 성립하지 않아
+  // 효과 리포트의 MODAL 순효과가 무의미해진다(대조군도 모달을 본 상태의 비교).
+  const handleCancelClick = async () => {
+    try {
+      const res = await recordMembershipCancelModal();
+      if (res?.isControl) {
+        await handleCancel();   // 대조군: 만류 없이 바로 해지 진행
+        return;
+      }
+    } catch (err) {
+      console.error(err);   // 기록 실패 시에도 사용자 흐름은 막지 않는다
+    }
+    setModalOpen(true);
+  };
+
   // 혜택 유지 처리 (해지 예약 취소)
   const handleKeep = async () => {
     try {
@@ -158,7 +174,7 @@ export function MembershipPage() {
       {membership && membership.status === "ACTIVE" ? (
         <>
           <p className={styles.status}>✓ 이용 중 · 다음 결제일 {formatPayDate(membership.endDate)}</p>
-          <Button variant="ghost" className={styles.cancel} onClick={() => { setModalOpen(true); recordMembershipCancelModal().catch(err => console.error(err)); }}>
+          <Button variant="ghost" className={styles.cancel} onClick={handleCancelClick}>
             멤버십 해지
           </Button>
         </>

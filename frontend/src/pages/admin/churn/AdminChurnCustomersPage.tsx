@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { TicketPercent } from "lucide-react";
 import { AdminLayout } from "../../../components/AdminLayout";
+import { Skeleton } from "../../../components/Skeleton";
 import {
   getRiskCustomerDetail,
   getRiskCustomers,
@@ -181,8 +182,18 @@ export function AdminChurnCustomersPage() {
             </select>
           </div>
           <div className={styles.listBody}>
+            {/* 목록 행 틀을 유지한다 — 문구 한 줄이면 데이터가 올 때 목록이 통째로 밀린다 */}
             {loading ? (
-              <p className={styles.emptyText}>불러오는 중…</p>
+              Array.from({ length: 12 }, (_, i) => (
+                <span key={i} className={styles.li}>
+                  <span className={styles.av} />
+                  <span className={styles.who}>
+                    <b><Skeleton w={82} h={13} /></b>
+                    <span className={styles.liType}><Skeleton w={116} h={11} /></span>
+                  </span>
+                  <span className={styles.liRight}><Skeleton w={38} h={17} r={7} /></span>
+                </span>
+              ))
             ) : error ? (
               <p className={styles.emptyText}>목록을 불러오지 못했습니다.</p>
             ) : rows.length === 0 ? (

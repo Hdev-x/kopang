@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { AdminLayout } from "../../../components/AdminLayout";
+import { SkeletonRows } from "../../../components/Skeleton";
 import { getInterventionLogs, type InterventionLog } from "../../../api/interventions";
 import styles from "./AdminInterventionsPage.module.css";
 
 const OUTCOME_LABEL: Record<string, string> = { CONVERTED: "전환", NO_RESPONSE: "미반응", CONTROL: "대조군" };
 function outcomeBadge(o: string) {
-  if (o === "CONVERTED") return styles.bOk;
+  if (o === "CONVERTED") return styles.bDone;
   if (o === "CONTROL") return styles.bMuted;
-  return styles.bWarn;
+  return styles.bWait;
 }
 
 const ACTION_LABEL: Record<string, string> = {
@@ -131,8 +132,16 @@ export function AdminInterventionsPage() {
         </div>
 
         {/* 테이블 */}
+        {/* 로딩 중에도 표 틀을 유지한다 — 문구 한 줄로 갈아끼우면 데이터가 올 때 화면이 튄다 */}
         {loading ? (
-          <p className={styles.empty}>불러오는 중…</p>
+          <div className={styles.tableWrap}>
+            <table className={styles.tbl}>
+              <thead>
+                <tr><th>일시</th><th>고객</th><th>위험 유형</th><th>대응</th><th>채널</th><th>구분</th><th>결과</th></tr>
+              </thead>
+              <tbody><SkeletonRows rows={12} cols={7} widths={["72%", "58%", "64%", "50%", "46%", "40%", "44%"]} /></tbody>
+            </table>
+          </div>
         ) : error ? (
           <p className={styles.empty}>대응 이력을 불러오지 못했습니다.</p>
         ) : filtered.length === 0 ? (
