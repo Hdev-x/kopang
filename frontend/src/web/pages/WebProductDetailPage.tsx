@@ -6,6 +6,7 @@ import { getProduct } from "../../api/products";
 import { getProductReviews, type Review } from "../../api/review";
 import { getProductQnaList } from "../../api/qna";
 import type { Product } from "../../types/product";
+import type { CartItem } from "../../types/cart";
 import type { QnaSummary } from "../../types/qna";
 import { WebLayout } from "../components/WebLayout";
 import styles from "./WebProductDetailPage.module.css";
@@ -40,6 +41,7 @@ export function WebProductDetailPage() {
   const [activeTab, setActiveTab] = useState<DetailTab>(readDetailTab);
   const [benefitOpen, setBenefitOpen] = useState(true);
   const [cardOpen, setCardOpen] = useState(false);
+  const [isDescExpanded, setIsDescExpanded] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -114,6 +116,22 @@ export function WebProductDetailPage() {
       .catch(() => window.alert("장바구니 담기에 실패했어요."));
   };
 
+  const handleDirectBuy = () => {
+    if (product) {
+      const directItem: CartItem = {
+        itemId: Date.now(),
+        productId: product.id,
+        name: product.name,
+        price: salePrice,
+        originalPrice: product.price,
+        discountPrice: salePrice,
+        quantity: quantity,
+        imageUrl: product.imageUrl || "",
+      };
+      navigate("/web/checkout", { state: { selectedItems: [directItem] } });
+    }
+  };
+
   const selectTab = (tab: DetailTab) => {
     window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#${tab}`);
     document.getElementById(tab)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -131,6 +149,13 @@ export function WebProductDetailPage() {
   const handleNextImage = () => {
     setSelectedImgIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
   };
+
+  const reviewCount = reviews.length;
+  const avgRatingNum =
+    reviewCount > 0
+      ? reviews.reduce((acc, r) => acc + (r.rating || 0), 0) / reviewCount
+      : 0;
+  const avgRatingText = reviewCount > 0 ? avgRatingNum.toFixed(1) : "0.0";
 
   return (
     <WebLayout>
@@ -188,8 +213,8 @@ export function WebProductDetailPage() {
 
           <div className={styles.ratingSummary}>
             <Star size={17} fill="currentColor" />
-            <strong>4.8</strong>
-            <button type="button" onClick={() => selectTab("review")}>상품평 {reviews.length}</button>
+            <strong>{avgRatingText}</strong>
+            <button type="button" onClick={() => selectTab("review")}>({reviewCount}개 상품평)</button>
           </div>
 
           <div className={styles.priceBlock}>
@@ -258,7 +283,7 @@ export function WebProductDetailPage() {
             <div className={styles.actions}>
               <button type="button" className={styles.wish} aria-label="찜하기"><Heart size={22} /></button>
               <button type="button" className={styles.cart} onClick={handleAddToCart}>장바구니</button>
-              <button type="button" className={styles.buy} onClick={() => navigate("/web/checkout")}>바로구매</button>
+              <button type="button" className={styles.buy} onClick={handleDirectBuy}>바로구매</button>
             </div>
           </div>
         </div>
@@ -278,10 +303,21 @@ export function WebProductDetailPage() {
           <p>KOPANG PRODUCT STORY</p>
           <h2>일상에 자연스럽게 스며드는<br />{product.name}</h2>
           {product.description ? (
-            <div
-              className={styles.descriptionHtml}
-              dangerouslySetInnerHTML={{ __html: product.description }}
-            />
+            <div className={styles.descWrapper}>
+              <div
+                className={`${styles.descriptionHtml} ${
+                  !isDescExpanded ? styles.descCollapsed : ""
+                }`}
+                dangerouslySetInnerHTML={{ __html: product.description }}
+              />
+              <button
+                type="button"
+                className={styles.expandBtn}
+                onClick={() => setIsDescExpanded((prev) => !prev)}
+              >
+                {isDescExpanded ? "상세설명 접기 ∧" : "상품 상세설명 펼쳐보기 ∨"}
+              </button>
+            </div>
           ) : (
             <span>필요한 기능과 편안한 사용 경험을 균형 있게 담은 상품입니다.</span>
           )}

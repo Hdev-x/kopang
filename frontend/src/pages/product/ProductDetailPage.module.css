@@ -474,3 +474,465 @@
 .reviewContent {
   flex: 1;
 }
+
+/* 리뷰 요약 뱃지 */
+.ratingSummary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 16px;
+}
+
+.stars {
+  color: #ff9a00;
+  font-size: 16px;
+  letter-spacing: 1px;
+}
+
+.ratingScore {
+  font-weight: 700;
+  color: #111;
+  font-size: 14px;
+}
+
+.reviewLink {
+  background: none;
+  border: none;
+  color: #3466e8;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+/* 쿠팡 스타일 가격 영역 */
+.priceContainer {
+  background: #fdfdfd;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.originalPriceRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.discountBadge {
+  font-size: 16px;
+  font-weight: 800;
+  color: #ae0000;
+}
+
+.originPrice {
+  font-size: 14px;
+  color: #888;
+  text-decoration: line-through;
+}
+
+.finalPriceRow {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.finalPrice {
+  font-size: 28px;
+  font-weight: 800;
+  color: #ae0000;
+  letter-spacing: -0.5px;
+}
+
+.priceUnit {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ae0000;
+  margin-right: 12px;
+}
+
+.rocketBadge {
+  display: inline-flex;
+  align-items: center;
+  background: linear-gradient(135deg, #0073e9, #0056b3);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 12px;
+  letter-spacing: 0.3px;
+  box-shadow: 0 2px 4px rgba(0, 115, 233, 0.25);
+}
+
+/* 도착 보장 안내 박스 */
+.deliveryPromiseBox {
+  background: #f4f8ff;
+  border: 1px solid #d0e2ff;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.deliveryTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.deliveryBadge {
+  background: #0073e9;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.deliveryDateText {
+  color: #0073e9;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.deliverySubText {
+  font-size: 12px;
+  color: #555;
+  margin-top: 4px;
+}
+
+/* 수량 선택 및 총 금액 계산 */
+.quantityBox {
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+}
+
+.quantityControl {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.quantityLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.quantityButtons {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.quantityButtons button {
+  width: 32px;
+  height: 32px;
+  background: #f5f5f5;
+  border: none;
+  font-size: 16px;
+  font-weight: 700;
+  color: #333;
+  cursor: pointer;
+}
+
+.quantityButtons button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.quantityButtons span {
+  width: 40px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.totalPriceRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px dashed #ddd;
+}
+
+.totalLabel {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111;
+}
+
+.totalPriceGroup {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+}
+
+.totalValue {
+  font-size: 22px;
+  font-weight: 800;
+  color: #ae0000;
+}
+
+.totalUnit {
+  font-size: 15px;
+  font-weight: 700;
+  color: #ae0000;
+}
+
+/* 상세 설명 (더보기/접기 기능) */
+.descContainer {
+  margin-top: 28px;
+  margin-bottom: 28px;
+  border-top: 1px solid #eee;
+  padding-top: 20px;
+}
+
+.sectionHeader {
+  font-size: 18px;
+  font-weight: 800;
+  color: #111;
+  margin-bottom: 16px;
+}
+
+.descCollapsed {
+  max-height: 800px;
+  overflow: hidden;
+  position: relative;
+  mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
+}
+
+.expandToggleBtn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 12px;
+  background: #ffffff;
+  border: 1px solid #0073e9;
+  color: #0073e9;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.expandToggleBtn:hover {
+  background: #f0f7ff;
+}
+
+/* 상품 필수정보 스펙 테이블 */
+.specContainer {
+  margin-top: 32px;
+  margin-bottom: 32px;
+  background: #fcfcfc;
+  border: 1px solid #eaeaea;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.specHeader {
+  font-size: 15px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.specTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.specTable th,
+.specTable td {
+  padding: 10px 12px;
+  border: 1px solid #e5e5e5;
+  text-align: left;
+}
+
+.specTable th {
+  background: #f5f5f5;
+  color: #555;
+  font-weight: 600;
+  width: 35%;
+}
+
+.specTable td {
+  background: #ffffff;
+  color: #222;
+}
+
+/* 4대 탭 메뉴 (두 번째 사진 참고) */
+.stickyTabs {
+  position: sticky;
+  top: 0;
+  background: #ffffff;
+  display: flex;
+  border-bottom: 1px solid #e2e8f0;
+  z-index: 20;
+  margin-top: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.tabBtn {
+  flex: 1;
+  padding: 14px 0;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-size: 15px;
+  font-weight: 500;
+  color: #4a5568;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  text-align: center;
+}
+
+.tabBtn:hover {
+  color: #0073e9;
+}
+
+.tabBtnActive {
+  color: #0073e9 !important;
+  font-weight: 800 !important;
+  border-bottom-color: #0073e9 !important;
+}
+
+.sectionBlock {
+  scroll-margin-top: 60px;
+  margin-bottom: 40px;
+}
+
+.sectionHeaderRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #2d3748;
+}
+
+.sectionHeaderRow h2 {
+  font-size: 18px;
+  font-weight: 800;
+  color: #1a202c;
+  margin: 0;
+}
+
+.highlightCount {
+  color: #0073e9;
+  font-size: 16px;
+}
+
+.askBtnInline {
+  border: 1px solid #0073e9 !important;
+  color: #0073e9 !important;
+  padding: 6px 14px !important;
+  font-size: 13px !important;
+}
+
+/* SHOPPING GUIDE 배송·교환·환불 안내 (세 번째 사진 참고) */
+.shoppingGuideSection {
+  scroll-margin-top: 60px;
+  margin-top: 48px;
+  margin-bottom: 48px;
+  padding: 32px 20px;
+  background: #ffffff;
+}
+
+.guideHeader {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.guideSubTitle {
+  color: #3182ce;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  margin-bottom: 8px;
+}
+
+.guideTitle {
+  font-size: 24px;
+  font-weight: 800;
+  color: #1a202c;
+  margin-bottom: 8px;
+}
+
+.guideDesc {
+  font-size: 14px;
+  color: #718096;
+}
+
+.guideCards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.guideCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: border-color 0.2s ease-in-out;
+}
+
+.guideCard:hover {
+  border-color: #cbd5e0;
+}
+
+.guideCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.guideIcon {
+  font-size: 22px;
+  color: #3182ce;
+}
+
+.guideCardHeader h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2d3748;
+  margin: 0;
+}
+
+.guideCard p {
+  font-size: 13px;
+  color: #4a5568;
+  line-height: 1.6;
+  margin: 0;
+  padding-left: 32px;
+}
+
+.guideNoticeBox {
+  background: #f7fafc;
+  border: 1px solid #edf2f7;
+  border-radius: 8px;
+  padding: 14px 16px;
+  text-align: center;
+}
+
+.guideNoticeBox p {
+  font-size: 12px;
+  color: #718096;
+  margin: 0;
+  line-height: 1.5;
+}

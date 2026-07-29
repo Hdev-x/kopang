@@ -508,13 +508,35 @@
   line-height: 1.8;
 }
 
-.descriptionHtml {
+.descWrapper {
+  position: relative;
   margin-top: var(--space-5);
-  color: var(--color-text);
-  line-height: 1.8;
-  font-size: var(--font-md);
-  text-align: left;
-  word-break: break-word;
+}
+
+.descCollapsed {
+  max-height: 1000px;
+  overflow: hidden;
+  mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
+}
+
+.expandBtn {
+  width: 100%;
+  padding: 14px;
+  margin-top: 20px;
+  background: #ffffff;
+  border: 1px solid #0073e9;
+  color: #0073e9;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 6px rgba(0, 115, 233, 0.1);
+}
+
+.expandBtn:hover {
+  background: #f0f7ff;
 }
 
 .descriptionHtml img {
