@@ -1,0 +1,65 @@
+.heading { padding: var(--space-8) 0; border-bottom: 1px solid var(--color-border); }
+.heading p { color: var(--color-primary); font-size: var(--font-xs); font-weight: var(--weight-bold); letter-spacing: .12em; }
+.heading h1 { margin-top: var(--space-2); font-size: var(--font-2xl); }
+.heading span { display: block; margin-top: var(--space-2); color: var(--color-text-muted); font-size: var(--font-sm); }
+.checkoutLayout { display: grid; grid-template-columns: minmax(0,1fr) 360px; align-items: start; gap: 48px; margin-top: var(--space-8); }
+.checkoutMain { display: grid; gap: var(--space-5); }
+.section { padding: var(--space-6); border: 1px solid var(--color-border); border-radius: var(--radius-lg); }
+.section > header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-5); }
+.section h2 { font-size: var(--font-lg); }
+.section > header button { color: var(--color-primary); background: transparent; border: 0; font-weight: var(--weight-bold); cursor: pointer; }
+.addressCard div { display: flex; align-items: center; gap: var(--space-2); }
+.addressCard div span { padding: var(--space-1) var(--space-2); color: var(--color-primary); background: var(--color-primary-light); border-radius: var(--radius-full); font-size: var(--font-xs); }
+.addressCard p { margin-top: var(--space-2); color: var(--color-text-muted); font-size: var(--font-sm); }
+.addressEmpty { width: 100%; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: var(--space-3); padding: var(--space-5); color: var(--color-text-muted); background: var(--gray-50); border: 0; border-radius: var(--radius-md); text-align: left; cursor: pointer; }
+.checkoutItem { display: grid; grid-template-columns: 72px minmax(0,1fr) auto; align-items: center; gap: var(--space-4); padding: var(--space-3) 0; border-top: 1px solid var(--color-border); }
+.checkoutItem:first-of-type { border-top: 0; }
+.checkoutItem img,.thumbFallback { width: 72px; height: 72px; display: grid; place-items: center; object-fit: cover; color: var(--gray-500); background: var(--gray-100); border-radius: var(--radius-md); }
+.checkoutItem > div { display: flex; flex-direction: column; gap: var(--space-2); }
+.checkoutItem span { color: var(--color-text-muted); font-size: var(--font-sm); }
+.field { display: grid; grid-template-columns: 100px minmax(0,1fr); align-items: center; gap: var(--space-4); padding: var(--space-3) 0; }
+.field > span { font-size: var(--font-sm); font-weight: var(--weight-bold); }
+.field select,.field input { width: 100%; height: 44px; padding: 0 var(--space-3); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.field > div { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); }
+.field button { padding: 0 var(--space-4); color: var(--color-primary); background: var(--color-surface); border: 1px solid var(--color-primary); border-radius: var(--radius-md); cursor: pointer; }
+.paymentMethod { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4); background: var(--color-primary-light); border: 1px solid var(--color-primary); border-radius: var(--radius-md); }
+.paymentMethod span { display: flex; flex-direction: column; gap: var(--space-1); }
+.paymentMethod small { color: var(--color-text-muted); }
+.summary { position: sticky; top: 150px; padding: var(--space-6); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
+.summary h2 { font-size: var(--font-lg); }
+.summary dl { display: grid; grid-template-columns: 1fr auto; gap: var(--space-3); margin-top: var(--space-5); color: var(--color-text-muted); font-size: var(--font-sm); }
+.summary dd { color: var(--color-text); text-align: right; }
+.summary > p { margin-top: var(--space-4); padding: var(--space-2); color: var(--color-primary); background: var(--color-primary-light); border-radius: var(--radius-md); font-size: var(--font-xs); text-align: center; }
+.summary > div { display: flex; align-items: center; justify-content: space-between; margin-top: var(--space-5); padding-top: var(--space-5); border-top: 1px solid var(--color-border); }
+.summary > div strong { color: var(--color-primary); font-size: var(--font-xl); }
+.summary > button,.primaryModalButton { width: 100%; height: 50px; margin-top: var(--space-5); color: var(--color-surface); background: var(--color-primary); border: 0; border-radius: var(--radius-md); font-weight: var(--weight-bold); cursor: pointer; }
+.summary > button:disabled,.primaryModalButton:disabled { background: var(--gray-300); cursor: wait; }
+.summary > small { display: block; margin-top: var(--space-3); color: var(--color-text-muted); font-size: var(--font-xs); text-align: center; }
+.overlay { position: fixed; inset: 0; z-index: var(--z-modal); display: grid; place-items: center; padding: var(--space-6); background: rgba(33,37,41,.52); }
+.modal { width: min(100%,var(--web-modal-width)); max-height: calc(100vh - 64px); overflow-y: auto; padding: var(--space-6); background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); }
+.modal > header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-5); }
+.modal > header h2 { font-size: var(--font-lg); }
+.modal > header button { color: var(--color-text-muted); background: transparent; border: 0; cursor: pointer; }
+.addressList { display: grid; gap: var(--space-2); }
+.addressList > button { padding: var(--space-4); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); text-align: left; cursor: pointer; }
+.addressList .selectedAddress { border-color: var(--color-primary); box-shadow: inset 0 0 0 1px var(--color-primary); }
+.modalEmpty { min-height: 120px; display: grid; place-items: center; color: var(--color-text-muted); background: var(--gray-50); border-radius: var(--radius-md); }
+.addressForm { display: grid; gap: var(--space-4); }
+.addressForm label { display: flex; flex-direction: column; gap: var(--space-2); color: var(--color-text-muted); font-size: var(--font-sm); }
+.addressForm input { height: 44px; padding: 0 var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.addressForm label > div { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); }
+.addressForm label > div button { padding: 0 var(--space-4); color: var(--color-primary); background: var(--color-surface); border: 1px solid var(--color-primary); border-radius: var(--radius-md); cursor: pointer; }
+.addressForm .checkbox { flex-direction: row; align-items: center; }
+.addressForm .checkbox input { width: auto; height: auto; }
+.result { min-height: 580px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-4); text-align: center; }
+.result > svg { width: 64px; height: 64px; }
+.successIcon { color: var(--color-success); }
+.failIcon { color: var(--color-danger); }
+.result h1 { font-size: var(--font-2xl); }
+.result p { color: var(--color-text-muted); }
+.result > span { padding: var(--space-2) var(--space-3); color: var(--color-danger); background: var(--gray-50); border-radius: var(--radius-full); font-size: var(--font-xs); }
+.result > div { display: flex; gap: var(--space-2); margin-top: var(--space-4); }
+.result a { padding: var(--space-3) var(--space-5); color: var(--color-surface); background: var(--color-primary); border: 1px solid var(--color-primary); border-radius: var(--radius-md); font-weight: var(--weight-bold); text-decoration: none; }
+.result .secondary { color: var(--color-primary); background: var(--color-surface); }
+.spinner { width: 44px; height: 44px; border: 4px solid var(--gray-200); border-top-color: var(--color-primary); border-radius: var(--radius-full); animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
