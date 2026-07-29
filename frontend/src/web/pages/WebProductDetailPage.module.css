@@ -31,9 +31,19 @@
   overflow: hidden;
   padding: 0;
   background: var(--gray-100);
-  border: 1px solid var(--color-border);
+  border: 2px solid transparent;
   border-radius: var(--radius-sm);
   cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.thumbnails button:hover {
+  opacity: 0.85;
+}
+
+.thumbActive {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
 .thumbnails img,
@@ -46,10 +56,57 @@
 }
 
 .mainImage {
+  position: relative;
   aspect-ratio: 1;
   overflow: hidden;
   background: var(--gray-100);
   border-radius: var(--radius-md);
+}
+
+.navBtn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #333;
+  cursor: pointer;
+  z-index: 2;
+  transition: all 0.2s;
+}
+
+.navBtn:hover {
+  background: #ffffff;
+  transform: translateY(-50%) scale(1.08);
+}
+
+.prevBtn {
+  left: 12px;
+}
+
+.nextBtn {
+  right: 12px;
+}
+
+.imageCounter {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #ffffff;
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  z-index: 2;
 }
 
 .infoHead {
@@ -449,6 +506,55 @@
   margin-top: var(--space-5);
   color: var(--color-text-muted);
   line-height: 1.8;
+}
+
+.descWrapper {
+  position: relative;
+  margin-top: var(--space-5);
+}
+
+.descCollapsed {
+  max-height: 1000px;
+  overflow: hidden;
+  mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
+}
+
+.expandBtn {
+  width: 100%;
+  padding: 14px;
+  margin-top: 20px;
+  background: #ffffff;
+  border: 1px solid #0073e9;
+  color: #0073e9;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 6px rgba(0, 115, 233, 0.1);
+}
+
+.expandBtn:hover {
+  background: #f0f7ff;
+}
+
+.descriptionHtml img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: var(--space-4) auto;
+  border-radius: var(--radius-md);
+}
+
+.descriptionHtml p {
+  margin-bottom: var(--space-3);
+}
+
+.descriptionHtml ul,
+.descriptionHtml ol {
+  padding-left: 24px;
+  margin-bottom: var(--space-3);
 }
 
 .editorialImage {

@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { ChevronDown, CreditCard, Heart, Minus, PackageCheck, Plus, RotateCcw, Share2, ShieldCheck, Star, Truck } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, CreditCard, Heart, Minus, PackageCheck, Plus, RotateCcw, Share2, ShieldCheck, Star, Truck } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { addToCart } from "../../api/cart";
 import { getProduct } from "../../api/products";
 import { getProductReviews, type Review } from "../../api/review";
 import { getProductQnaList } from "../../api/qna";
 import type { Product } from "../../types/product";
+import type { CartItem } from "../../types/cart";
 import type { QnaSummary } from "../../types/qna";
 import { WebLayout } from "../components/WebLayout";
 import styles from "./WebProductDetailPage.module.css";
@@ -31,6 +32,7 @@ export function WebProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [product, setProduct] = useState<Product | null>(null);
+  const [selectedImgIndex, setSelectedImgIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -39,6 +41,7 @@ export function WebProductDetailPage() {
   const [activeTab, setActiveTab] = useState<DetailTab>(readDetailTab);
   const [benefitOpen, setBenefitOpen] = useState(true);
   const [cardOpen, setCardOpen] = useState(false);
+  const [isDescExpanded, setIsDescExpanded] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -113,10 +116,46 @@ export function WebProductDetailPage() {
       .catch(() => window.alert("장바구니 담기에 실패했어요."));
   };
 
+  const handleDirectBuy = () => {
+    if (product) {
+      const directItem: CartItem = {
+        itemId: Date.now(),
+        productId: product.id,
+        name: product.name,
+        price: salePrice,
+        originalPrice: product.price,
+        discountPrice: salePrice,
+        quantity: quantity,
+        imageUrl: product.imageUrl || "",
+      };
+      navigate("/web/checkout", { state: { selectedItems: [directItem] } });
+    }
+  };
+
   const selectTab = (tab: DetailTab) => {
     window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#${tab}`);
     document.getElementById(tab)?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
+
+  const images = Array.from(
+    new Set([product.imageUrl, ...(product.imageUrls ?? [])].filter(Boolean) as string[])
+  );
+  const currentImage = images[selectedImgIndex] || product.imageUrl || "";
+
+  const handlePrevImage = () => {
+    setSelectedImgIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  };
+
+  const handleNextImage = () => {
+    setSelectedImgIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
+  const reviewCount = reviews.length;
+  const avgRatingNum =
+    reviewCount > 0
+      ? reviews.reduce((acc, r) => acc + (r.rating || 0), 0) / reviewCount
+      : 0;
+  const avgRatingText = reviewCount > 0 ? avgRatingNum.toFixed(1) : "0.0";
 
   return (
     <WebLayout>
@@ -124,12 +163,42 @@ export function WebProductDetailPage() {
       <section className={styles.productTop}>
         <div className={styles.gallery}>
           <div className={styles.thumbnails}>
-            {[product.imageUrl, ...(product.imageUrls ?? [])].filter(Boolean).slice(0, 5).map((image, index) => (
-              <button key={`${image}-${index}`} type="button"><img src={image} alt="" /></button>
+            {images.map((image, index) => (
+              <button
+                key={`${image}-${index}`}
+                type="button"
+                className={index === selectedImgIndex ? styles.thumbActive : ""}
+                onClick={() => setSelectedImgIndex(index)}
+              >
+                <img src={image} alt={`상품 썸네일 ${index + 1}`} />
+              </button>
             ))}
           </div>
           <div className={styles.mainImage}>
-            {product.imageUrl ? <img src={product.imageUrl} alt={product.name} /> : <div />}
+            {currentImage ? <img src={currentImage} alt={product.name} /> : <div />}
+            {images.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  className={`${styles.navBtn} ${styles.prevBtn}`}
+                  onClick={handlePrevImage}
+                  aria-label="이전 이미지"
+                >
+                  <ChevronLeft size={22} />
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.navBtn} ${styles.nextBtn}`}
+                  onClick={handleNextImage}
+                  aria-label="다음 이미지"
+                >
+                  <ChevronRight size={22} />
+                </button>
+                <span className={styles.imageCounter}>
+                  {selectedImgIndex + 1} / {images.length}
+                </span>
+              </>
+            )}
           </div>
         </div>
 
@@ -144,8 +213,8 @@ export function WebProductDetailPage() {
 
           <div className={styles.ratingSummary}>
             <Star size={17} fill="currentColor" />
-            <strong>4.8</strong>
-            <button type="button" onClick={() => selectTab("review")}>상품평 {reviews.length}</button>
+            <strong>{avgRatingText}</strong>
+            <button type="button" onClick={() => selectTab("review")}>({reviewCount}개 상품평)</button>
           </div>
 
           <div className={styles.priceBlock}>
@@ -214,7 +283,7 @@ export function WebProductDetailPage() {
             <div className={styles.actions}>
               <button type="button" className={styles.wish} aria-label="찜하기"><Heart size={22} /></button>
               <button type="button" className={styles.cart} onClick={handleAddToCart}>장바구니</button>
-              <button type="button" className={styles.buy} onClick={() => navigate("/web/checkout")}>바로구매</button>
+              <button type="button" className={styles.buy} onClick={handleDirectBuy}>바로구매</button>
             </div>
           </div>
         </div>
@@ -233,7 +302,25 @@ export function WebProductDetailPage() {
         <header className={styles.detailIntro}>
           <p>KOPANG PRODUCT STORY</p>
           <h2>일상에 자연스럽게 스며드는<br />{product.name}</h2>
-          <span>{product.description ?? "필요한 기능과 편안한 사용 경험을 균형 있게 담은 상품입니다."}</span>
+          {product.description ? (
+            <div className={styles.descWrapper}>
+              <div
+                className={`${styles.descriptionHtml} ${
+                  !isDescExpanded ? styles.descCollapsed : ""
+                }`}
+                dangerouslySetInnerHTML={{ __html: product.description }}
+              />
+              <button
+                type="button"
+                className={styles.expandBtn}
+                onClick={() => setIsDescExpanded((prev) => !prev)}
+              >
+                {isDescExpanded ? "상세설명 접기 ∧" : "상품 상세설명 펼쳐보기 ∨"}
+              </button>
+            </div>
+          ) : (
+            <span>필요한 기능과 편안한 사용 경험을 균형 있게 담은 상품입니다.</span>
+          )}
         </header>
 
         <div className={styles.editorialImage}>

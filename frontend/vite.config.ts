@@ -4,6 +4,9 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  optimizeDeps: {
+    include: ["@ckeditor/ckeditor5-react", "@ckeditor/ckeditor5-build-classic"],
+  },
   server: {
     proxy: {
       // MSW 핸들러에 없는 /api 요청만 백엔드(8080)로 전달됨
