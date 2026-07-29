@@ -309,6 +309,64 @@
     </select>
 
     <!-- 오늘 대응받은 회원에게 오늘 발급된 쿠폰 (원복 전 집계·재고 복구용) -->
+    <!-- 판정 결과 일괄 저장. 한 건씩 넣으면 회원 수만큼 DB 를 왕복해
+         원격 DB 에서 7,000건에 수 분이 걸린다. -->
+    <insert id="insertChurnScores">
+        INSERT INTO churn_score (user_id, score, risk_level, risk_type, source, scored_at)
+        VALUES
+        <foreach collection="list" item="s" separator=",">
+        (
+            #{s.userId}, #{s.score}, #{s.riskLevel}, #{s.riskType}, #{s.source}, NOW()
+        )
+        </foreach>
+    </insert>
+
+    <!-- 오늘 이미 판정이 남아 있는 회원. deleteTodayRuleScores 는 대응이 참조하는 행을
+         FK 때문에 남기는데, 그 상태에서 전량을 다시 넣으면 같은 회원의 판정이 중복 누적된다
+         (실측: 재실행 한 번에 7,270 → 9,763). -->
+    <select id="findTodayScoredUserIds" resultType="long">
+        SELECT DISTINCT user_id FROM churn_score
+         WHERE source = 'RULE'
+           AND scored_at::date = CURRENT_DATE
+           AND risk_type = #{riskType}
+           AND demo_tag IS NULL
+    </select>
+
+    <!-- 대응 알림 일괄 저장 — 공용 NotificationMapper 를 건드리지 않으려고 여기에 둔다 -->
+    <insert id="insertChurnNotifications">
+        INSERT INTO notifications (user_id, type, message, ref_id, is_read, clicked)
+        VALUES
+        <foreach collection="list" item="n" separator=",">
+        (
+            #{n.userId}, #{n.type}, #{n.message}, #{n.refId}, FALSE, FALSE
+        )
+        </foreach>
+    </insert>
+
+    <!-- 이미 해당 쿠폰을 가진 회원 (한 명씩 조회하면 N 번 왕복) -->
+    <select id="findUsersHavingCoupon" resultType="long">
+        SELECT DISTINCT user_id FROM user_coupons
+         WHERE coupon_id = #{couponId}
+           AND user_id IN
+        <foreach collection="userIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <insert id="insertChurnUserCoupons">
+        INSERT INTO user_coupons (user_id, coupon_id, used, issued_at, expires_at, issued_by)
+        VALUES
+        <foreach collection="userIds" item="id" separator=",">
+        (
+            #{id}, #{couponId}, FALSE, NOW(), CAST(#{expiresAt} AS DATE), 'CHURN'
+        )
+        </foreach>
+    </insert>
+
+    <update id="decreaseCouponQuantityBy">
+        UPDATE coupons SET quantity = GREATEST(quantity - #{count}, 0) WHERE coupon_id = #{couponId}
+    </update>
+
     <!-- 이탈 대응 쿠폰 발급 — issued_by='CHURN' 을 남겨 원복 때 이것만 회수한다.
          공용 CouponMapper.insertUserCoupon 을 쓰면 출처를 구분할 수 없다. -->
     <insert id="insertChurnUserCoupon">

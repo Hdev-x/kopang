@@ -39,16 +39,73 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
     // ============================================
 
     // 공통 저장: 대상 목록을 받아 회원마다 판정 결과(DTO)를 churn_score에 저장
+    /** 한 번에 보낼 행 수. Postgres 파라미터 상한(65535)에 걸리지 않게 나눈다. */
+    private static final int BATCH_ROWS = 500;
+
     private void save(List<Long> userIds, double score, String level, String type) {
+        if (userIds.isEmpty()) {
+            return;
+        }
+        // 삭제 단계는 대응이 참조하는 판정을 FK 때문에 남긴다. 그 회원을 걸러내지 않으면
+        // 재실행할 때마다 같은 판정이 쌓인다(실측: 한 번에 7,270 → 9,763).
+        Set<Long> already = new HashSet<>(churnMapper.findTodayScoredUserIds(type));
+        List<ChurnScoreDTO> rows = new ArrayList<>(userIds.size());
         for (Long id : userIds) {
+            if (already.contains(id)) {
+                continue;
+            }
             ChurnScoreDTO dto = new ChurnScoreDTO();
             dto.setUserId(id);
             dto.setScore(score);
             dto.setRiskLevel(level);
             dto.setRiskType(type);
             dto.setSource("RULE");
-            churnMapper.insertChurnScore(dto);
+            rows.add(dto);
         }
+        // 한 건씩 넣으면 회원 수만큼 DB 를 왕복한다. 룰 8종이 매번 전 회원을 판정하므로
+        // 원격 DB 에서는 이 차이만으로 수 분이 갈린다.
+        for (int i = 0; i < rows.size(); i += BATCH_ROWS) {
+            churnMapper.insertChurnScores(rows.subList(i, Math.min(i + BATCH_ROWS, rows.size())));
+        }
+    }
+
+    /** 알림 일괄 저장 — 호출부는 리스트에 담기만 하고 마지막에 한 번 부른다. */
+    private void flushNotifications(List<NotificationDTO> notis) {
+        for (int i = 0; i < notis.size(); i += BATCH_ROWS) {
+            churnMapper.insertChurnNotifications(notis.subList(i, Math.min(i + BATCH_ROWS, notis.size())));
+        }
+    }
+
+    /**
+     * 쿠폰 일괄 발급. 대상 중 이미 가진 사람을 한 번의 조회로 걸러내고,
+     * 남은 인원에게 한 번에 발급한 뒤 재고를 한 번에 차감한다.
+     * (기존: 1명당 보유 확인 1 + 쿠폰 조회 1 + 재고 차감 1 + 발급 1 = 4회 왕복)
+     *
+     * @return 실제로 발급된 회원 — 알림 문구를 "발급됨/이미 보유"로 나누는 데 쓴다
+     */
+    private Set<Long> issueCoupons(Long couponId, List<Long> userIds) {
+        if (userIds.isEmpty()) {
+            return Set.of();
+        }
+        CouponDTO coupon = couponMapper.findCouponById(couponId);
+        if (coupon == null || coupon.getQuantity() <= 0) {
+            return Set.of();
+        }
+        Set<Long> already = new HashSet<>(churnMapper.findUsersHavingCoupon(couponId, userIds));
+        List<Long> targets = userIds.stream().filter(id -> !already.contains(id)).distinct().toList();
+        if (targets.isEmpty()) {
+            return Set.of();
+        }
+        // 재고보다 대상이 많으면 재고만큼만 발급한다
+        List<Long> issued = targets.size() > coupon.getQuantity()
+                ? targets.subList(0, coupon.getQuantity())
+                : targets;
+        for (int i = 0; i < issued.size(); i += BATCH_ROWS) {
+            churnMapper.insertChurnUserCoupons(couponId, coupon.getEndDate(),
+                    issued.subList(i, Math.min(i + BATCH_ROWS, issued.size())));
+        }
+        churnMapper.decreaseCouponQuantityBy(couponId, issued.size());
+        return new HashSet<>(issued);
     }
 
     // 룰1) 장바구니 방치
@@ -235,7 +292,17 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
         var split = interventionService.recordAndCheckControl(reqs);
         Set<Long> toSend = new HashSet<>(split.treatment());
 
-        // ② 발송 (처치군만) — riskType별 알림 만들어 notifications INSERT
+        // ② 발송 (처치군만) — 쿠폰을 먼저 일괄 발급하고, 알림도 모아서 한 번에 넣는다.
+        //    한 명씩 처리하면 대상 수만큼 DB 를 왕복해 원격 DB 에서 수 분이 걸린다.
+        List<Long> couponTargets = targets.stream()
+                .filter(t -> !"WISHLIST_IDLE".equals(t.getRiskType()))
+                .filter(t -> toSend.contains(t.getUserId()))
+                .filter(t -> "FIRST_ORDER_ONLY".equals(t.getRiskType()))
+                .map(ChurnScoreDTO::getUserId)
+                .toList();
+        Set<Long> issued = issueCoupons(4L, couponTargets);
+
+        List<NotificationDTO> notis = new ArrayList<>();
         for (ChurnScoreDTO target : targets) {
             if ("WISHLIST_IDLE".equals(target.getRiskType())) {
                 continue; // 찜 방치는 CHURN-13(할인 시 알림)에서 처리하므로 독촉 발송 제외
@@ -269,7 +336,7 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
                     refId = 4L; // 복귀 5000원 쿠폰 ID
                     // 이미 갖고 있으면 발급되지 않는다. 그때도 발급됐다고 알리면
                     // 고객은 쿠폰함에서 아무것도 찾지 못한다.
-                    message = autoIssueCoupon(target.getUserId(), refId)
+                    message = issued.contains(target.getUserId())
                             ? "돌아오신 것을 환영해요! 복귀 기념 특별 5,000원 할인 쿠폰이 발급되었습니다. 💖"
                             : "돌아오신 것을 환영해요! 받아두신 복귀 쿠폰이 아직 남아 있어요. 만료 전에 사용해 보세요. 💖";
                 }
@@ -287,8 +354,9 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
             noti.setRefId(refId);
             noti.setIsRead(false);
             noti.setClicked(false);
-            notificationMapper.insertNotification(noti);
+            notis.add(noti);
         }
+        flushNotifications(notis);
 
         // 대조군은 "기록만 남기고 발송하지 않은 인원"이다. 상한에 걸려 기록조차 안 된 인원
         // (split.skipped())과 섞으면 대조군이 실제의 수십 배로 부풀려 보인다.
@@ -325,6 +393,7 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
         var split = interventionService.recordAndCheckControl(reqs);
         Set<Long> toSend = new HashSet<>(split.treatment());
 
+        List<NotificationDTO> notis = new ArrayList<>();
         for (ChurnScoreDTO target : targets) {
             if (!toSend.contains(target.getUserId())) {
                 continue; // 대조군·상한 제외분
@@ -335,8 +404,9 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
             noti.setMessage("[리마인드] 보유하신 미사용 쿠폰이 곧 만료됩니다! 만료 전에 꼭 사용해 보세요. 🎟️");
             noti.setIsRead(false);
             noti.setClicked(false);
-            notificationMapper.insertNotification(noti);
+            notis.add(noti);
         }
+        flushNotifications(notis);
     }
 
     @Transactional
@@ -362,24 +432,29 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
         var split = interventionService.recordAndCheckControl(reqs);
         Set<Long> toSend = new HashSet<>(split.treatment());
 
-        for (ChurnScoreDTO target : targets) {
-            if (!toSend.contains(target.getUserId())) {
-                continue;
-            }
-            // 복귀 5,000원 쿠폰 지급. 이미 갖고 있으면 발급되지 않으므로 문구를 나눈다.
-            boolean issued = autoIssueCoupon(target.getUserId(), 4L);
+        // 쿠폰을 먼저 일괄 발급하고(이미 보유한 사람은 걸러진다) 알림도 모아서 한 번에 넣는다
+        List<Long> sendIds = targets.stream()
+                .map(ChurnScoreDTO::getUserId)
+                .filter(toSend::contains)
+                .toList();
+        Set<Long> issued = issueCoupons(4L, sendIds);
 
+        List<NotificationDTO> notis = new ArrayList<>();
+        for (Long userId : sendIds) {
             NotificationDTO noti = new NotificationDTO();
-            noti.setUserId(target.getUserId());
+            noti.setUserId(userId);
             noti.setType("COMEBACK");
-            noti.setMessage(issued
+            // 이미 갖고 있으면 발급되지 않는다. 그때도 발급됐다고 알리면
+            // 고객은 알림을 받고 쿠폰함에서 아무것도 찾지 못한다.
+            noti.setMessage(issued.contains(userId)
                     ? "오랜만에 뵙네요! 복귀 기념 특별 5,000원 할인 쿠폰이 발급되었습니다. 💖"
                     : "오랜만에 뵙네요! 받아두신 복귀 쿠폰이 아직 남아 있어요. 만료 전에 사용해 보세요. 💖");
             noti.setRefId(4L);
             noti.setIsRead(false);
             noti.setClicked(false);
-            notificationMapper.insertNotification(noti);
+            notis.add(noti);
         }
+        flushNotifications(notis);
     }
 
     /**
