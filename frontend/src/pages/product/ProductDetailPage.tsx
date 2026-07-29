@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Heart } from "lucide-react";
+import { Heart, ChevronLeft, ChevronRight } from "lucide-react";
 import { Layout } from "../../components/Layout";
 import { Button } from "../../components/Button";
 import { Card } from "../../components/Card";
 import { AddToCartModal } from "../../components/AddToCartModal";
 import { getProduct, getAIRecommendations } from "../../api/products";
-import { addToCart, getCart } from "../../api/cart";
+import { addToCart } from "../../api/cart";
 import { checkWishlist, addWishlist, deleteWishlist } from "../../api/wishlist";
 import { getProductReviews } from "../../api/review";
 import { getProductQnaList } from "../../api/qna";
@@ -21,13 +21,12 @@ import styles from "./ProductDetailPage.module.css";
 import type { QnaSummary } from "../../types/qna";
 import { Link } from "react-router-dom";
 
-
-
 export function ProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const user = useAuth();
   const [product, setProduct] = useState<Product | null>(null);
+  const [selectedImgIndex, setSelectedImgIndex] = useState(0);
   const [similarProducts, setSimilarProducts] = useState<Product[]>([]);
   const [togetherProducts, setTogetherProducts] = useState<Product[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(true);
@@ -124,13 +123,73 @@ export function ProductDetailPage() {
     }
   };
 
+  const images = Array.from(
+    new Set([product.imageUrl, ...(product.imageUrls || [])].filter(Boolean) as string[])
+  );
+  const currentImage = images[selectedImgIndex] || product.imageUrl || "";
+
+  const handlePrevImage = () => {
+    setSelectedImgIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  };
+
+  const handleNextImage = () => {
+    setSelectedImgIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
   return (
     <Layout>
-      {product.imageUrl ? (
-        <img src={product.imageUrl} alt={product.name} className={styles.image} />
-      ) : (
-        <div className={styles.image} />
-      )}
+      {/* 이미지 갤러리 영역 */}
+      <div className={styles.galleryContainer}>
+        <div className={styles.mainImageWrapper}>
+          {currentImage ? (
+            <img src={currentImage} alt={product.name} className={styles.image} />
+          ) : (
+            <div className={styles.image} />
+          )}
+
+          {images.length > 1 && (
+            <>
+              <button
+                type="button"
+                className={`${styles.navBtn} ${styles.prevBtn}`}
+                onClick={handlePrevImage}
+                aria-label="이전 이미지"
+              >
+                <ChevronLeft size={22} />
+              </button>
+              <button
+                type="button"
+                className={`${styles.navBtn} ${styles.nextBtn}`}
+                onClick={handleNextImage}
+                aria-label="다음 이미지"
+              >
+                <ChevronRight size={22} />
+              </button>
+              <span className={styles.imageCounter}>
+                {selectedImgIndex + 1} / {images.length}
+              </span>
+            </>
+          )}
+        </div>
+
+        {/* 하단 썸네일 목록 */}
+        {images.length > 1 && (
+          <div className={styles.thumbnailList}>
+            {images.map((img, idx) => (
+              <button
+                key={`${img}-${idx}`}
+                type="button"
+                className={`${styles.thumbnailBtn} ${
+                  idx === selectedImgIndex ? styles.thumbnailActive : ""
+                }`}
+                onClick={() => setSelectedImgIndex(idx)}
+              >
+                <img src={img} alt={`상품 썸네일 ${idx + 1}`} />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       {product.brand && <p className={styles.brand}>{product.brand}</p>}
       <h1 className={styles.name}>{product.name}</h1>
@@ -153,7 +212,12 @@ export function ProductDetailPage() {
         </p>
       )}
 
-      {product.description && <p className={styles.desc}>{product.description}</p>}
+      {product.description && (
+        <div
+          className={styles.descHtml}
+          dangerouslySetInnerHTML={{ __html: product.description }}
+        />
+      )}
 
       {/* 배송비 안내 */}
       {(() => {

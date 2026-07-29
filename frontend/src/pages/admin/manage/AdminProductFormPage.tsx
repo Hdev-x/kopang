@@ -6,6 +6,7 @@ import { Button } from "../../../components/Button";
 import { createProduct, getProduct, updateProduct, uploadProductImage } from "../../../api/products";
 import { getCategories } from "../../../api/categories";
 import type { Category } from "../../../types/category";
+import { CKEditorWrapper } from "../../../components/editor/CKEditorWrapper";
 import sh from "../adminShared.module.css";
 import styles from "./AdminProductFormPage.module.css";
 
@@ -402,12 +403,13 @@ export function AdminProductFormPage() {
           </div>
 
           <div className={styles.field}>
-            <label className={styles.label}>상세 설명</label>
-            <textarea
-              className={styles.textarea}
-              placeholder="상품 설명 (상세페이지 본문)"
+            <label className={styles.label}>
+              상세 설명 (위지윅 에디터 · 이미지 직접 첨부/드래그 가능)
+            </label>
+            <CKEditorWrapper
               value={form.description}
-              onChange={handleChange("description")}
+              onChange={(data) => setForm((f) => ({ ...f, description: data }))}
+              placeholder="쇼핑몰 상세페이지 본문을 텍스트 서식 및 이미지를 조합하여 자유롭게 작성하세요."
             />
           </div>
 

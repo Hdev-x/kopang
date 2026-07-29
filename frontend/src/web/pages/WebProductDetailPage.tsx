@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ChevronDown, CreditCard, Heart, Minus, PackageCheck, Plus, RotateCcw, Share2, ShieldCheck, Star, Truck } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, CreditCard, Heart, Minus, PackageCheck, Plus, RotateCcw, Share2, ShieldCheck, Star, Truck } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { addToCart } from "../../api/cart";
 import { getProduct } from "../../api/products";
@@ -31,6 +31,7 @@ export function WebProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [product, setProduct] = useState<Product | null>(null);
+  const [selectedImgIndex, setSelectedImgIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -118,18 +119,61 @@ export function WebProductDetailPage() {
     document.getElementById(tab)?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  const images = Array.from(
+    new Set([product.imageUrl, ...(product.imageUrls ?? [])].filter(Boolean) as string[])
+  );
+  const currentImage = images[selectedImgIndex] || product.imageUrl || "";
+
+  const handlePrevImage = () => {
+    setSelectedImgIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  };
+
+  const handleNextImage = () => {
+    setSelectedImgIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
   return (
     <WebLayout>
       <div className={styles.breadcrumb}>쇼핑홈 / 상품 / {product.name}</div>
       <section className={styles.productTop}>
         <div className={styles.gallery}>
           <div className={styles.thumbnails}>
-            {[product.imageUrl, ...(product.imageUrls ?? [])].filter(Boolean).slice(0, 5).map((image, index) => (
-              <button key={`${image}-${index}`} type="button"><img src={image} alt="" /></button>
+            {images.map((image, index) => (
+              <button
+                key={`${image}-${index}`}
+                type="button"
+                className={index === selectedImgIndex ? styles.thumbActive : ""}
+                onClick={() => setSelectedImgIndex(index)}
+              >
+                <img src={image} alt={`상품 썸네일 ${index + 1}`} />
+              </button>
             ))}
           </div>
           <div className={styles.mainImage}>
-            {product.imageUrl ? <img src={product.imageUrl} alt={product.name} /> : <div />}
+            {currentImage ? <img src={currentImage} alt={product.name} /> : <div />}
+            {images.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  className={`${styles.navBtn} ${styles.prevBtn}`}
+                  onClick={handlePrevImage}
+                  aria-label="이전 이미지"
+                >
+                  <ChevronLeft size={22} />
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.navBtn} ${styles.nextBtn}`}
+                  onClick={handleNextImage}
+                  aria-label="다음 이미지"
+                >
+                  <ChevronRight size={22} />
+                </button>
+                <span className={styles.imageCounter}>
+                  {selectedImgIndex + 1} / {images.length}
+                </span>
+              </>
+            )}
           </div>
         </div>
 
@@ -233,7 +277,14 @@ export function WebProductDetailPage() {
         <header className={styles.detailIntro}>
           <p>KOPANG PRODUCT STORY</p>
           <h2>일상에 자연스럽게 스며드는<br />{product.name}</h2>
-          <span>{product.description ?? "필요한 기능과 편안한 사용 경험을 균형 있게 담은 상품입니다."}</span>
+          {product.description ? (
+            <div
+              className={styles.descriptionHtml}
+              dangerouslySetInnerHTML={{ __html: product.description }}
+            />
+          ) : (
+            <span>필요한 기능과 편안한 사용 경험을 균형 있게 담은 상품입니다.</span>
+          )}
         </header>
 
         <div className={styles.editorialImage}>
