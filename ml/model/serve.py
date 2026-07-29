@@ -6,8 +6,9 @@ serve.py — 이탈 예측 ML 서빙 (FastAPI)
 Spring 배치가 aggregate_profiles.sql 로 뽑은 피처를 보내면, 같은 scaler·피처순서로
 예측해 { userId, score, riskLevel } 를 돌려준다. (학습=실전 정합성)
 
-실행: ml/.venv/bin/uvicorn ml.serve:app --port 8000
-      (또는 ml/.venv/bin/python -m uvicorn ml.serve:app --port 8000)
+실행: ml/.venv/bin/uvicorn ml.model.serve:app --port 8000
+      (또는 ml/.venv/bin/python -m uvicorn ml.model.serve:app --port 8000)
+      — 프로젝트 루트에서 실행한다(경로가 루트 기준).
 """
 import joblib
 import numpy as np
@@ -15,7 +16,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 # 모델 번들 로드 (학습 때 저장한 model + scaler + 피처 순서)
-BUNDLE = joblib.load("ml/churn_model.pkl")
+BUNDLE = joblib.load("ml/model/churn_model.pkl")
 MODEL = BUNDLE["model"]
 SCALER = BUNDLE["scaler"]
 FEATURES = BUNDLE["features"]

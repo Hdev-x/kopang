@@ -1,17 +1,22 @@
 /* 이탈 방지 대시보드 — C-2 v2 시안(구분선 플랫 레이아웃) 기준 */
 
 /* AdminLayout main 패딩 위로 흰 면을 페이지 끝까지 확장 */
+/* 높이를 화면에 고정한다 — min-height 면 내용만큼 늘어나서
+   데이터가 들어오는 순간 영역이 커지며 화면이 밀린다. */
 .page {
   display: flex;
   flex-direction: column;
   margin: 0;
   padding: 24px 40px 36px;
   background: #fff;
-  min-height: calc(100vh - 62px);
+  height: calc(100vh - 62px);
+  overflow: hidden;
 }
 
+/* 오른쪽 배지 문구가 데이터에 따라 길어진다 — 줄바꿈되면 머리 높이가 변한다 */
 .pageHead {
   display: flex;
+  min-height: 46px;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
@@ -29,6 +34,7 @@
   background: #fff;
   color: #626d80;
   font-size: 12px;
+  white-space: nowrap;
 }
 
 .basis i { width: 7px; height: 7px; border-radius: 50%; background: #2f6bff; }
@@ -38,15 +44,24 @@
 /* 구분선 그리드 */
 .fRow { display: grid; }
 .fRow + .fRow { border-top: 1px solid #e5e8ef; }
-.fKpis { grid-template-columns: repeat(4, 1fr); }
-.fMid { grid-template-columns: 1.4fr 1fr; flex: 1; }
-.fBot { grid-template-columns: 1.25fr 1fr 1fr; }
+.fKpis { grid-template-columns: repeat(4, 1fr); flex: 0 0 auto; }
 
-.fCell { min-width: 0; padding: 19px 29px; }
+/* 가운데·아래 행이 남은 높이를 나눠 갖는다. 항목 수가 달라져도 행 높이는 그대로다. */
+.fMid { grid-template-columns: 1.4fr 1fr; flex: 1 1 0; min-height: 0; }
+.fBot { grid-template-columns: 1.25fr 1fr 1fr; flex: 1 1 0; min-height: 0; }
+
+.fCell { min-width: 0; min-height: 0; padding: 19px 29px; overflow: hidden; }
 .fCell + .fCell { border-left: 1px solid #e5e8ef; }
 .fRow .fCell:first-child { padding-left: 0; }
 .fRow > .fCell:last-child { padding-right: 0; }
-.fMid > .fCell { display: flex; flex-direction: column; }
+.fMid > .fCell, .fBot > .fCell { display: flex; flex-direction: column; }
+
+/* 아래 행의 목록(Top 3 등)은 칸을 넘치면 그 안에서 스크롤한다 */
+.fBot > .fCell > *:last-child { min-height: 0; overflow-y: auto; }
+
+/* KPI 칸 높이를 못박는다 — 보조 문구가 데이터에 따라 한 줄/두 줄로 바뀌면
+   아래 구분선이 통째로 밀린다. */
+.fKpis > .fCell { min-height: 104px; }
 
 .label {
   color: #8b94a5;
@@ -58,16 +73,38 @@
 
 /* KPI */
 .kTop { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+
+/* 기준 시점 배지 — 카드마다 보는 시점이 달라(현재 상태 vs 마감 집계) 표시한다.
+   이게 없으면 "어제 값이 왜 보이지?" 같은 오해가 생긴다. */
+.asOfNow, .asOfDone {
+  margin-left: auto; flex-shrink: 0;
+  padding: 1px 6px; border-radius: 9px;
+  font-size: 9.5px; font-style: normal; font-weight: 600; letter-spacing: -0.2px;
+  white-space: nowrap;
+}
+.asOfNow  { background: #eaf1fe; color: #2f6bff; }   /* 실시간 */
+.asOfDone { background: #f0f1f5; color: #7c8598; }   /* 마감 집계 */
 .kIcon { display: inline-flex; align-items: center; flex: 0 0 auto; }
 .kValue { display: block; font-size: 22px; font-weight: 750; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-.kSub { display: block; margin-top: 3px; color: #626d80; font-size: 11.5px; font-weight: 600; }
+/* "미대응 82명 → 발송 실행" 처럼 길어지면 줄바꿈돼 칸이 커진다. 한 줄로 고정. */
+.kSub {
+  display: block;
+  overflow: hidden;
+  margin-top: 3px;
+  color: #626d80;
+  font-size: 11.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .pos { color: #12a150; }
 .neg { color: #e4453a; }
 
 /* 섹션 헤더 */
 .secHead { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 9px; }
 .secHead h2 { margin: 0; font-size: 14px; font-weight: 800; letter-spacing: -0.01em; }
-.secHead p { margin: 0; color: #8b94a5; font-size: 11.5px; }
+/* 섹션 설명에 배지(목표 초과 N일 등)가 붙었다 빠졌다 하면서 두 줄이 되지 않도록 */
+.secHead p { margin: 0; overflow: hidden; color: #8b94a5; font-size: 11.5px; text-overflow: ellipsis; white-space: nowrap; }
 
 .chip {
   display: inline-block;

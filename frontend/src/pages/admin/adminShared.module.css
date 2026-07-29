@@ -1,4 +1,6 @@
-/* 관리자 페이지 공용 스타일 — 여러 admin 페이지가 import해서 씀 */
+/* 관리자 페이지 구(舊) 공용 스타일 — 위험 고객 상세와 상품 등록 폼만 남아 있다.
+   새 목록 화면은 adminTable.module.css 를 쓴다. 여기서는 그 팔레트와 어긋나지 않도록
+   뱃지·표만 같은 값으로 맞춰 둔다. */
 
 .toolbar {
   display: flex;
@@ -84,17 +86,23 @@
   white-space: nowrap;
 }
 .table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 11px 16px;
+  border-bottom: 1px solid #e5e8ef;
+  background: #fbfcfe;
+  color: #8b94a5;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   text-align: left;
-  color: var(--color-text-muted);
-  font-weight: var(--weight-medium);
-  font-size: var(--font-xs);
-  padding: var(--space-3);
-  border-bottom: 1px solid var(--color-border);
-  background: var(--gray-50);
+  text-transform: uppercase;
 }
 .table td {
-  padding: var(--space-3);
-  border-bottom: 1px solid var(--color-border);
+  padding: 11px 16px;
+  border-bottom: 1px solid #f0f2f5;
+  color: #3a4553;
 }
 
 .badge {
@@ -104,26 +112,12 @@
   font-weight: var(--weight-medium);
   white-space: nowrap;
 }
-.bOk {
-  background: #e6f4ea;
-  color: var(--color-success);
-}
-.bWarn {
-  background: #fff3e0;
-  color: var(--color-warning);
-}
-.bDanger {
-  background: #fde8e8;
-  color: var(--color-danger);
-}
-.bMuted {
-  background: var(--gray-100);
-  color: var(--color-text-muted);
-}
-.bInfo {
-  background: var(--color-primary-light);
-  color: var(--color-primary);
-}
+/* adminTable.module.css 와 같은 값 — 같은 의미가 화면마다 다른 색으로 보이면 안 된다 */
+.bOk { background: #e3f6ec; color: #0e7a3c; }
+.bWarn { background: #fbf0d9; color: #9a6206; }
+.bDanger { background: #fce8e6; color: #c2352b; }
+.bMuted { background: #eef1f5; color: #5a6474; }
+.bInfo { background: #e9f0ff; color: #1b4fd6; }
 
 .stats {
   display: grid;

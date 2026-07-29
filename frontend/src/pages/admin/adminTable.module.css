@@ -1,0 +1,241 @@
+/* 관리자 목록 화면 공용 표면 — 레이아웃이 아니라 "보이는 규칙"만 담는다.
+   각 화면은 성격대로 구조를 잡되(처리 큐·검색·갤러리), 색·간격·표·뱃지는 여기서 가져다 쓴다. */
+
+/* ── 페이지 ────────────────────────────────── */
+.page {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 62px);   /* 페이지는 스크롤하지 않는다. 넘치는 목록만 안에서 스크롤 */
+  padding: 24px 40px 30px;
+  background: #fff;
+}
+
+.caption { margin: 0; color: #8b94a5; font-size: 12.5px; }
+.spacer { flex: 1; }
+
+/* ── 도구줄 ────────────────────────────────── */
+.toolbar {
+  display: flex;
+  min-height: 38px;              /* 안의 요소가 바뀌어도 아래 표가 밀리지 않게 */
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.toolbar + .toolbar { margin-top: -4px; }
+
+/* 검색 — 찾기가 주된 화면에서는 flex:1 로 넓게 쓴다 */
+.search {
+  display: flex;
+  min-width: 200px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid #e5e8ef;
+  border-radius: 9px;
+  background: #fff;
+  color: #8b94a5;
+}
+
+.search input {
+  width: 100%;
+  height: 36px;
+  border: 0;
+  background: none;
+  color: #171d2b;
+  font-family: inherit;
+  font-size: 13px;
+}
+.search input:focus { outline: 0; }
+.search:focus-within { border-color: #2f6bff; }
+
+.select {
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid #e5e8ef;
+  border-radius: 9px;
+  background: #fff;
+  color: #626d80;
+  font-family: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.select:focus { outline: 0; border-color: #2f6bff; }
+
+/* ── 상태 칩 (건수 포함) ──────────────────────
+   "오늘 뭘 처리해야 하나"를 요약 카드 없이 보여주는 자리다. */
+.chips { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid #e5e8ef;
+  border-radius: 999px;
+  background: #fff;
+  color: #626d80;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.chip:hover { background: #fbfcfe; }
+/* 건수는 로딩 중에도 자리를 차지해야 한다 — 빈 칸이었다가 숫자가 들어오면
+   칩 폭이 늘어나 도구줄 전체가 좌우로 움직인다. */
+.chip b { min-width: 14px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+
+.chipOn { border-color: #2f6bff; background: #2f6bff; color: #fff; }
+.chipOn b { color: #fff; }
+
+/* ── 버튼 ─────────────────────────────────── */
+.btnPrimary, .btnGhost {
+  display: inline-flex;
+  height: 36px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.btnPrimary { border: 0; background: #2f6bff; color: #fff; }
+.btnPrimary:hover { background: #2559d6; }
+.btnPrimary:disabled { background: #c3cede; cursor: not-allowed; }
+
+.btnGhost { border: 1px solid #e5e8ef; background: #fff; color: #626d80; }
+.btnGhost:hover { background: #fbfcfe; }
+.btnGhost:disabled { color: #b6bfcd; cursor: not-allowed; }
+
+.btnSmall { height: 28px; padding: 0 10px; border-radius: 7px; font-size: 12px; }
+
+/* ── 표 ───────────────────────────────────── */
+.tableWrap {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;               /* 페이지가 아니라 표가 스크롤한다 */
+  border: 1px solid #e5e8ef;
+  border-radius: 12px;
+}
+
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+.tbl th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 11px 16px;
+  border-bottom: 1px solid #e5e8ef;
+  background: #fbfcfe;
+  color: #8b94a5;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tbl td {
+  padding: 11px 16px;
+  border-bottom: 1px solid #f0f2f5;
+  color: #3a4553;
+  vertical-align: middle;
+}
+
+.tbl tbody tr:last-child td { border-bottom: 0; }
+.tbl tbody tr:hover td { background: #fbfcfe; }
+
+.tbl .r { text-align: right; font-variant-numeric: tabular-nums; }
+.tbl .num { color: #8b94a5; font-variant-numeric: tabular-nums; }
+.tbl .name { color: #171d2b; font-weight: 600; }
+
+/* 행 클릭으로 이동하는 표. 클릭은 편의이고, 실제 이동 수단은 셀 안의 링크다
+   (행 onClick 만 두면 키보드·스크린리더로 접근할 방법이 없다). */
+.rowLink { cursor: pointer; }
+.rowLink:hover .name { color: #2f6bff; }
+
+.cellLink { color: inherit; text-decoration: none; }
+.cellLink:hover { color: #2f6bff; }
+.cellLink:focus-visible { outline: 2px solid #2f6bff; outline-offset: 2px; border-radius: 4px; }
+
+/* 길어지는 칸은 자른다 — 표가 옆으로 밀리면 스캔이 어렵다 */
+.ellip { display: block; max-width: 340px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 행 끝 버튼 묶음 — 버튼이 없는 행과 높이를 맞춘다.
+   처리 후 버튼이 사라지면 그 행만 줄어들어 아래 행이 위로 튄다. */
+.rowActions { display: flex; min-height: 28px; align-items: center; justify-content: flex-end; gap: 6px; }
+
+/* 48px 썸네일 (상품) */
+.thumbEmpty {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px dashed #e5e8ef;
+  border-radius: 8px;
+  background: #fbfcfe;
+  color: #b6bfcd;
+  font-size: 9px;
+}
+
+.thumb {
+  display: block;
+  width: 44px;
+  height: 44px;
+  border: 1px solid #f0f2f5;
+  border-radius: 8px;
+  background: #fbfcfe;
+  object-fit: cover;
+}
+
+/* ── 뱃지 ─────────────────────────────────── 
+   11px 작은 글자라 배경은 유지하고 글자만 어둡게 해 명도 대비 4.5:1(WCAG AA)을 넘긴다.
+   기존 값은 2.45~3.94:1 이라 밝은 화면에서 읽기 어려웠다. */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.bInfo { background: #e9f0ff; color: #1b4fd6; }   /* 정보·진행  5.86:1 */
+.bDone { background: #e3f6ec; color: #0e7a3c; }   /* 완료·정상  4.82:1 */
+.bWait { background: #fbf0d9; color: #9a6206; }   /* 대기·주의  4.50:1 */
+.bRisk { background: #fce8e6; color: #c2352b; }   /* 위험·오류  4.64:1 */
+.bMuted { background: #eef1f5; color: #5a6474; }  /* 비활성    5.28:1 */
+
+/* ── 요약 (성격상 통계가 본질인 화면에서만) ───── */
+.kpis { display: flex; border-top: 1px solid #e5e8ef; border-bottom: 1px solid #e5e8ef; }
+.kCell { flex: 1; min-height: 88px; padding: 18px 24px; }
+.kCell:first-child { padding-left: 0; }
+.kCell + .kCell { border-left: 1px solid #e5e8ef; }
+.kLabel { color: #8b94a5; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.kValue { margin-top: 7px; font-size: 22px; font-weight: 750; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.kSub { margin-top: 3px; color: #626d80; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+
+/* ── 섹션 (한 화면에 표가 둘 이상일 때) ────── */
+.sectionTitle { font-size: 14px; font-weight: 800; letter-spacing: -0.01em; }
+.sectionGap { margin-top: 18px; }
+
+/* 검색이 주된 화면에서 넓게 쓰는 변형 */
+.searchWide { flex: 1; max-width: 380px; }
+
+/* ── 빈 상태 ──────────────────────────────── */
+.empty { padding: 44px; color: #8b94a5; font-size: 13px; text-align: center; }
+.loadMore { padding: 18px; color: #8b94a5; font-size: 12.5px; text-align: center; }
+
+@media (max-width: 1080px) {
+  .page { height: auto; min-height: calc(100vh - 62px); padding: 20px; }
+  .toolbar { flex-wrap: wrap; }
+  .kpis { flex-wrap: wrap; }
+  .kCell { min-width: 45%; }
+  .ellip { max-width: 180px; }
+}

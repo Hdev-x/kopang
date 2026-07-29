@@ -79,12 +79,66 @@ export type InterventionPreview = {
 export type InterventionRunResult = {
   targetCount: number; // 발송 후보 전원
   sentCount: number; // 처치군(실제 발송)
-  controlCount: number; // 대조군 + 정책 제외
+  controlCount: number; // 순수 대조군 (상한·배타 제외분은 미포함)
 };
 
 // 발송 대상 현황 조회 (GET /api/admin/churn/intervene/preview)
 export async function getInterventionPreview() {
   const res = await client.get<ApiResponse<InterventionPreview>>("/admin/churn/intervene/preview");
+  return res.data.data;
+}
+
+// 일 배치 실행 결과 — 스케줄러(매일 03:00)와 같은 메서드를 호출한다
+export type BatchRunResult = {
+  detected: number;         // 감지된 위험 판정 수
+  mlScored: number;         // ML 스코어링 수 (서빙 불가 시 0)
+  interventionOn: boolean;  // 자동 발송 스위치 상태
+  sent: number;             // 발송(처치군)
+  control: number;          // 대조군(기록만)
+  measured: number;         // 이번 실행에서 전환 판정 확정
+};
+
+export type BatchResetResult = {
+  interventions: number;
+  outcomes: number;
+  notifications: number;
+  coupons: number;
+};
+
+// 일 배치 수동 실행 (POST /api/admin/churn/batch)
+// 스케줄러와 같은 메서드를 한 번에 호출한다. 화면에서 단계별 진행을 보여줄 때는
+// 아래 개별 단계 함수를 순서대로 부른다(같은 로직을 나눠 실행 — 진행률이 실제 값이 된다).
+export async function runDailyBatch() {
+  const res = await client.post<ApiResponse<BatchRunResult>>("/admin/churn/batch");
+  return res.data.data;
+}
+
+// ── 배치 단계별 실행 (화면 진행 표시용) ──────────────────────────
+// 감지 (룰 8종)
+export async function runChurnDetect() {
+  await client.post<ApiResponse<{ message: string }>>("/admin/churn/run");
+}
+
+// ML 스코어링 — 서빙(:8000)이 꺼져 있으면 실패하므로 호출부에서 건너뛸 수 있게 둔다
+export async function runMlScoring() {
+  const res = await client.post<ApiResponse<{ scored: number }>>("/admin/churn/ml-run");
+  return res.data.data;
+}
+
+// 효과 측정
+export async function measureOutcomes() {
+  const res = await client.post<ApiResponse<{ measured: number }>>("/admin/churn/measure");
+  return res.data.data;
+}
+
+// 지표 적재
+export async function recordChurnMetrics() {
+  await client.post<ApiResponse<{ status: string }>>("/admin/churn/metrics");
+}
+
+// 오늘 배치분 원복 (POST /api/admin/churn/batch/reset)
+export async function resetDailyBatch() {
+  const res = await client.post<ApiResponse<BatchResetResult>>("/admin/churn/batch/reset");
   return res.data.data;
 }
 

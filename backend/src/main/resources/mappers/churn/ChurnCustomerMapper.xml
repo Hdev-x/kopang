@@ -27,7 +27,12 @@
         WITH latest AS (
             SELECT DISTINCT ON (user_id) user_id, score, risk_level, risk_type, scored_at
             FROM churn_score
-            ORDER BY user_id, scored_at DESC
+            <!-- 대시보드 인원 지표와 같은 유효기간을 적용한다. 이 조건이 없으면 회복한 회원이
+                 목록에 계속 남아 "고위험 N명"과 목록 건수가 어긋난다.
+                 단 source는 제한하지 않는다 — 이 화면은 대응 대상 발굴이라 ML 발견분도 봐야 한다. -->
+            WHERE scored_at &gt; NOW() - INTERVAL '7 days'
+              AND scored_at &lt;= NOW()
+            ORDER BY user_id, scored_at DESC, churn_score_id DESC
         )
         SELECT
             l.user_id           AS userId,
@@ -102,7 +107,10 @@
             SELECT risk_type,
                    MIN(scored_at) AS first_at,
                    MAX(scored_at) AS last_at,
-                   COUNT(*)       AS cnt
+                   <!-- 감지 "횟수"가 아니라 "일수". 같은 날 배치를 두 번 돌리면 행이 두 개
+                        생기는데(재실행·리허설), 그걸 그대로 세면 감지 횟수가 부풀려진다.
+                        실측: 21일 감지된 회원이 31회로 표시됐다. -->
+                   COUNT(DISTINCT scored_at::date) AS cnt
             FROM churn_score
             WHERE user_id = #{userId}
             GROUP BY risk_type
@@ -210,7 +218,9 @@
         WITH latest AS (
             SELECT DISTINCT ON (user_id) user_id, risk_level, risk_type
             FROM churn_score
-            ORDER BY user_id, scored_at DESC
+            WHERE scored_at &gt; NOW() - INTERVAL '7 days'   <!-- 위 목록 쿼리와 동일 기준 (건수 일치용) -->
+              AND scored_at &lt;= NOW()
+            ORDER BY user_id, scored_at DESC, churn_score_id DESC
         )
         SELECT COUNT(*)
         FROM latest l

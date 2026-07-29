@@ -5,6 +5,12 @@
       "type": "java.lang.String",
       "description": "이탈 점수 배치 실행 주기 (Spring cron 표현식). ChurnScheduler에서 사용.",
       "defaultValue": "0 0 3 * * *"
+    },
+    {
+      "name": "churn.intervention.enabled",
+      "type": "java.lang.Boolean",
+      "description": "배치의 자동 대응 발송 여부. false면 감지만 실행하고 발송은 건너뛴다(수동 실행은 영향 없음). ChurnScheduler에서 사용.",
+      "defaultValue": false
     }
   ]
 }

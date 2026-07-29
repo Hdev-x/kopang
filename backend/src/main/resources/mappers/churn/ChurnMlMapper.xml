@@ -112,11 +112,18 @@
         </foreach>
     </insert>
 
-    <!-- 멱등성 : 오늘자 ML 점수 삭제 후 재삽입 -->
+    <!-- 멱등성 : 오늘자 ML 점수 삭제 후 재삽입.
+         단 사각지대 발송이 참조 중인 판정은 남긴다 — 대응이 churn_score_id 를 FK로 물고 있어
+         "ML 스코어링 → 사각지대 발송 → ML 재실행" 순서에서 FK violation 이 난다.
+         (deleteTodayRuleScores 와 같은 가드) -->
     <delete id="deleteTodayMlScores">
-        DELETE FROM churn_score
-        WHERE source = 'ML'
-            AND scored_at::date = CURRENT_DATE
+        DELETE FROM churn_score cs
+        WHERE cs.source = 'ML'
+            AND cs.scored_at::date = CURRENT_DATE
+            AND NOT EXISTS (
+                SELECT 1 FROM retention_intervention ri
+                WHERE ri.churn_score_id = cs.churn_score_id
+            )
     </delete>
 
 </mapper>

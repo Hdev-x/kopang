@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { AlertTriangle, Crosshair, Percent, Target } from "lucide-react";
 import { AdminLayout } from "../../../components/AdminLayout";
+import { Skeleton } from "../../../components/Skeleton";
 import { getChurnSummary, type ChurnSummary } from "../../../api/churn";
 import styles from "./AdminChurnPage.module.css";
 
@@ -52,10 +53,54 @@ export function AdminChurnPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  // 로딩 중에도 같은 틀을 그린다 — 문구 한 줄로 갈아끼우면 데이터가 오는 순간 화면이 통째로 튄다
   if (loading || error || !data) {
     return (
-      <AdminLayout title="이탈 방지 대시보드">
-        <p>{loading ? "집계를 불러오는 중…" : "집계를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요."}</p>
+      <AdminLayout title="이탈 방지 대시보드" fullBleed>
+        <div className={styles.page}>
+          <div className={styles.pageHead}>
+            <p className={styles.caption}>예측 → 대응 → 효과를 한눈에</p>
+            {error && <span className={styles.basis}><i />집계를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</span>}
+          </div>
+
+          <div className={`${styles.fRow} ${styles.fKpis}`}>
+            {["고위험 고객", "대응 커버리지", "주간 이탈률", "대응 전환율"].map((label) => (
+              <div key={label} className={styles.fCell}>
+                <span className={styles.kTop}><span className={styles.label}>{label}</span></span>
+                <b className={styles.kValue}><Skeleton w={84} h={22} /></b>
+                <span className={styles.kSub}><Skeleton w={120} h={11} /></span>
+              </div>
+            ))}
+          </div>
+
+          <div className={`${styles.fRow} ${styles.fMid}`}>
+            <div className={styles.fCell}>
+              <div className={styles.secHead}><h2>이탈률 추이</h2></div>
+              <div className={styles.chartWrap} />
+            </div>
+            <div className={styles.fCell}>
+              <div className={styles.secHead}><h2>위험 유형 분포</h2></div>
+              <div className={styles.hbars}>
+                {Array.from({ length: 5 }, (_, i) => (
+                  <div key={i} className={styles.hbar}>
+                    <div className={styles.hbarMeta}><Skeleton w={92} h={11} /><Skeleton w={38} h={11} /></div>
+                    <span className={styles.hbarTrack} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* 아래 행도 실제와 같은 3분할로 자리를 잡아둔다 */}
+          <div className={`${styles.fRow} ${styles.fBot}`}>
+            {["대응 현황", "룰 vs ML", "위험 고객 Top 3"].map((title) => (
+              <div key={title} className={styles.fCell}>
+                <div className={styles.secHead}><h2>{title}</h2></div>
+                <div />
+              </div>
+            ))}
+          </div>
+        </div>
       </AdminLayout>
     );
   }
@@ -70,6 +115,9 @@ export function AdminChurnPage() {
 
   // 이탈률 추이 (최근 7일) ─────────────────────────
   const trend = weeklyChurnRate.slice(-7);
+  // 지표 마감일 — 일별 지표는 하루가 끝나야 확정되므로 보통 "어제"다.
+  // 카드마다 기준 시점이 달라(현재 상태 vs 마감 집계) 화면에 표시해야 오해가 없다.
+  const asOf = weeklyChurnRate.length ? weeklyChurnRate[weeklyChurnRate.length - 1].metricDate.slice(5) : null;
   const rates = trend.map((t) => t.churnRate);
   const yMax = Math.max(...rates, CHURN_TARGET) + 0.3;
   const yMin = Math.min(...rates, CHURN_TARGET) - 0.3;
@@ -106,24 +154,24 @@ export function AdminChurnPage() {
         {/* KPI 4 */}
         <div className={`${styles.fRow} ${styles.fKpis}`}>
           <div className={styles.fCell}>
-            <span className={styles.kTop}><AlertTriangle size={14} className={styles.kIcon} color="#e4453a" /><span className={styles.label}>고위험 고객</span></span>
+            <span className={styles.kTop}><AlertTriangle size={14} className={styles.kIcon} color="#e4453a" /><span className={styles.label}>고위험 고객</span><em className={styles.asOfNow}>현재</em></span>
             <b className={styles.kValue}>{highCount.toLocaleString()}명</b>
             <span className={styles.kSub}>확률 0.7 이상</span>
           </div>
           <div className={styles.fCell}>
-            <span className={styles.kTop}><Crosshair size={14} className={styles.kIcon} color="#2f6bff" /><span className={styles.label}>대응 커버리지</span></span>
+            <span className={styles.kTop}><Crosshair size={14} className={styles.kIcon} color="#2f6bff" /><span className={styles.label}>대응 커버리지</span><em className={styles.asOfNow}>현재</em></span>
             <b className={styles.kValue}>{coveragePct}%</b>
             <span className={styles.kSub}>{uncovered > 0 ? <span className={styles.neg}>미대응 {uncovered.toLocaleString()}명</span> : "고위험 전원 대응"}{uncovered > 0 && " → 발송 실행"}</span>
           </div>
           <div className={styles.fCell}>
-            <span className={styles.kTop}><Percent size={14} className={styles.kIcon} color="#d98a06" /><span className={styles.label}>주간 이탈률</span></span>
+            <span className={styles.kTop}><Percent size={14} className={styles.kIcon} color="#d98a06" /><span className={styles.label}>주간 이탈률</span><em className={styles.asOfNow}>현재</em></span>
             <b className={styles.kValue}>{kpi.churnRate}%</b>
             <span className={styles.kSub}>{kpi.churnRate <= CHURN_TARGET ? <span className={styles.pos}>목표 달성</span> : <span className={styles.neg}>목표 초과</span>} · 목표 {CHURN_TARGET.toFixed(1)}%</span>
           </div>
           <div className={styles.fCell}>
-            <span className={styles.kTop}><Target size={14} className={styles.kIcon} color="#12a150" /><span className={styles.label}>대응 전환율</span></span>
+            <span className={styles.kTop}><Target size={14} className={styles.kIcon} color="#12a150" /><span className={styles.label}>대응 전환율</span><em className={styles.asOfNow}>현재</em></span>
             <b className={styles.kValue}>{kpi.conversionRate}%</b>
-            <span className={styles.kSub}>처치군 재구매 기준 (7일 귀속)</span>
+            <span className={styles.kSub}>최근 30일 · 처치군 재구매 기준 (7일 귀속)</span>
           </div>
         </div>
 
@@ -132,7 +180,7 @@ export function AdminChurnPage() {
           <div className={styles.fCell}>
             <div className={styles.secHead}>
               <h2>이탈률 추이</h2>
-              <p>최근 {trend.length}일 · 목표선 {CHURN_TARGET.toFixed(1)}%{overDays > 0 && <span className={`${styles.chip} ${styles.chipGood}`} style={{ marginLeft: 6, background: "#fce8e6", color: "#e4453a" }}>목표 초과 {overDays}일</span>}</p>
+              <p>{asOf ? `~${asOf} 마감` : "마감 전"} · 최근 {trend.length}일 · 목표선 {CHURN_TARGET.toFixed(1)}%{overDays > 0 && <span className={`${styles.chip} ${styles.chipGood}`} style={{ marginLeft: 6, background: "#fce8e6", color: "#e4453a" }}>목표 초과 {overDays}일</span>}</p>
             </div>
             <div className={styles.chartWrap}>
               {yTicks.map((t) => (
@@ -206,7 +254,7 @@ export function AdminChurnPage() {
             </div>
             <div className={styles.opsWrap}>
               <div className={styles.opsGrid}>
-                <div className={styles.op}><span className={styles.label}>오늘 발송</span><b>{ops.sentToday.toLocaleString()}건</b><small>알림 {ops.sentPushToday} · 쿠폰 {ops.sentCouponToday}</small></div>
+                <div className={styles.op}><span className={styles.label}>오늘 발송</span><b>{ops.sentToday.toLocaleString()}건</b><small>알림 {ops.sentPushToday} · 쿠폰 발급 {ops.sentCouponToday}</small></div>
                 <div className={styles.op}><span className={styles.label}>오늘 대조군</span><b>{ops.controlToday.toLocaleString()}명</b><small>효과 측정용 미발송</small></div>
                 <div className={styles.op}><span className={styles.label}>누적 대응</span><b>{ops.totalCount.toLocaleString()}건</b><small>1일 1건 · 7일 중복 방지</small></div>
                 <div className={styles.op}><span className={styles.label}>전환 (7일 귀속)</span><b>{ops.convertedCount.toLocaleString()}건</b><small>전환율 {kpi.conversionRate}%</small></div>

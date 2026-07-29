@@ -2,13 +2,14 @@
 """
 train_churn.py — 이탈 예측 모델 학습 (로지스틱 회귀 + 확률 보정)
 
-입력:  ml/user_profiles.csv  (유저 1행 = 피처 + churned 라벨)
-출력:  ml/churn_model.pkl     (보정된 model + scaler + feature 순서)
+입력:  ml/seed/user_profiles.csv   (유저 1행 = 피처 + churned 라벨)
+출력:  ml/model/churn_model.pkl    (보정된 model + scaler + feature 순서)
 
 핵심: class_weight='balanced' 로 이탈자를 잘 잡되(recall), CalibratedClassifierCV 로
 확률을 실제에 맞게 보정한다 → score 가 진짜 "이탈 가능성"을 뜻하고 등급(HIGH/MID/LOW)이 의미를 가진다.
 
-실행:  ml/.venv/bin/python ml/train_churn.py
+실행:  ml/.venv/bin/python ml/model/train_churn.py
+       — 프로젝트 루트에서 실행한다(경로가 루트 기준).
 """
 import joblib
 import numpy as np
@@ -19,8 +20,8 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
-CSV = "ml/user_profiles.csv"
-MODEL_OUT = "ml/churn_model.pkl"
+CSV = "ml/seed/user_profiles.csv"
+MODEL_OUT = "ml/model/churn_model.pkl"
 DROP = ["user_id", "prefered_order_cat", "seed_group", "seed_type", "churned"]
 
 

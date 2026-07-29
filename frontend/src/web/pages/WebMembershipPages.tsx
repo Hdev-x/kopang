@@ -27,9 +27,20 @@ export function WebMembershipPage() {
     } catch { window.alert("결제를 시작하지 못했어요."); }
   };
 
-  const handleOpenCancelModal = () => {
+  // 대조군에게는 만류 모달을 띄우지 않는다.
+  // 응답의 isControl 을 버리고 무조건 띄우면 "대응받지 않은 군"이 성립하지 않아
+  // 효과 리포트의 MODAL 순효과가 무의미해진다(대조군도 모달을 본 상태의 비교).
+  const handleOpenCancelModal = async () => {
+    try {
+      const res = await recordMembershipCancelModal();
+      if (res?.isControl) {
+        await handleConfirmCancel();   // 대조군: 만류 없이 바로 해지 진행
+        return;
+      }
+    } catch (err) {
+      console.error(err);   // 기록 실패 시에도 사용자 흐름은 막지 않는다
+    }
     setModalOpen(true);
-    recordMembershipCancelModal().catch((err) => console.error(err));
   };
 
   const handleConfirmCancel = async () => {
