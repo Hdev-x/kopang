@@ -1,7 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { findEmail } from "../../api/auth";
-import { getErrorMessage } from "../../utils/error";
 import { WebAuthLayout } from "../components/WebAuthLayout";
 import styles from "./WebAuthPages.module.css";
 
@@ -34,8 +33,9 @@ export function WebFindEmailPage() {
         try {
             const data = await findEmail(name, phoneFull);
             setFoundEmail(data.email);
-        } catch (error: unknown) {
-            window.alert(getErrorMessage(error, "일치하는 회원 정보가 없습니다."));
+        } catch (err: any) {
+            const msg = err.response?.data?.message || "일치하는 회원 정보가 없습니다.";
+            window.alert(msg);
         } finally {
             setSubmitting(false);
         }
