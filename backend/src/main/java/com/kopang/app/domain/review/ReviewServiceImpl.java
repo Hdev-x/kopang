@@ -25,23 +25,27 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public void addReview(Long userId, Long productId, double rating, String content, String imageUrl) {
 
-        // 이미 해당 상품에 대해 작성한 리뷰가 있는지 검증
+        // 1. 해당 상품에 대해 사용자가 작성한 기존 리뷰 수
         List<ReviewDTO> existingReviews = reviewMapper.findByUserId(userId);
-        boolean alreadyReviewed = existingReviews.stream()
-                .anyMatch(r -> r.getProductId().equals(productId));
-        if (alreadyReviewed) {
-            throw new IllegalStateException("이미 이 상품에 대해 리뷰를 작성하셨습니다.");
-        }
+        long reviewCount = existingReviews.stream()
+                .filter(r -> r.getProductId().equals(productId))
+                .count();
 
-        // 구매확정 상태인지 검증
+        // 2. 해당 상품을 구매확정(CONFIRMED)한 총 구매 수량
         List<OrderDTO> orders = orderMapper.findOrdersByUserId(userId);
-        boolean hasConfirmedPurchase = orders.stream()
+        long confirmedPurchaseCount = orders.stream()
                 .filter(order -> "CONFIRMED".equals(order.getOrderStatus()))
                 .flatMap(order -> order.getItems().stream())
-                .anyMatch(item -> item.getProductId().equals(productId));
+                .filter(item -> item.getProductId().equals(productId))
+                .mapToLong(item -> item.getQuantity() > 0 ? item.getQuantity() : 1L)
+                .sum();
 
-        if (!hasConfirmedPurchase) {
+        if (confirmedPurchaseCount == 0) {
             throw new IllegalStateException("구매확정한 상품에 대해서만 리뷰를 작성할 수 있습니다.");
+        }
+
+        if (reviewCount >= confirmedPurchaseCount) {
+            throw new IllegalStateException("이미 구매하신 횟수만큼 리뷰를 작성하셨습니다.");
         }
 
         ReviewDTO dto = new ReviewDTO();

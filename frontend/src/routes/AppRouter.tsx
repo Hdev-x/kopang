@@ -191,6 +191,7 @@ export function AppRouter() {
       {/* ---------- 고객지원 (스코프 제외 — 화면만 유지) ---------- */}
       <Route path="/my/support" element={<SupportPage />} />
       <Route path="/my/support/inquiry" element={<SupportInquiryPage />} />
+      <Route path="/support/inquiry" element={<SupportInquiryPage />} />
       <Route path="/my/support/notices" element={<NoticeListPage />} />
       <Route path="/my/support/notices/:id" element={<NoticeDetailPage />} />
       <Route path="/my/support/faq" element={<FaqPage />} />

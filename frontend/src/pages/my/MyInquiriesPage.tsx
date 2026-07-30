@@ -30,8 +30,11 @@ export function MyInquiriesPage() {
       <PageHeader title="문의내역" backTo="/my" />
 
       <div style={{ padding: "0 var(--space-4)", marginTop: "var(--space-2)", marginBottom: "var(--space-2)" }}>
-        <Button className={s.writeBtn} onClick={() => navigate("/support/inquiry")}>
-          + 1:1 문의하기
+        <Button
+          className={s.writeBtn}
+          onClick={() => navigate(tab === "product" ? "/my/support/inquiry?type=PRODUCT" : "/my/support/inquiry?type=GENERAL")}
+        >
+          {tab === "product" ? "상품 문의하기" : "1:1 문의하기"}
         </Button>
       </div>
 
