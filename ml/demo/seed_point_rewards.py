@@ -140,11 +140,13 @@ def undo(conn):
         cur.close()
         return
 
+    # description 은 "... 주문 ID: 12345)" 형식이라 split_part 만 쓰면 닫는 괄호가 붙어
+    # 주문 ID 와 영영 일치하지 않는다(적립 이력이 0행 삭제되고 포인트만 남는다).
     cur.execute(
         """DELETE FROM point_history
            WHERE type='SAVED'
              AND description LIKE '구매확정 포인트 적립%%'
-             AND split_part(description, '주문 ID: ', 2) = ANY(%s)""",
+             AND rtrim(split_part(description, '주문 ID: ', 2), ')') = ANY(%s)""",
         ([str(i) for i in order_ids],),
     )
     deleted = cur.rowcount
