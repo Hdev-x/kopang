@@ -14,4 +14,5 @@ public interface CouponService {
 
     // 4. 쿠폰 사용 처리 (결제 완료 등)
     void useCoupon(Long userCouponId);
+    void useCoupon(Long userCouponId, Long userId);
 }

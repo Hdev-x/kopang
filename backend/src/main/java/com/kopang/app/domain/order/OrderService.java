@@ -185,7 +185,22 @@ public class OrderService {
         orderMapper.updatePaymentStatus(orderId, "CANCELLED");
         orderMapper.updateOrderStatus(orderId, "CANCELLED");
 
-        // 3. 재고 환원 (주문 취소로 인한 플러스)
+        // 3. 사용한 쿠폰 복원 (원복)
+        if (order.getUserCouponId() != null && order.getUserCouponId() > 0) {
+            couponMapper.restoreUserCoupon(order.getUserCouponId());
+        }
+
+        // 4. 사용한 포인트 환원 (원복)
+        if (order.getUsedPoint() > 0) {
+            PointHistoryDTO restoreHistory = new PointHistoryDTO();
+            restoreHistory.setUserId(order.getUserId());
+            restoreHistory.setAmount(order.getUsedPoint());
+            restoreHistory.setType("CANCEL_RESTORE");
+            restoreHistory.setDescription("주문 취소 포인트 환원 (주문 ID: " + orderId + ")");
+            pointMapper.insertPointHistory(restoreHistory);
+        }
+
+        // 5. 재고 환원 (주문 취소로 인한 플러스)
         List<OrderItemDTO> items = orderMapper.findOrderItemsByOrderId(orderId);
         for (OrderItemDTO item : items) {
             ProductDTO product = productMapper.findById(item.getProductId());

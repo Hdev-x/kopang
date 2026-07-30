@@ -10,14 +10,16 @@ export function OAuth2CallbackPage() {
         const accessToken = searchParams.get("accessToken");
         const refreshToken = searchParams.get("refreshToken");
         const nameRaw = searchParams.get("name");
+        const emailParam = searchParams.get("email");
         const roleParam = searchParams.get("role");
         const hasPhone = searchParams.get("hasPhone") === "true";
         const role: AuthUser["role"] = roleParam === "ADMIN" ? "ADMIN" : "USER";
 
         if (accessToken && refreshToken && nameRaw) {
             const name = decodeURIComponent(nameRaw);
+            const email = emailParam ? decodeURIComponent(emailParam) : undefined;
             // 자체 세션 스토리지에 로그인 정보 저장
-            authLogin({ name, role }, accessToken, refreshToken);
+            authLogin({ name, email, role }, accessToken, refreshToken);
             alert(`${name}님, 소셜 로그인으로 반갑습니다!`);
             const preferredView = localStorage.getItem("kopang_login_view");
             localStorage.removeItem("kopang_login_view");

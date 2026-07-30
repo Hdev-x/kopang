@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { login as apiLogin } from "../../api/auth";
 import { login as saveAuth } from "../../lib/auth";
@@ -8,7 +8,8 @@ import styles from "./WebAuthPages.module.css";
 
 export function WebLoginPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const location = useLocation();
+  const [email, setEmail] = useState((location.state as { email?: string })?.email || "");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -24,7 +25,7 @@ export function WebLoginPage() {
     setSubmitting(true);
     try {
       const data = await apiLogin(email, password);
-      saveAuth({ name: data.user.name, role: data.user.role }, data.accessToken, data.refreshToken, rememberMe);
+      saveAuth({ name: data.user.name, email: data.user.email || email, role: data.user.role }, data.accessToken, data.refreshToken, rememberMe);
       navigate("/web");
     } catch {
       window.alert("로그인에 실패했습니다. 이메일 또는 비밀번호를 확인해 주세요.");
@@ -39,7 +40,7 @@ export function WebLoginPage() {
     <WebAuthLayout eyebrow="WELCOME BACK" title="다시 만나서 반가워요" description="로그인하고 장바구니, 주문 내역, 찜한 상품을 Web 화면에서 이어서 확인하세요.">
       <div className={styles.heading}><h2>로그인</h2><p>Kopang 계정 정보를 입력해 주세요.</p></div>
       <form className={styles.form} onSubmit={handleSubmit} noValidate>
-        <div className={styles.field}><label htmlFor="web-login-email">이메일</label><input id="web-login-email" type="text" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="email@example.com 또는 admin" autoComplete="username" /></div>
+        <div className={styles.field}><label htmlFor="web-login-email">이메일</label><input id="web-login-email" type="text" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="이메일 입력" autoComplete="username" /></div>
         <div className={styles.field}>
           <label htmlFor="web-login-password">비밀번호</label>
           <div style={{ position: "relative", display: "flex", alignItems: "center", width: "100%" }}>

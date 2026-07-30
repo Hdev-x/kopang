@@ -44,19 +44,19 @@ export type AdminCouponResponse = {
 // 1. 관리자 회원 목록 조회
 export async function getAdminMembers() {
     const res = await client.get<ApiResponse<AdminMemberResponse[]>>("/admin/members");
-    return res.data.data;
+    return res.data?.data ?? [];
 }
 
 // 2. 관리자 멤버십 지표 및 해지 위험 회원 조회
 export async function getAdminMembershipStats() {
     const res = await client.get<ApiResponse<AdminMembershipStatsResponse>>("/admin/membership/stats");
-    return res.data.data;
+    return res.data?.data ?? { membershipCount: 0, newSubscribersThisMonth: 0, atRiskCount: 0, retentionRate: 100, atRiskMembers: [] };
 }
 
 // 3. 관리자 쿠폰 발행 현황 조회
 export async function getAdminCoupons() {
     const res = await client.get<ApiResponse<AdminCouponResponse[]>>("/admin/coupons");
-    return res.data.data;
+    return res.data?.data ?? [];
 }
 
 // 4. 관리자 쿠폰 신규 발행 (이벤트 등록)

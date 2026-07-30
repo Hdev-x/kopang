@@ -1,5 +1,6 @@
 import { useState, type FormEvent, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 import { Eye, EyeOff } from "lucide-react";
 import { checkEmail, signup } from "../../api/auth";
 import { WebAuthLayout } from "../components/WebAuthLayout";
@@ -20,6 +21,7 @@ export function WebSignupPage() {
   const [phone1, setPhone1] = useState("010");
   const [phone2, setPhone2] = useState("");
   const [phone3, setPhone3] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const phone3Ref = useRef<HTMLInputElement>(null);
 
   const [checkedEmail, setCheckedEmail] = useState("");
@@ -42,7 +44,7 @@ export function WebSignupPage() {
   };
 
   const handleEmailCheck = async () => {
-    if (!email.includes("@")) {
+    if (!email.trim() || !email.includes("@")) {
       window.alert("올바른 이메일을 입력해 주세요.");
       return;
     }
@@ -61,7 +63,7 @@ export function WebSignupPage() {
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    if (checkedEmail !== email) {
+    if (!checkedEmail || checkedEmail !== email) {
       window.alert("이메일 중복 확인을 진행해 주세요.");
       return;
     }
@@ -97,12 +99,16 @@ export function WebSignupPage() {
         email,
         password,
         name,
-        phone: phoneFull
+        phone: phoneFull,
+        birthDate: birthDate || undefined,
       });
       window.alert("회원가입이 완료되었습니다. 로그인해 주세요.");
       navigate("/web/login");
-    } catch (err: any) {
-      const msg = err.response?.data?.message || "회원가입에 실패했습니다. 입력값을 확인해 주세요.";
+    } catch (err: unknown) {
+      let msg = "회원가입에 실패했습니다. 입력값을 확인해 주세요.";
+      if (axios.isAxiosError(err) && err.response?.data?.message) {
+        msg = err.response.data.message;
+      }
       window.alert(msg);
     } finally {
       setSubmitting(false);
@@ -117,7 +123,7 @@ export function WebSignupPage() {
           <div className={styles.field}><label htmlFor="web-signup-email">이메일</label><input id="web-signup-email" type="email" value={email} onChange={(event) => { setEmail(event.target.value); setCheckedEmail(""); }} placeholder="email@example.com" autoComplete="email" /></div>
           <button type="button" className={styles.secondaryButton} onClick={handleEmailCheck}>중복확인</button>
         </div>
-        {checkedEmail === email && <p className={styles.message}>사용 가능한 이메일입니다.</p>}
+        {Boolean(checkedEmail) && checkedEmail === email && <p className={styles.message}>사용 가능한 이메일입니다.</p>}
         <div className={styles.field}>
           <label htmlFor="web-signup-password">비밀번호</label>
           <div style={{ position: "relative", display: "flex", alignItems: "center", width: "100%" }}>
@@ -260,6 +266,18 @@ export function WebSignupPage() {
               }}
             />
           </div>
+        </div>
+
+        <div className={styles.field}>
+          <label htmlFor="web-signup-birthdate">생년월일</label>
+          <input
+            id="web-signup-birthdate"
+            type="date"
+            value={birthDate}
+            max={new Date().toISOString().substring(0, 10)}
+            min="1900-01-01"
+            onChange={(event) => setBirthDate(event.target.value)}
+          />
         </div>
 
         <div className={styles.terms}>

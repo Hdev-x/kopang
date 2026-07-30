@@ -1,0 +1,114 @@
+.container {
+  max-width: 800px;
+  margin: 40px auto 80px;
+  padding: 0 20px;
+}
+
+.header {
+  margin-bottom: 28px;
+  border-bottom: 2px solid var(--color-border, #eee);
+  padding-bottom: 16px;
+}
+
+.header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text, #222);
+  margin-bottom: 6px;
+}
+
+.header p {
+  font-size: 14px;
+  color: var(--color-text-muted, #666);
+}
+
+.empty {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--color-text-muted, #888);
+  font-size: 15px;
+  background: var(--color-bg-card, #fff);
+  border-radius: 12px;
+  border: 1px dashed var(--color-border, #e0e0e0);
+}
+
+.emptyIcon {
+  font-size: 36px;
+  margin-bottom: 12px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 18px 20px;
+  background: #ffffff;
+  border: 1px solid var(--color-border, #eee);
+  border-radius: 12px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  position: relative;
+  cursor: pointer;
+}
+
+.card:hover {
+  border-color: var(--color-primary, #007bff);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.unread {
+  background: #f0f7ff;
+  border-color: #b3d7ff;
+}
+
+.emojiWrapper {
+  font-size: 24px;
+  line-height: 1;
+  padding-top: 2px;
+}
+
+.body {
+  flex: 1;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.tag {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-primary, #007bff);
+}
+
+.time {
+  font-size: 12px;
+  color: #999;
+}
+
+.message {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+  margin: 0;
+}
+
+.unreadBadge {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-primary, #007bff);
+  position: absolute;
+  top: 18px;
+  right: 18px;
+}

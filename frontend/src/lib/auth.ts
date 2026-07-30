@@ -18,7 +18,8 @@ export function isLoggedIn(): boolean {
 }
 
 export function isAdmin(): boolean {
-  return getAuth()?.role === "ADMIN";
+  const role = getAuth()?.role;
+  return role === "ADMIN" || role === "ROLE_ADMIN";
 }
 
 export function login(user: AuthUser, accessToken?: string, refreshToken?: string, rememberMe?: boolean): void {
@@ -41,6 +42,19 @@ export function login(user: AuthUser, accessToken?: string, refreshToken?: strin
     } else {
       sessionStorage.setItem("refreshToken", refreshToken);
     }
+  }
+  window.dispatchEvent(new Event("auth-change"));
+}
+
+export function updateAuthUser(partial: Partial<AuthUser>): void {
+  const current = getAuth();
+  if (!current) return;
+  const updated = { ...current, ...partial };
+  if (localStorage.getItem(KEY)) {
+    localStorage.setItem(KEY, JSON.stringify(updated));
+  }
+  if (sessionStorage.getItem(KEY)) {
+    sessionStorage.setItem(KEY, JSON.stringify(updated));
   }
   window.dispatchEvent(new Event("auth-change"));
 }

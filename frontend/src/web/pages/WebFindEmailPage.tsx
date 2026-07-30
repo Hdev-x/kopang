@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 import { findEmail } from "../../api/auth";
 import { WebAuthLayout } from "../components/WebAuthLayout";
 import styles from "./WebAuthPages.module.css";
@@ -11,6 +12,7 @@ export function WebFindEmailPage() {
     const [phone2, setPhone2] = useState("");
     const [phone3, setPhone3] = useState("");
     const [foundEmail, setFoundEmail] = useState<string | null>(null);
+    const [fullEmail, setFullEmail] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
 
     const handleSubmit = async (event: FormEvent) => {
@@ -33,8 +35,12 @@ export function WebFindEmailPage() {
         try {
             const data = await findEmail(name, phoneFull);
             setFoundEmail(data.email);
-        } catch (err: any) {
-            const msg = err.response?.data?.message || "일치하는 회원 정보가 없습니다.";
+            setFullEmail(data.fullEmail || data.email);
+        } catch (err: unknown) {
+            let msg = "일치하는 회원 정보가 없습니다.";
+            if (axios.isAxiosError(err) && err.response?.data?.message) {
+                msg = err.response.data.message;
+            }
             window.alert(msg);
         } finally {
             setSubmitting(false);
@@ -152,7 +158,7 @@ export function WebFindEmailPage() {
                     <button
                         className={styles.submit}
                         type="button"
-                        onClick={() => navigate("/web/login")}
+                        onClick={() => navigate("/web/login", { state: { email: fullEmail || foundEmail } })}
                         style={{ marginBottom: "15px" }}
                     >
                         로그인하러 가기

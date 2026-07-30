@@ -18,9 +18,11 @@ export function AdminCouponsPage() {
 
   const loadData = async () => {
     try {
-      setCoupons(await getAdminCoupons());
+      const data = await getAdminCoupons();
+      setCoupons(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("쿠폰 현황을 불러오는 데 실패했습니다.", err);
+      setCoupons([]);
     } finally {
       setLoading(false);
     }
@@ -51,6 +53,7 @@ export function AdminCouponsPage() {
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "—";
     const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
     return `~ ${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
   };
 
@@ -72,7 +75,7 @@ export function AdminCouponsPage() {
               <tbody><SkeletonRows rows={10} cols={7} widths={["70%", "50%", "44%", "40%", "56%", "38%", "60%"]} /></tbody>
             </table>
           </div>
-        ) : coupons.length === 0 ? (
+        ) : (!coupons || coupons.length === 0) ? (
           <p className={styles.empty}>생성된 쿠폰 정책이 없습니다.</p>
         ) : (
           <div className={styles.tableWrap}>
@@ -82,20 +85,24 @@ export function AdminCouponsPage() {
               </thead>
               <tbody>
                 {coupons.map((c) => {
-                  const usageRate = c.issuedCount > 0 ? Math.round((c.usedCount / c.issuedCount) * 100) : 0;
+                  const issuedCount = c?.issuedCount ?? 0;
+                  const usedCount = c?.usedCount ?? 0;
+                  const discountValue = c?.discountValue ?? 0;
+                  const quantity = c?.quantity ?? 0;
+                  const usageRate = issuedCount > 0 ? Math.round((usedCount / issuedCount) * 100) : 0;
                   return (
-                    <tr key={c.couponId}>
-                      <td className={styles.name}>{c.name}</td>
-                      <td><span className={`${styles.badge} ${c.targetGroup === "신규" ? styles.bMuted : styles.bInfo}`}>{c.targetGroup}</span></td>
-                      <td>{c.discountType === "RATE" ? `${c.discountValue}%` : `₩${c.discountValue.toLocaleString()}`}</td>
-                      <td className={styles.r}>{c.issuedCount.toLocaleString()}</td>
+                    <tr key={c.couponId || Math.random()}>
+                      <td className={styles.name}>{c.name ?? "쿠폰"}</td>
+                      <td><span className={`${styles.badge} ${c.targetGroup === "신규" ? styles.bMuted : styles.bInfo}`}>{c.targetGroup ?? "일반"}</span></td>
+                      <td>{c.discountType === "RATE" ? `${discountValue}%` : `₩${discountValue.toLocaleString()}`}</td>
+                      <td className={styles.r}>{issuedCount.toLocaleString()}</td>
                       <td className={styles.r}>
                         <span className={styles.usage}>
                           <span className={styles.usageTrack}><span className={styles.usageFill} style={{ width: `${usageRate}%` }} /></span>
                           {usageRate}%
                         </span>
                       </td>
-                      <td className={styles.r}>{c.quantity.toLocaleString()}</td>
+                      <td className={styles.r}>{quantity.toLocaleString()}</td>
                       <td>{formatDate(c.endDate)}</td>
                     </tr>
                   );

@@ -2,6 +2,7 @@ import { useState, type FormEvent, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "../../components/Layout";
 import { PageHeader } from "../../components/PageHeader";
+import { Input } from "../../components/Input";
 import { Button } from "../../components/Button";
 import { updateProfile } from "../../api/auth";
 import styles from "../../styles/LoginPage.module.css";
@@ -10,6 +11,7 @@ export function AddPhonePage() {
     const [phone1, setPhone1] = useState("010");
     const [phone2, setPhone2] = useState("");
     const [phone3, setPhone3] = useState("");
+    const [birthDate, setBirthDate] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const navigate = useNavigate();
     const phone3Ref = useRef<HTMLInputElement>(null);
@@ -31,11 +33,11 @@ export function AddPhonePage() {
 
         try {
             setSubmitting(true);
-            await updateProfile({ phone: phoneFull });
-            alert("연락처 등록이 완료되었습니다. 반갑습니다!");
+            await updateProfile({ phone: phoneFull, birthDate: birthDate || undefined });
+            alert("추가 정보 등록이 완료되었습니다. 반갑습니다!");
             navigate("/");
         } catch (err: any) {
-            const msg = err.response?.data?.message || "연락처 등록에 실패했습니다. 다시 시도해 주세요.";
+            const msg = err.response?.data?.message || "추가 정보 등록에 실패했습니다. 다시 시도해 주세요.";
             alert(msg);
         } finally {
             setSubmitting(false);
@@ -124,6 +126,17 @@ export function AddPhonePage() {
                                 }}
                             />
                         </div>
+                    </div>
+
+                    <div style={{ marginBottom: "25px", width: "100%" }}>
+                        <Input
+                            label="생년월일 (선택)"
+                            type="date"
+                            value={birthDate}
+                            max={new Date().toISOString().substring(0, 10)}
+                            min="1900-01-01"
+                            onChange={(e) => setBirthDate(e.target.value)}
+                        />
                     </div>
 
                     <Button type="submit" disabled={submitting} style={{ width: "100%", height: "48px", fontSize: "16px" }}>

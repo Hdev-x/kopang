@@ -26,7 +26,7 @@ public class CartController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.fail("인증되지 않은 사용자입니다"));
         }
-        Long userId = userService.detailByEmail(userDetails.getEmail()).getUserId();
+        Long userId = userDetails.getUserId() != null ? userDetails.getUserId() : userService.detailByEmail(userDetails.getEmail()).getUserId();
         List<CartItemDTO> items = cartService.getCartItems(userId);
         return ResponseEntity.ok(ApiResponse.success(items));
     }
@@ -39,7 +39,7 @@ public class CartController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.fail("인증되지 않은 사용자입니다"));
         }
-        Long userId = userService.detailByEmail(userDetails.getEmail()).getUserId();
+        Long userId = userDetails.getUserId() != null ? userDetails.getUserId() : userService.detailByEmail(userDetails.getEmail()).getUserId();
         cartService.addToCart(userId, request.getProductId(), request.getQuantity());
         return ResponseEntity.ok(ApiResponse.success(null));
     }
@@ -53,7 +53,7 @@ public class CartController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.fail("인증되지 않은 사용자입니다"));
         }
-        Long userId = userService.detailByEmail(userDetails.getEmail()).getUserId();
+        Long userId = userDetails.getUserId() != null ? userDetails.getUserId() : userService.detailByEmail(userDetails.getEmail()).getUserId();
         try {
             cartService.updateQuantity(userId, cartItemId, quantity);
             return ResponseEntity.ok(ApiResponse.success(null));
@@ -70,7 +70,7 @@ public class CartController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.fail("인증되지 않은 사용자입니다"));
         }
-        Long userId = userService.detailByEmail(userDetails.getEmail()).getUserId();
+        Long userId = userDetails.getUserId() != null ? userDetails.getUserId() : userService.detailByEmail(userDetails.getEmail()).getUserId();
         try {
             cartService.deleteCartItem(userId, cartItemId);
             return ResponseEntity.ok(ApiResponse.success(null));

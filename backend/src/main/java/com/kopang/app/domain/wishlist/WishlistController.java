@@ -27,7 +27,7 @@ public class WishlistController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.fail("인증되지 않은 사용자입니다"));
         }
-        Long userId = userService.detailByEmail(userDetails.getEmail()).getUserId();
+        Long userId = userDetails.getUserId() != null ? userDetails.getUserId() : userService.detailByEmail(userDetails.getEmail()).getUserId();
         List<WishlistDTO> list = wishlistService.getWishlist(userId);
         return ResponseEntity.ok(ApiResponse.success(list));
     }
@@ -44,7 +44,7 @@ public class WishlistController {
         if (productId == null) {
             return ResponseEntity.badRequest().body(ApiResponse.fail("상품 ID가 유효하지 않습니다"));
         }
-        Long userId = userService.detailByEmail(userDetails.getEmail()).getUserId();
+        Long userId = userDetails.getUserId() != null ? userDetails.getUserId() : userService.detailByEmail(userDetails.getEmail()).getUserId();
         wishlistService.addWishlist(userId, productId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
@@ -57,7 +57,7 @@ public class WishlistController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.fail("인증되지 않은 사용자입니다"));
         }
-        Long userId = userService.detailByEmail(userDetails.getEmail()).getUserId();
+        Long userId = userDetails.getUserId() != null ? userDetails.getUserId() : userService.detailByEmail(userDetails.getEmail()).getUserId();
         wishlistService.deleteWishlist(userId, productId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
@@ -69,7 +69,7 @@ public class WishlistController {
         if (userDetails == null) {
             return ResponseEntity.ok(ApiResponse.success(false)); // 비로그인은 무조건 찜 안됨 상태
         }
-        Long userId = userService.detailByEmail(userDetails.getEmail()).getUserId();
+        Long userId = userDetails.getUserId() != null ? userDetails.getUserId() : userService.detailByEmail(userDetails.getEmail()).getUserId();
         boolean isWished = wishlistService.checkWishlist(userId, productId);
         return ResponseEntity.ok(ApiResponse.success(isWished));
     }

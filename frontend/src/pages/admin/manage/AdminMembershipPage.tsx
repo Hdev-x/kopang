@@ -52,8 +52,8 @@ export function AdminMembershipPage() {
   const sorted = useMemo(() => {
     const rows = (stats?.atRiskMembers ?? []).filter((m) => !q.trim() || (m.name ?? "").includes(q.trim()));
     return [...rows].sort((a, b) => {
-      if (sortBy === "score_desc") return b.score - a.score;
-      if (sortBy === "score_asc") return a.score - b.score;
+      if (sortBy === "score_desc") return (b.score ?? 0) - (a.score ?? 0);
+      if (sortBy === "score_asc") return (a.score ?? 0) - (b.score ?? 0);
       if (sortBy === "name_asc") return (a.name || "").localeCompare(b.name || "");
       return 0;
     });
@@ -143,7 +143,7 @@ export function AdminMembershipPage() {
                   {shown.map((m, i) => (
                     <tr key={`${m.name}-${i}`}>
                       <td className={styles.name}>{m.name}</td>
-                      <td><span className={`${styles.badge} ${scoreTone(m.score)}`}>{m.score.toFixed(2)}</span></td>
+                      <td><span className={`${styles.badge} ${scoreTone(m.score ?? 0)}`}>{(m.score ?? 0).toFixed(2)}</span></td>
                       <td><span className={styles.ellip}>{m.reason}</span></td>
                       <td>{m.action}</td>
                       <td><span className={`${styles.badge} ${statusTone(m.status)}`}>{m.status}</span></td>

@@ -41,6 +41,8 @@
     <update id="useUserCoupon"> UPDATE user_coupons SET used = true, used_at = CAST(#{usedAt} AS
         TIMESTAMP) WHERE user_coupon_id = #{userCouponId} </update>
 
+    <update id="restoreUserCoupon"> UPDATE user_coupons SET used = false, used_at = NULL WHERE user_coupon_id = #{userCouponId} </update>
+
     <select id="findAllCoupons" resultType="com.kopang.app.domain.coupon.CouponDTO"> SELECT
         coupon_id AS couponId, name AS name, discount_type AS discountType, discount_value AS
         discountValue, start_date AS startDate, end_date AS endDate, quantity AS quantity FROM

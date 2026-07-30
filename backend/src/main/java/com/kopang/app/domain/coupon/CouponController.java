@@ -72,7 +72,7 @@ public class CouponController {
         }
         try {
             Long userCouponId = body.get("userCouponId");
-            couponService.useCoupon(userCouponId);
+            couponService.useCoupon(userCouponId, userDetails.getUserId());
 
             Map<String, String> data = new HashMap<>();
             data.put("message", "쿠폰 사용 처리가 완료되었습니다");

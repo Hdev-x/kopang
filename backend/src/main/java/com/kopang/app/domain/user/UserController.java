@@ -198,11 +198,12 @@ public class UserController {
 
             String email = userService.findEmailByNameAndPhone(name, phone);
 
-            // 로컬 파트 마스킹 (예: user123@naver.com -> us*****@naver.com)
+            // 회원 인식하기 쉽도록 가운데 2자리만 가볍게 마스킹 (예: hayeon@gmail.com -> hay**n@gmail.com)
             String maskedEmail = maskEmail(email);
 
             Map<String, Object> data = new HashMap<>();
             data.put("email", maskedEmail);
+            data.put("fullEmail", email);
 
             return ResponseEntity.ok(ApiResponse.success(data));
         } catch (IllegalArgumentException e) {
@@ -218,14 +219,17 @@ public class UserController {
         String local = email.substring(0, atIdx);
         String domain = email.substring(atIdx + 1);
 
-        if (local.length() == 0) {
-            return email;
-        } else if (local.length() == 1) {
-            return "*@" + domain;
-        } else if (local.length() == 2) {
+        int len = local.length();
+        if (len <= 2) {
             return local.charAt(0) + "*@" + domain;
+        } else if (len <= 4) {
+            return local.charAt(0) + "**" + local.substring(len - 1) + "@" + domain;
+        } else {
+            int prefixLen = Math.min(3, (len - 2) / 2 + 1);
+            String prefix = local.substring(0, prefixLen);
+            String suffix = local.substring(prefixLen + 2);
+            return prefix + "**" + suffix + "@" + domain;
         }
-        return local.substring(0, 2) + "*".repeat(local.length() - 2) + "@" + domain;
     }
 
     // 10. 내 기본 배송지 조회 (GET /api/users/me/address)

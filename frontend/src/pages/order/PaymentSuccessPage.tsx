@@ -33,7 +33,8 @@ export function PaymentSuccessPage() {
         // 결제 완료 → 세션 주문 ID 정리
         sessionStorage.removeItem("checkout_pending_order_id");
         const idOnly = orderId.replace("ORD-", "");
-        navigate(`/order/complete?orderId=${idOnly}`, { replace: true });
+        const isWeb = window.location.pathname.startsWith("/web");
+        navigate(isWeb ? `/web/order/complete?orderId=${idOnly}` : `/order/complete?orderId=${idOnly}`, { replace: true });
       })
       .catch((err: unknown) => {
         console.error("결제 승인 오류:", err);

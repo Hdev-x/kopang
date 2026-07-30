@@ -25,13 +25,13 @@ export function AdminInquiriesPage() {
     }, []);
 
     const loading = inquiries === null;
-    const waiting = inquiries?.filter((q) => q.status === "답변대기").length ?? 0;
+    const waiting = (inquiries ?? []).filter((q) => q?.status === "답변대기").length;
 
     const shown = useMemo(() => {
-        if (!inquiries) return [];
+        if (!Array.isArray(inquiries)) return [];
         const kw = keyword.trim();
         return inquiries.filter(
-            (q) => (filter === "전체" || q.status === filter) && (!kw || q.title.includes(kw) || q.author.includes(kw)),
+            (q) => (filter === "전체" || q?.status === filter) && (!kw || (q?.title ?? "").includes(kw) || (q?.author ?? "").includes(kw)),
         );
     }, [inquiries, filter, keyword]);
 
@@ -41,11 +41,11 @@ export function AdminInquiriesPage() {
                 <div className={styles.toolbar}>
                     <p className={styles.caption}>
                         {/* 로딩 중에도 문장 틀은 남기고 숫자 자리만 자리표시자로 둔다 */}
-                        전체 {loading || !inquiries
+                        전체 {loading || !Array.isArray(inquiries)
                             ? <Skeleton w={22} h={12} style={{ display: "inline-block", verticalAlign: "-1px" }} />
                             : inquiries.length.toLocaleString()}건
                         {" · 답변대기 "}
-                        {loading || !inquiries
+                        {loading || !Array.isArray(inquiries)
                             ? <Skeleton w={16} h={12} style={{ display: "inline-block", verticalAlign: "-1px" }} />
                             : waiting.toLocaleString()}건
                     </p>
@@ -84,7 +84,7 @@ export function AdminInquiriesPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {loading || inquiries === null ? (
+                            {loading || !Array.isArray(inquiries) ? (
                                 <SkeletonRows rows={10} cols={7} widths={["40%", "60%", "72%", "56%", "70%", "58%", "30%"]} />
                             ) : shown.length === 0 ? (
                                 <tr>
@@ -94,7 +94,7 @@ export function AdminInquiriesPage() {
                                 </tr>
                             ) : (
                                 shown.map((q) => (
-                                    <tr key={q.id}>
+                                    <tr key={q.id || Math.random()}>
                                         <td className={styles.num}>{q.id}</td>
                                         <td>
                                             <span className={`${styles.badge} ${q.type === "PRODUCT" ? styles.bInfo : styles.bMuted}`}>
@@ -103,14 +103,14 @@ export function AdminInquiriesPage() {
                                         </td>
                                         <td>
                                             <Link to={`/admin/inquiries/${q.id}`} className={styles.rowLink}>
-                                                <span className={styles.ellip}>{q.title}</span>
+                                                <span className={styles.ellip}>{q.title ?? "(제목 없음)"}</span>
                                             </Link>
                                         </td>
-                                        <td>{q.author}</td>
-                                        <td className={styles.num}>{q.createdAt?.slice(0, 10)}</td>
+                                        <td>{q.author || "고객"}</td>
+                                        <td className={styles.num}>{q.createdAt?.slice(0, 10) ?? "-"}</td>
                                         <td>
                                             <span className={`${styles.badge} ${q.status === "답변완료" ? styles.bDone : styles.bWait}`}>
-                                                {q.status}
+                                                {q.status ?? "답변대기"}
                                             </span>
                                         </td>
                                         <td>

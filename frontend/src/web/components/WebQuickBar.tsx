@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ChevronUp, Clock3, MessageCircle, ShoppingCart, X } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { getCart } from "../../api/cart";
 import { useAuth } from "../../hooks/useAuth";
 import type { CartItem } from "../../types/cart";
@@ -26,6 +26,7 @@ function readRecentProducts(): Product[] {
 
 export function WebQuickBar() {
   const user = useAuth();
+  const navigate = useNavigate();
   const [panel, setPanel] = useState<Panel | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[] | null>(null);
   const recentProducts = panel === "recent" ? readRecentProducts() : [];
@@ -95,16 +96,54 @@ export function WebQuickBar() {
                 ) : cartItems.length === 0 ? (
                   <EmptyState message="장바구니에 담긴 상품이 없어요." action="상품 보러 가기" to="/web/products" />
                 ) : (
-                  <ul className={styles.itemList}>
-                    {cartItems.map((item) => (
-                      <li key={item.itemId}>
-                        <Link to={`/web/products/${item.productId}`} onClick={() => setPanel(null)}>
-                          <img src={item.imageUrl} alt="" />
-                          <span><b>{item.name}</b><small>{item.quantity}개 · {(item.price * item.quantity).toLocaleString()}원</small></span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
+                  <div>
+                    <ul className={styles.itemList}>
+                      {cartItems.map((item) => (
+                        <li key={item.itemId}>
+                          <Link to={`/web/products/${item.productId}`} onClick={() => setPanel(null)}>
+                            <img src={item.imageUrl} alt="" />
+                            <span><b>{item.name}</b><small>{item.quantity}개 · {(item.price * item.quantity).toLocaleString()}원</small></span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                    <div style={{ marginTop: "16px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                      <button
+                        type="button"
+                        style={{
+                          width: "100%",
+                          padding: "12px",
+                          backgroundColor: "var(--color-primary, #007bff)",
+                          color: "#fff",
+                          border: "none",
+                          borderRadius: "8px",
+                          fontWeight: 600,
+                          fontSize: "14px",
+                          cursor: "pointer"
+                        }}
+                        onClick={() => {
+                          setPanel(null);
+                          navigate("/web/checkout", { state: { selectedItems: cartItems } });
+                        }}
+                      >
+                        상품 주문하기 ({cartItems.reduce((acc, i) => acc + i.quantity, 0)}개)
+                      </button>
+                      <Link
+                        to="/web/cart"
+                        style={{
+                          display: "block",
+                          textAlign: "center",
+                          padding: "8px",
+                          color: "var(--color-text-muted, #666)",
+                          fontSize: "13px",
+                          textDecoration: "underline"
+                        }}
+                        onClick={() => setPanel(null)}
+                      >
+                        장바구니 전체보기
+                      </Link>
+                    </div>
+                  </div>
                 )
               )}
 

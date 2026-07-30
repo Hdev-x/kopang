@@ -108,7 +108,7 @@ export function HomePage() {
 
   const handleAbandonBannerClick = () => {
     // 5% 장바구니 방치 할인 쿠폰(couponId=3) 발급 시도 (중복 발급 시 백엔드 오류는 에러 표시 없이 차단)
-    downloadCoupon(3).catch(() => {});
+    downloadCoupon(3).catch(() => { });
   };
 
   // 히어로 슬라이드 구조 (고정 3개 + 개인화 2개)
@@ -164,7 +164,7 @@ export function HomePage() {
       id: "membership",
       tag: "⭐ WOW MEMBERSHIP",
       title: "WOW 멤버십 무제한 무료배송",
-      subtitle: "구매금액 2% 추가 적립 및 다양한 회원 혜택 받기",
+      subtitle: "구매금액 5% 추가 적립 및 다양한 회원 혜택 받기",
       link: "/membership",
       bgGradient: "linear-gradient(135deg, #4776E6 0%, #8E54E9 100%)",
     });
@@ -315,7 +315,7 @@ export function HomePage() {
       {!isMember && (
         <Link to="/membership" className={styles.upsell}>
           <div>
-            <p className={styles.upsellTitle}>⭐ WOW 멤버십 무료배송 + 2% 적립</p>
+            <p className={styles.upsellTitle}>⭐ WOW 멤버십 무료배송 + 5% 적립</p>
             <p className={styles.upsellSub}>첫 달 무료로 혜택 받아보기</p>
           </div>
           <span className={styles.upsellArrow}>→</span>

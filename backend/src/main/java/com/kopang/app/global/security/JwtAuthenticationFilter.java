@@ -32,13 +32,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 if (jwtUtil.validateToken(token)) {
                     String email = jwtUtil.getEmail(token);
                     String role = jwtUtil.getRole(token); // e.g., ROLE_USER, ROLE_ADMIN
+                    Long userId = jwtUtil.getUserId(token);
 
                     if (email != null && role != null) {
-                        // User principal holds email and role
-                        CustomUserDetails userDetails = new CustomUserDetails(email, role);
+                        String authorityRole = role.startsWith("ROLE_") ? role : "ROLE_" + role;
+                        // User principal holds userId, email and role
+                        CustomUserDetails userDetails = new CustomUserDetails(userId, email, role);
 
                         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                                userDetails, null, Collections.singletonList(new SimpleGrantedAuthority(role)));
+                                userDetails, null, Collections.singletonList(new SimpleGrantedAuthority(authorityRole)));
 
                         SecurityContextHolder.getContext().setAuthentication(authentication);
                     }
@@ -47,8 +49,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     try {
                         jwtUtil.getEmail(token);
                     } catch (ExpiredJwtException e) {
-                        sendExpiredTokenResponse(response);
-                        return;
+                        // 공개(Public) API 요청인 경우 만료된 토큰을 무시하고 비인증 상태로 계속 진행 허용
+                        if (!isPublicEndpoint(request.getRequestURI())) {
+                            sendExpiredTokenResponse(response);
+                            return;
+                        }
                     }
                 }
             } catch (Exception e) {
@@ -57,6 +62,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private boolean isPublicEndpoint(String uri) {
+        return uri.startsWith("/api/auth/") ||
+               uri.startsWith("/api/products") ||
+               uri.startsWith("/api/categories") ||
+               uri.startsWith("/api/notices") ||
+               uri.startsWith("/api/faqs") ||
+               uri.startsWith("/api/chatbot") ||
+               uri.startsWith("/api/churn/home-banners") ||
+               uri.startsWith("/api/coupons/available") ||
+               uri.startsWith("/oauth2") ||
+               uri.startsWith("/login");
     }
 
     private String resolveToken(HttpServletRequest request) {
@@ -75,12 +93,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     // Custom Principal class to hold user details in SecurityContext
     public static class CustomUserDetails {
+        private final Long userId;
         private final String email;
         private final String role;
 
-        public CustomUserDetails(String email, String role) {
+        public CustomUserDetails(Long userId, String email, String role) {
+            this.userId = userId;
             this.email = email;
             this.role = role;
+        }
+
+        public CustomUserDetails(String email, String role) {
+            this(null, email, role);
+        }
+
+        public Long getUserId() {
+            return userId;
         }
 
         public String getEmail() {

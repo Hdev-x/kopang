@@ -54,6 +54,7 @@ export function SignupPage() {
   const [phone1, setPhone1] = useState("010");
   const [phone2, setPhone2] = useState("");
   const [phone3, setPhone3] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const phone3Ref = useRef<HTMLInputElement>(null);
 
   const [agreeTerms, setAgreeTerms] = useState(false);
@@ -137,7 +138,8 @@ export function SignupPage() {
         email,
         password,
         name,
-        phone: phoneFull
+        phone: phoneFull,
+        birthDate: birthDate || undefined,
       });
       alert("회원가입이 성공적으로 완료되었습니다! 로그인해 주세요.");
       navigate("/login");
@@ -186,7 +188,7 @@ export function SignupPage() {
             <Input
               label="비밀번호"
               type={showPassword ? "text" : "password"}
-              placeholder="비밀번호 입력"
+              placeholder="비밀번호 입력(최소 8글자 이상)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
@@ -319,6 +321,17 @@ export function SignupPage() {
                 }}
               />
             </div>
+          </div>
+
+          <div style={{ marginBottom: "15px", width: "100%" }}>
+            <Input
+              label="생년월일"
+              type="date"
+              value={birthDate}
+              max={new Date().toISOString().substring(0, 10)}
+              min="1900-01-01"
+              onChange={(e) => setBirthDate(e.target.value)}
+            />
           </div>
 
           {/* 약관 동의 (필수/선택) */}

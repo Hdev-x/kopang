@@ -6,7 +6,7 @@ import { PageHeader } from "../../components/PageHeader";
 import { Input } from "../../components/Input";
 import { Button } from "../../components/Button";
 import { getProfile, updateProfile, withdraw } from "../../api/auth";
-import { logout } from "../../lib/auth";
+import { logout, updateAuthUser } from "../../lib/auth";
 import s from "../../styles/AccountPages.module.css";
 
 export function EditProfilePage() {
@@ -126,16 +126,7 @@ export function EditProfilePage() {
         password: newPassword || undefined
       });
 
-      // 1. 로컬스토리지의 기존 이름 정보 변경
-      const rawAuth = localStorage.getItem("kopang_auth");
-      if (rawAuth) {
-        const parsed = JSON.parse(rawAuth);
-        parsed.name = name; // 입력받은 새 이름 대입
-        localStorage.setItem("kopang_auth", JSON.stringify(parsed));
-
-        // 2. 헤더/내비바 컴포넌트 실시간 갱신용 이벤트 트리거
-        window.dispatchEvent(new Event("auth-change"));
-      }
+      updateAuthUser({ name, email });
       alert("회원 정보가 성공적으로 수정되었습니다.");
       navigate("/my");
     } catch (err: any) {

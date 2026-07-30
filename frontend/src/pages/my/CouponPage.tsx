@@ -14,6 +14,7 @@ export function CouponPage() {
 
   const [loading, setLoading] = useState(true);
   const [myCoupons, setMyCoupons] = useState<UserCouponResponse[]>([]);
+  const [downloadedCouponIds, setDownloadedCouponIds] = useState<number[]>([]);
   const [availableCoupons, setAvailableCoupons] = useState<CouponResponse[]>([]);
 
   // 실시간 쿠폰 데이터 로드
@@ -23,6 +24,9 @@ export function CouponPage() {
       const availableData = await getAvailableCoupons();
       const today = new Date();
       today.setHours(0, 0, 0, 0);
+
+      // 내가 이미 한 번이라도 발급받았던 쿠폰 ID 목록
+      setDownloadedCouponIds(myData.map((c) => c.couponId));
 
       // 미사용 및 미만료(당일 자정 기준 포함) 쿠폰 위주로 필터링
       setMyCoupons(
@@ -129,7 +133,7 @@ export function CouponPage() {
         ) : (
           availableCoupons.map((c) => {
             // 내가 이미 받았는지 확인
-            const isAlreadyDownloaded = myCoupons.some((mc) => mc.couponId === c.couponId);
+            const isAlreadyDownloaded = downloadedCouponIds.includes(c.couponId);
 
             return (
               <Card key={c.couponId}>

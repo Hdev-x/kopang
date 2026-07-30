@@ -14,13 +14,13 @@ import styles from "../adminTable.module.css";
 
 type Ship = "배송준비" | "배송중" | "배송완료" | "취소" | "구매확정" | "-";
 
-function shipLabel(orderStatus: string): Ship {
-  if (orderStatus === "PAID") return "배송준비";
+function shipLabel(orderStatus?: string): Ship {
+  if (!orderStatus || orderStatus === "PAID" || orderStatus === "PENDING" || orderStatus === "ORDERED") return "배송준비";
   if (orderStatus === "SHIPPING") return "배송중";
   if (orderStatus === "DELIVERED") return "배송완료";
   if (orderStatus === "CANCELLED") return "취소";
   if (orderStatus === "CONFIRMED") return "구매확정";
-  return "-";
+  return "배송준비";
 }
 
 function shipTone(s: Ship, styleMap: Record<string, string>) {
