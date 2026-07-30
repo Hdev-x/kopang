@@ -82,7 +82,7 @@ export function WebMembershipPage() {
         </div>
         <div>
           <p>이번 달 절약한 배송비</p>
-          <strong>{savedFee.toLocaleString()}원</strong>
+          <strong>{(active || cancelled ? savedFee : 0).toLocaleString()}원</strong>
         </div>
       </section>
       <div className={styles.actions}>

@@ -52,7 +52,7 @@ export function WebLayout({ children }: Props) {
     getNotifications().then((items) => setUnreadCount(items.filter((item) => !item.read).length)).catch(() => setUnreadCount(0));
     getMembershipStatus()
       .then((status) => {
-        if (status && status.status === "ACTIVE") {
+        if (status && (status.status === "ACTIVE" || status.status === "CANCELLED")) {
           setIsMember(true);
         } else {
           setIsMember(false);
