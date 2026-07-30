@@ -94,6 +94,7 @@ import { AdminFaqPage } from "../pages/admin/manage/AdminFaqPage";
 import { AdminInquiriesPage } from "../pages/admin/manage/AdminInquiriesPage";
 import { AdminInquiryDetailPage } from "../pages/admin/manage/AdminInquiryDetailPage";
 import { AdminStatsPage } from "../pages/admin/manage/AdminStatsPage";
+import { AdminPointsPage } from "../pages/admin/manage/AdminPointsPage";
 import { AdminRecommendationsPage } from "../pages/admin/manage/AdminRecommendationsPage";
 
 export function AppRouter() {
@@ -221,6 +222,7 @@ export function AppRouter() {
       <Route path="/admin/faqs" element={<AdminRoute><AdminFaqPage /></AdminRoute>} />
       <Route path="/admin/recommendations" element={<AdminRoute><AdminRecommendationsPage /></AdminRoute>} />
       <Route path="/admin/stats" element={<AdminRoute><AdminStatsPage /></AdminRoute>} />
+      <Route path="/admin/points" element={<AdminRoute><AdminPointsPage /></AdminRoute>} />
     </Routes>
   );
 }
