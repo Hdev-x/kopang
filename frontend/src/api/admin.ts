@@ -8,7 +8,8 @@ export type AdminMemberResponse = {
     role: string;
     createdAt: string;
     membershipType: "일반" | "멤버십";
-    riskLevel: "고위험" | "중위험" | "저위험";
+    // 이탈 위험도는 한글 라벨이 기본이지만 배치 원본 값(HIGH/MEDIUM/LOW)이 그대로 올 수 있다.
+    riskLevel: "고위험" | "중위험" | "저위험" | "HIGH" | "MEDIUM" | "LOW";
     churnProbability: number;
 };
 
