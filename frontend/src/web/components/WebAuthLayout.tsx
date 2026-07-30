@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { CheckCircle2, ShieldCheck, Truck } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { toMobilePath } from "../../routes/platformPath";
 import styles from "./WebAuthLayout.module.css";
 
 type Props = {
@@ -11,12 +12,13 @@ type Props = {
 };
 
 export function WebAuthLayout({ eyebrow, title, description, children }: Props) {
+  const location = useLocation();
   return (
     <div className={styles.page}>
       <header className={styles.header}>
         <Link to="/web" className={styles.logo}>Kopang</Link>
         <div className={styles.headerLinks}>
-          <Link to="/mobile">모바일 화면</Link>
+          <Link to={toMobilePath(location.pathname, location.search)}>모바일 화면</Link>
           <Link to="/web">쇼핑홈</Link>
         </div>
       </header>

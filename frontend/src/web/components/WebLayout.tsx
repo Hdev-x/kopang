@@ -3,9 +3,10 @@ import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Bell, Bookmark, Search, ShoppingCart, X } from "lucide-react";
 import { getNotifications } from "../../api/notifications";
-import { getMembershipStatus } from "../../api/membership";
 import { useAuth } from "../../hooks/useAuth";
+import { useMembership } from "../../hooks/useMembership";
 import { logout } from "../../lib/auth";
+import { toMobilePath } from "../../routes/platformPath";
 import { WebQuickBar } from "./WebQuickBar";
 import { WebChatbot } from "./WebChatbot";
 import { WebFooter } from "./WebFooter";
@@ -33,10 +34,13 @@ const ACCOUNT_NAV = [
   { to: "/web/my/profile", label: "설정" },
 ];
 
+/** 배너를 닫은 사실은 탭이 살아 있는 동안 유지한다 (WebLayout이 이동마다 재마운트되므로 state로는 못 남는다). */
+const PROMOTION_DISMISSED = "kopang_web_promotion_dismissed";
+
 export function WebLayout({ children }: Props) {
   const user = useAuth();
-  const [promotionVisible, setPromotionVisible] = useState(true);
-  const [isMember, setIsMember] = useState(false);
+  const isMember = useMembership();
+  const [promotionDismissed, setPromotionDismissed] = useState(() => sessionStorage.getItem(PROMOTION_DISMISSED) === "1");
   const [unreadCount, setUnreadCount] = useState(0);
   const [profileOpen, setProfileOpen] = useState(false);
   const location = useLocation();
@@ -44,26 +48,23 @@ export function WebLayout({ children }: Props) {
   const currentLocation = `${location.pathname}${location.search}`;
   const inAccount = path.startsWith("/web/my");
 
+  // 멤버십 여부를 알기 전(undefined)에는 배너를 그리지 않는다.
+  // false로 가정하고 그렸다가 회원으로 확인되면 48px이 사라지며 화면이 밀린다.
+  const showPromotion = isMember === false && !promotionDismissed;
+
+  const dismissPromotion = () => {
+    sessionStorage.setItem(PROMOTION_DISMISSED, "1");
+    setPromotionDismissed(true);
+  };
+
   useEffect(() => {
-    if (!user) {
-      setIsMember(false);
-      return;
-    }
+    if (!user) return;
     getNotifications().then((items) => setUnreadCount(items.filter((item) => !item.read).length)).catch(() => setUnreadCount(0));
-    getMembershipStatus()
-      .then((status) => {
-        if (status && (status.status === "ACTIVE" || status.status === "CANCELLED")) {
-          setIsMember(true);
-        } else {
-          setIsMember(false);
-        }
-      })
-      .catch(() => setIsMember(false));
   }, [user]);
 
   return (
     <div className={styles.page}>
-      {promotionVisible && !isMember && <div className={styles.promotion}><Link to="/web/membership">첫 구매부터 시작되는 Kopang 멤버십 혜택 <strong>확인하기</strong></Link><button type="button" onClick={() => setPromotionVisible(false)} aria-label="프로모션 닫기"><X size={22} /></button></div>}
+      {showPromotion && <div className={styles.promotion}><Link to="/web/membership">첫 구매부터 시작되는 Kopang 멤버십 혜택 <strong>확인하기</strong></Link><button type="button" onClick={dismissPromotion} aria-label="프로모션 닫기"><X size={22} /></button></div>}
       <header className={styles.header}>
         <div className={styles.headerInner}>
           <Link to="/web" className={styles.logo}>Kopang</Link>
@@ -85,7 +86,7 @@ export function WebLayout({ children }: Props) {
                 <Link to="/web/my/wishlist" className={styles.iconLink} aria-label="저장한 상품"><Bookmark size={21} /></Link>
                 <Link to="/web/notifications" className={styles.iconLink} aria-label={`알림 ${unreadCount}개`}><Bell size={21} />{unreadCount > 0 && <span className={styles.badge}>{unreadCount > 9 ? "9+" : unreadCount}</span>}</Link>
                 <Link to="/web/cart" className={styles.headerCart}><ShoppingCart size={22} aria-hidden="true" /><span className={styles.srOnly}>장바구니</span></Link>
-                <div className={styles.profileWrap}><button type="button" className={styles.profile} aria-label={`${user.name} 사용자 메뉴`} aria-expanded={profileOpen} onClick={() => setProfileOpen((open) => !open)}>{user.name.trim().slice(0, 1).toUpperCase()}</button>{profileOpen && <nav className={styles.profileMenu} aria-label="사용자 메뉴"><Link to="/web/my" onClick={() => setProfileOpen(false)}>마이페이지</Link><Link to="/web/membership" onClick={() => setProfileOpen(false)}>멤버십</Link><Link to="/web/support" onClick={() => setProfileOpen(false)}>고객센터</Link><Link to="/mobile" className={styles.viewMenuItem} onClick={() => setProfileOpen(false)}>모바일 화면</Link>{user.role === "ADMIN" && <Link to="/admin" className={styles.adminMenuItem} onClick={() => setProfileOpen(false)}>관리자 페이지</Link>}<button type="button" onClick={() => { logout(); setProfileOpen(false); }}>로그아웃</button></nav>}</div>
+                <div className={styles.profileWrap}><button type="button" className={styles.profile} aria-label={`${user.name} 사용자 메뉴`} aria-expanded={profileOpen} onClick={() => setProfileOpen((open) => !open)}>{user.name.trim().slice(0, 1).toUpperCase()}</button>{profileOpen && <nav className={styles.profileMenu} aria-label="사용자 메뉴"><Link to="/web/my" onClick={() => setProfileOpen(false)}>마이페이지</Link><Link to="/web/membership" onClick={() => setProfileOpen(false)}>멤버십</Link><Link to="/web/support" onClick={() => setProfileOpen(false)}>고객센터</Link><Link to={toMobilePath(path, location.search)} className={styles.viewMenuItem} onClick={() => setProfileOpen(false)}>모바일 화면</Link>{user.role === "ADMIN" && <Link to="/admin" className={styles.adminMenuItem} onClick={() => setProfileOpen(false)}>관리자 페이지</Link>}<button type="button" onClick={() => { logout(); setProfileOpen(false); }}>로그아웃</button></nav>}</div>
               </>
             ) : (
               <>

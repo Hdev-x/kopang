@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Bell, ShoppingCart, User, Search, ChevronLeft, Monitor } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
+import { toWebPath } from "../routes/platformPath";
 import { ChatbotWidget } from "./ChatbotWidget";
 import { SearchBarInput } from "./SearchBarInput";
 import styles from "./Layout.module.css";
@@ -11,7 +12,8 @@ type Props = { children: ReactNode };
 export function Layout({ children }: Props) {
   const user = useAuth();
   const navigate = useNavigate();
-  const path = useLocation().pathname;
+  const location = useLocation();
+  const path = location.pathname;
   const onSearch = path === "/search";
   // 검색바는 둘러보는 화면(홈·상품·검색)에서만 노출
   const showSearch = path === "/" || path.startsWith("/products") || onSearch;
@@ -38,7 +40,7 @@ export function Layout({ children }: Props) {
             </Link>
           )}
           <div className={styles.icons}>
-            <Link to="/web" className={styles.pcSwitchBtn} title="PC 화면으로 전환" aria-label="PC 화면으로 전환">
+            <Link to={toWebPath(path, location.search)} className={styles.pcSwitchBtn} title="PC 화면으로 전환" aria-label="PC 화면으로 전환">
               <Monitor size={15} strokeWidth={2.2} />
               <span>PC버전</span>
             </Link>
