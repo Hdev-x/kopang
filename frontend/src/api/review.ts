@@ -16,7 +16,7 @@ export interface Review {
 // 특정 상품의 리뷰 목록 조회
 export async function getProductReviews(productId: number) {
   const res = await client.get<ApiResponse<Review[]>>(`/products/${productId}/reviews`);
-  return res.data.data;
+  return res.data?.data ?? [];
 }
 
 // 리뷰 작성
