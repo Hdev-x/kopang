@@ -11,4 +11,5 @@ export type Page<T> = {
   number: number;
   totalPages: number;
   totalElements: number;
+  last?: boolean;
 };

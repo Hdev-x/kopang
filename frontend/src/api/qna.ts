@@ -32,7 +32,7 @@ export async function getProductQnaList(productId: number) {
   const res = await client.get<ApiResponse<QnaSummary[]>>(
     `/inquiries/product/${productId}`
   );
-  return res.data.data;
+  return res.data?.data ?? [];
 }
 
 

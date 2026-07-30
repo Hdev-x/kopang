@@ -56,10 +56,12 @@ export function WebProductDetailPage() {
     ])
       .then(([productData, reviewData, qnaData]) => {
         setProduct(productData);
-        setReviews(reviewData);
-        setProductQna(qnaData);
+        setReviews(Array.isArray(reviewData) ? reviewData : []);
+        setProductQna(Array.isArray(qnaData) ? qnaData : []);
         setError(false);
-        saveRecentProduct(productData);
+        if (productData) {
+          saveRecentProduct(productData);
+        }
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
@@ -184,10 +186,12 @@ export function WebProductDetailPage() {
     setSelectedImgIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
   };
 
-  const reviewCount = reviews.length;
+  const safeReviews = Array.isArray(reviews) ? reviews : [];
+  const safeQna = Array.isArray(productQna) ? productQna : [];
+  const reviewCount = safeReviews.length;
   const avgRatingNum =
     reviewCount > 0
-      ? reviews.reduce((acc, r) => acc + (r.rating || 0), 0) / reviewCount
+      ? safeReviews.reduce((acc, r) => acc + (r?.rating || 0), 0) / reviewCount
       : 0;
   const avgRatingText = reviewCount > 0 ? avgRatingNum.toFixed(1) : "0.0";
 
@@ -292,8 +296,8 @@ export function WebProductDetailPage() {
 
       <nav id="web-detail-tabs" className={styles.tabs} aria-label="상품 상세 메뉴">
         <button type="button" className={activeTab === "product-info" ? styles.tabActive : ""} onClick={() => selectTab("product-info")}>상품정보</button>
-        <button type="button" className={activeTab === "review" ? styles.tabActive : ""} onClick={() => selectTab("review")}>리뷰 {reviews.length}</button>
-        <button type="button" className={activeTab === "qna" ? styles.tabActive : ""} onClick={() => selectTab("qna")}>문의 {productQna.length}</button>
+        <button type="button" className={activeTab === "review" ? styles.tabActive : ""} onClick={() => selectTab("review")}>리뷰 {safeReviews.length}</button>
+        <button type="button" className={activeTab === "qna" ? styles.tabActive : ""} onClick={() => selectTab("qna")}>문의 {safeQna.length}</button>
         <button type="button" className={activeTab === "delivery" ? styles.tabActive : ""} onClick={() => selectTab("delivery")}>배송/환불</button>
       </nav>
 
@@ -350,10 +354,10 @@ export function WebProductDetailPage() {
       </section>
 
       <section id="review" className={styles.communitySection}>
-        <header className={styles.contentTitle}><p className={styles.sectionLabel}>REVIEW</p><h2>상품 리뷰 <span>{reviews.length}</span></h2></header>
-        {reviews.length === 0 ? <div className={styles.placeholder}><strong>아직 작성된 리뷰가 없어요.</strong><p>첫 번째 구매 후기를 남겨주세요.</p></div> : (
+        <header className={styles.contentTitle}><p className={styles.sectionLabel}>REVIEW</p><h2>상품 리뷰 <span>{safeReviews.length}</span></h2></header>
+        {safeReviews.length === 0 ? <div className={styles.placeholder}><strong>아직 작성된 리뷰가 없어요.</strong><p>첫 번째 구매 후기를 남겨주세요.</p></div> : (
           <div className={styles.reviewList}>
-            {reviews.map((review) => (
+            {safeReviews.map((review) => (
               <article key={review.reviewId} className={styles.reviewCard}>
                 <div className={styles.reviewMeta}><strong>{review.userName || "익명"}</strong><span>{review.createdAt?.slice(0, 10)}</span></div>
                 <p className={styles.rating}>{"★".repeat(Math.round(review.rating))}{"☆".repeat(5 - Math.round(review.rating))}</p>
@@ -367,12 +371,12 @@ export function WebProductDetailPage() {
 
       <section id="qna" className={styles.communitySection}>
         <header className={styles.contentTitleRow}>
-          <div><p className={styles.sectionLabel}>Q&amp;A</p><h2>상품 문의 <span>{productQna.length}</span></h2></div>
+          <div><p className={styles.sectionLabel}>Q&amp;A</p><h2>상품 문의 <span>{safeQna.length}</span></h2></div>
           <button type="button" onClick={() => navigate(`/web/qna/write?type=PRODUCT&productId=${product.id}`)}>상품 문의하기</button>
         </header>
-        {productQna.length === 0 ? <div className={styles.placeholder}><strong>등록된 상품 문의가 없어요.</strong><p>상품에 대해 궁금한 점을 문의해 주세요.</p></div> : (
+        {safeQna.length === 0 ? <div className={styles.placeholder}><strong>등록된 상품 문의가 없어요.</strong><p>상품에 대해 궁금한 점을 문의해 주세요.</p></div> : (
           <div className={styles.qnaList}>
-            {productQna.map((item) => (
+            {safeQna.map((item) => (
               <article key={item.id} className={styles.qnaCard}>
                 <div><span className={item.status === "답변완료" ? styles.qnaDone : styles.qnaWaiting}>{item.status}</span><strong>Q. {item.title}</strong></div>
                 <p>{item.author} · {item.createdAt?.slice(0, 10)}</p>

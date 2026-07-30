@@ -21,16 +21,20 @@ export function OAuth2CallbackPage() {
             // 자체 세션 스토리지에 로그인 정보 저장
             authLogin({ name, email, role }, accessToken, refreshToken);
             alert(`${name}님, 소셜 로그인으로 반갑습니다!`);
-            const preferredView = localStorage.getItem("kopang_login_view");
+            const preferredView = localStorage.getItem("kopang_login_view") || sessionStorage.getItem("kopang_login_view");
             localStorage.removeItem("kopang_login_view");
+            sessionStorage.removeItem("kopang_login_view");
+            const isWeb = preferredView === "web" || document.referrer.includes("/web") || window.innerWidth > 768;
+
             if (hasPhone) {
-                navigate(preferredView === "web" ? "/web" : "/");
+                navigate(isWeb ? "/web" : "/");
             } else {
-                navigate(preferredView === "web" ? "/web/add-phone" : "/add-phone");
+                navigate(isWeb ? "/web/add-phone" : "/add-phone");
             }
         } else {
             alert("소셜 로그인 인증에 실패했습니다.");
-            navigate("/login");
+            const isWeb = window.location.pathname.startsWith("/web") || window.innerWidth > 768;
+            navigate(isWeb ? "/web/login" : "/login");
         }
     }, [searchParams, navigate]);
 

@@ -34,7 +34,10 @@ export function WebLoginPage() {
     }
   };
 
-  const rememberWebOAuth = () => localStorage.setItem("kopang_login_view", "web");
+  const rememberWebOAuth = () => {
+    localStorage.setItem("kopang_login_view", "web");
+    sessionStorage.setItem("kopang_login_view", "web");
+  };
 
   return (
     <WebAuthLayout eyebrow="WELCOME BACK" title="다시 만나서 반가워요" description="로그인하고 장바구니, 주문 내역, 찜한 상품을 Web 화면에서 이어서 확인하세요.">
