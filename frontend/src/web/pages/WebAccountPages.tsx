@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { ChevronRight, Download, Heart, Package, Search, Star, Ticket, UserRound, Eye, EyeOff } from "lucide-react";
+import { ChevronRight, Download, Heart, Image as ImageIcon, Package, Search, Star, Ticket, UserRound, Eye, EyeOff } from "lucide-react";
 import { getProfile, updateProfile } from "../../api/auth";
 import { getAvailableCoupons, getMyCoupons, downloadCoupon, type CouponResponse, type UserCouponResponse } from "../../api/coupon";
 import { getPointBalance } from "../../api/point";
@@ -54,17 +54,18 @@ export function WebShoppingNav({ activeKind }: { activeKind: string }) {
 
 function ProfileHome({ name }: { name: string }) {
   const [couponsCount, setCouponsCount] = useState(0);
-  const [ordersCount, setOrdersCount] = useState(0);
-  const [wishlistCount, setWishlistCount] = useState(0);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [wishlist, setWishlist] = useState<Wishlist[]>([]);
-  const [loadingWishlist, setLoadingWishlist] = useState(true);
+  const [points, setPoints] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       getMyCoupons().catch(() => []),
       getOrders().catch(() => []),
       getWishlist().catch(() => []),
-    ]).then(([couponData, orderData, wishlistData]) => {
+      getPointBalance().catch(() => ({ balance: 0 })),
+    ]).then(([couponData, orderData, wishlistData, pointData]) => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const validCoupons = couponData.filter((c) => {
@@ -73,14 +74,10 @@ function ProfileHome({ name }: { name: string }) {
         return new Date(c.expiresAt) >= today;
       });
       setCouponsCount(validCoupons.length);
-      setOrdersCount(orderData.length);
-      setWishlistCount(wishlistData.length);
+      setOrders(orderData);
       setWishlist(wishlistData);
-      setLoadingWishlist(false);
-    }).catch((err) => {
-      console.error(err);
-      setLoadingWishlist(false);
-    });
+      setPoints(pointData.balance);
+    }).catch(console.error).finally(() => setLoading(false));
   }, []);
 
   return (
@@ -90,68 +87,36 @@ function ProfileHome({ name }: { name: string }) {
           <UserRound size={42} />
         </div>
         <h1>{name}</h1>
+        <p>반가워요. 오늘의 쇼핑 현황을 확인해 보세요.</p>
+        <Link to="/web/my/profile">회원정보 관리</Link>
         <div className={styles.profileStats}>
-          <Link to="/web/my/wishlist" style={{ textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <span><Heart />찜<b>{wishlistCount}</b></span>
+          <Link to="/web/my/wishlist" className={styles.statLink}>
+            <span><Heart />찜<b>{wishlist.length}</b></span>
           </Link>
-          <Link to="/web/my/coupons" style={{ textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <Link to="/web/my/coupons" className={styles.statLink}>
             <span><Ticket />쿠폰<b>{couponsCount}</b></span>
           </Link>
-          <Link to="/web/my/orders" style={{ textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <span><Package />주문<b>{ordersCount}</b></span>
+          <Link to="/web/my/orders" className={styles.statLink}>
+            <span><Package />주문<b>{orders.length}</b></span>
           </Link>
         </div>
       </aside>
       <main className={styles.profileContent}>
+        <section className={styles.dashboardSummary}>
+          <Link to="/web/membership"><span>KOPANG MEMBERSHIP</span><strong>멤버십 혜택 확인</strong><ChevronRight /></Link>
+          <Link to="/web/my/points"><span>사용 가능 포인트</span><strong>{points.toLocaleString()}P</strong><ChevronRight /></Link>
+          <Link to="/web/my/coupons"><span>사용 가능 쿠폰</span><strong>{couponsCount}장</strong><ChevronRight /></Link>
+        </section>
         <section>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-            <h2 style={{ fontSize: "18px", fontWeight: 700, margin: 0 }}>찜한 상품 ({wishlist.length})</h2>
-            {wishlist.length > 0 && (
-              <Link to="/web/my/wishlist" style={{ fontSize: "13px", color: "var(--color-primary, #007bff)", textDecoration: "none", fontWeight: 600 }}>
-                전체보기 &gt;
-              </Link>
-            )}
-          </div>
-
-          {loadingWishlist ? (
-            <div style={{ textAlign: "center", padding: "40px 0", color: "#888" }}>불러오는 중...</div>
-          ) : wishlist.length === 0 ? (
-            <div className={styles.uploadEmpty}>관심 상품을 저장하면 여기에 표시됩니다.</div>
-          ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "16px" }}>
-              {wishlist.map((w) => {
-                const finalPrice = (w.discountPrice && w.discountPrice > 0 && w.discountPrice < w.price)
-                  ? w.discountPrice
-                  : w.price;
-                const hasDiscount = Boolean(w.discountPrice && w.discountPrice > 0 && w.discountPrice < w.price);
-                const discountRate = hasDiscount
-                  ? Math.round(((w.price - w.discountPrice!) / w.price) * 100)
-                  : 0;
-
-                return (
-                  <div key={w.wishlistId || w.productId} style={{ border: "1px solid #eee", borderRadius: "12px", padding: "12px", background: "#fff", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-                    <Link to={`/web/products/${w.productId}`} style={{ textDecoration: "none", color: "inherit" }}>
-                      <img src={w.imageUrl} alt={w.name} style={{ width: "100%", height: "140px", objectFit: "cover", borderRadius: "8px", marginBottom: "8px" }} />
-                      <div style={{ fontWeight: 600, fontSize: "13px", marginBottom: "4px", lineHeight: "1.4", height: "36px", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
-                        {w.name}
-                      </div>
-                    </Link>
-                    <div>
-                      <div style={{ display: "flex", alignItems: "baseline", gap: "4px", marginTop: "4px", flexWrap: "wrap" }}>
-                        {hasDiscount && (
-                          <span style={{ color: "#ff4d4f", fontWeight: 700, fontSize: "13px" }}>
-                            {discountRate}%
-                          </span>
-                        )}
-                        <strong style={{ fontWeight: 700, fontSize: "14px", color: "#222" }}>
-                          {finalPrice.toLocaleString()}원
-                        </strong>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+          <header className={styles.sectionHeading}><h2>최근 주문</h2><Link to="/web/my/orders">전체보기 <ChevronRight /></Link></header>
+          {loading ? <div className={styles.uploadEmpty}>쇼핑 정보를 불러오는 중이에요.</div> : orders.length === 0 ? <div className={styles.uploadEmpty}>아직 주문한 상품이 없어요.</div> : (
+            <div className={styles.recentOrders}>{orders.slice(0, 2).map((order) => <Link key={order.orderId} to={`/web/my/orders/${order.orderId}`}><Package /><div><strong>{order.items[0]?.name ?? `주문 #${order.orderId}`}{order.items.length > 1 ? ` 외 ${order.items.length - 1}개` : ""}</strong><span>{formatOrderStatus(order.orderStatus)}</span></div><b>{order.totalPrice.toLocaleString()}원</b><ChevronRight /></Link>)}</div>
+          )}
+        </section>
+        <section>
+          <header className={styles.sectionHeading}><h2>찜한 상품</h2><Link to="/web/my/wishlist">전체보기 <ChevronRight /></Link></header>
+          {loading ? <div className={styles.uploadEmpty}>관심 상품을 불러오는 중이에요.</div> : wishlist.length === 0 ? <div className={styles.uploadEmpty}>관심 상품을 저장하면 여기에 표시됩니다.</div> : (
+            <div className={styles.wishlistPreview}>{wishlist.slice(0, 4).map((item) => <Link key={item.wishlistId} to={`/web/products/${item.productId}`}>{item.imageUrl ? <img src={item.imageUrl} alt={item.name} /> : <div><ImageIcon /></div>}<strong>{item.name}</strong><span>{(item.discountPrice ?? item.price).toLocaleString()}원</span></Link>)}</div>
           )}
         </section>
       </main>

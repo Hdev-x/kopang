@@ -870,10 +870,11 @@
 
 .stickyPurchase {
   position: sticky;
-  top: 190px;
+  /* 헤더 + 상세 탭 아래에 붙는다. 탭과 같은 기준을 써서 헤더 높이가 바뀌면 함께 따라간다. */
+  top: calc(var(--web-header-height) + 66px);
   z-index: 1;
-  height: calc(100vh - 190px);
-  min-height: 520px;
+  height: calc(100vh - var(--web-header-height) - 66px);
+  min-height: 440px;
   display: flex;
   flex-direction: column;
   padding: var(--space-5) 0 var(--space-4) var(--space-5);
@@ -894,18 +895,6 @@
   min-height: 0;
   overflow-y: auto;
   padding-right: var(--space-1);
-}
-
-.optionSelect {
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 var(--space-3);
-  color: var(--color-text-muted);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-sm);
 }
 
 .stickySelected {
@@ -993,4 +982,17 @@
   color: var(--color-text-muted);
   background: var(--gray-50);
   border-radius: var(--radius-md);
+}
+
+/* 찜 활성 상태 — 하드코딩 #ff4d4f 대신 세일/강조 토큰을 쓴다. */
+.wished {
+  color: var(--color-sale);
+  border-color: var(--color-sale);
+}
+
+.wish:disabled,
+.cart:disabled,
+.buy:disabled {
+  cursor: not-allowed;
+  opacity: .5;
 }
