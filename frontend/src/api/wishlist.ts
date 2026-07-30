@@ -10,6 +10,7 @@ export interface Wishlist {
   price: number;
   imageUrl?: string;
   discountPrice?: number;
+  discountRate?: number;
 }
 
 // 내 찜 목록 조회
