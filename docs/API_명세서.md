@@ -1,8 +1,8 @@
 # Kopang API 명세서
 
-> ✅ **2026-07-02 회의 확정 — 프론트·백 공통 계약서.**
+> ✅ **2026-07-30 구현 현황 반영 — 프론트·백 공통 계약서.**
 > 변경이 필요하면 팀 합의 후 이 문서를 먼저 수정한다 (코드보다 문서가 기준).
-> 확정 내용: 위험 유형 8종 · PG(토스 테스트) 결제 · 만족도 수집 · 찜/주문취소/내쿠폰/포인트 · FastAPI 피처
+> 반영 내용: 위험 유형 8종 · PG(토스 테스트) 결제 · 만족도 수집 · 고객지원 문의/공지/FAQ · Gemini 챗봇 · FastAPI 피처
 
 ## 위험 유형 코드 (공통 enum) — 확정 8종
 
@@ -202,19 +202,26 @@ POST /api/satisfaction
 
 ## 8. 문의 (Inquiries) — 🔒 인증
 > 상품문의(상세페이지) + 1:1 일반문의(고객센터)를 한 테이블로. 공지사항과는 별도.
-> ⚠️ 경로 통일: FE 목업이 현재 `/api/qna` 사용 중 → **`/api/inquiries`로 통일** (FE 수정 필요).
+> 프론트 표준 경로는 `/api/inquiries`. 백엔드의 `/api/qna`는 기존 호환 경로로만 유지한다.
 
 | Method | Path | 설명 |
 | --- | --- | --- |
 | GET | `/api/inquiries?type=PRODUCT|GENERAL` | 내 문의내역 (탭별) |
 | GET | `/api/inquiries/product/{productId}` | 상품 상세에서 특정 상품의 문의 목록 조회 |
-| GET | `/api/inquiries/{id}` | 문의 상세 (질문+답변) |
+| GET | `/api/inquiries/{id}` | 내 문의 상세 (질문+답변) |
 | POST | `/api/inquiries` | 문의 등록 |
+| GET | `/api/admin/inquiries` | 관리자용 전체 문의 목록 조회 |
+| GET | `/api/admin/inquiries/{id}` | 관리자용 문의 상세 조회 |
+| POST | `/api/inquiries/{id}/answer` | 관리자 문의 답변 등록 |
 
 ```
 POST /api/inquiries
   req: { "type":"PRODUCT", "productId":1, "title":"재고 문의", "content":"..." }   // GENERAL이면 productId 생략
-  res: { "id": 10, "status":"답변대기" }
+  res: { "type":"PRODUCT", "productId":1, "title":"재고 문의", "content":"...", "status":"답변대기" }
+
+POST /api/inquiries/10/answer
+  req: { "answerContent":"현재 재고가 있습니다." }
+  res: null
 ```
 
 ## 9. 공지 / FAQ
@@ -224,8 +231,32 @@ POST /api/inquiries
 | GET | `/api/notices` | 공지사항 목록 | ✕ |
 | GET | `/api/notices/{id}` | 공지 상세 | ✕ |
 | GET | `/api/faqs` | 자주 묻는 질문 | ✕ |
+| POST | `/api/admin/faqs` | FAQ 등록 | `ROLE_ADMIN` |
+| PUT | `/api/admin/faqs/{id}` | FAQ 수정 | `ROLE_ADMIN` |
+| DELETE | `/api/admin/faqs/{id}` | FAQ 삭제 | `ROLE_ADMIN` |
 
-## 10. 멤버십 (Membership) — 🔒 인증
+```
+POST /api/admin/faqs
+  req: { "question":"배송은 얼마나 걸리나요?", "answer":"주문 후 보통 1~2일 내 도착합니다.", "category":"배송" }
+  res: null
+```
+
+## 10. AI 챗봇 (Chatbot)
+
+| Method | Path | 설명 | 인증 |
+| --- | --- | --- | --- |
+| POST | `/api/chatbot` | Gemini 기반 고객 상담 답변과 후속 질문 1개 반환 | ✕ |
+
+```
+POST /api/chatbot
+  req: { "message":"배송은 언제 도착하나요?" }
+  res: { "answer":"배송 일정은 주문내역에서 확인할 수 있습니다.", "suggestions":["주문내역은 어디서 확인하나요?"] }
+```
+
+> API 키는 백엔드 환경변수 `GEMINI_API_KEY`로 주입한다. 키가 없거나 외부 AI 연결에 실패하면 1:1 문의 안내 응답을 반환한다.
+> 현재 상품·주문·FAQ DB를 챗봇이 직접 조회하는 기능은 연결되지 않았다.
+
+## 11. 멤버십 (Membership) — 🔒 인증
 
 | Method | Path | 설명 |
 | --- | --- | --- |
@@ -235,7 +266,7 @@ POST /api/inquiries
 
 ---
 
-## 11. 관리자 (Admin) — 🔒 `ROLE_ADMIN` 전용
+## 12. 관리자 (Admin) — 🔒 `ROLE_ADMIN` 전용
 > 로그인 응답의 `role`로 구분. `/api/admin/**` 는 Security에서 ADMIN만 통과.
 
 **이탈 (churn)**
@@ -271,7 +302,7 @@ GET /api/admin/churn/summary
 | GET | `/api/admin/members?q=` | 회원 목록(검색) |
 | GET / POST | `/api/admin/coupons` | 쿠폰 목록 / 발급 |
 
-## 12. 내부 — ML 서빙 (FastAPI, 외부 API 아님)
+## 13. 내부 — ML 서빙 (FastAPI, 외부 API 아님)
 > Spring ↔ FastAPI(WebClient). 배치 스코어링 결과를 DB에 저장, 화면은 DB만 읽음.
 
 | Method | Path | 설명 |
