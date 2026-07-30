@@ -116,7 +116,31 @@ function ProfileHome({ name }: { name: string }) {
         <section>
           <header className={styles.sectionHeading}><h2>찜한 상품</h2><Link to="/web/my/wishlist">전체보기 <ChevronRight /></Link></header>
           {loading ? <div className={styles.uploadEmpty}>관심 상품을 불러오는 중이에요.</div> : wishlist.length === 0 ? <div className={styles.uploadEmpty}>관심 상품을 저장하면 여기에 표시됩니다.</div> : (
-            <div className={styles.wishlistPreview}>{wishlist.slice(0, 4).map((item) => <Link key={item.wishlistId} to={`/web/products/${item.productId}`}>{item.imageUrl ? <img src={item.imageUrl} alt={item.name} /> : <div><ImageIcon /></div>}<strong>{item.name}</strong><span>{(item.discountPrice ?? item.price).toLocaleString()}원</span></Link>)}</div>
+            <div className={styles.wishlistPreview}>
+              {wishlist.slice(0, 4).map((item) => {
+                const rate = item.discountRate || (item.discountPrice && item.discountPrice > 0 && item.discountPrice < item.price ? Math.round(((item.price - item.discountPrice) / item.price) * 100) : 0);
+                const hasDiscount = Boolean(rate && rate > 0);
+                const finalPrice = hasDiscount ? Math.round((item.price * (100 - rate)) / 100) : item.price;
+
+                return (
+                  <Link key={item.wishlistId} to={`/web/products/${item.productId}`}>
+                    {item.imageUrl ? <img src={item.imageUrl} alt={item.name} /> : <div><ImageIcon /></div>}
+                    <strong>{item.name}</strong>
+                    {hasDiscount ? (
+                      <span style={{ display: "flex", flexDirection: "column", gap: "1px", marginTop: "2px" }}>
+                        <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                          <span style={{ color: "#ff4d4f", fontWeight: 700, fontSize: "11px" }}>{rate}%</span>
+                          <del style={{ fontSize: "11px", color: "#888", textDecoration: "line-through", fontWeight: 400 }}>{item.price.toLocaleString()}원</del>
+                        </span>
+                        <b style={{ fontSize: "13px", fontWeight: 700, color: "#222" }}>{finalPrice.toLocaleString()}원</b>
+                      </span>
+                    ) : (
+                      <span>{item.price.toLocaleString()}원</span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
           )}
         </section>
       </main>
@@ -1009,19 +1033,25 @@ function WebWishlistBody() {
                 <img src={w.imageUrl} alt={w.name} style={{ width: "100%", height: "180px", objectFit: "cover", borderRadius: "8px", marginBottom: "12px" }} />
                 <div style={{ fontWeight: 600, fontSize: "14px", marginBottom: "6px", lineHeight: "1.4" }}>{w.name}</div>
               </Link>
-              <div style={{ display: "flex", alignItems: "baseline", gap: "6px", marginBottom: "12px", flexWrap: "wrap" }}>
-                {hasDiscount && (
-                  <span style={{ color: "#ff4d4f", fontWeight: 700, fontSize: "14px" }}>
-                    {discountRate}%
-                  </span>
-                )}
-                <strong style={{ fontWeight: 700, fontSize: "15px", color: "#222" }}>
-                  {finalPrice.toLocaleString()}원
-                </strong>
-                {hasDiscount && (
-                  <del style={{ fontSize: "12px", color: "#999", textDecoration: "line-through" }}>
+              <div style={{ marginTop: "8px", marginBottom: "12px" }}>
+                {hasDiscount ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <span style={{ color: "#ff4d4f", fontWeight: 700, fontSize: "14px" }}>
+                        {discountRate}%
+                      </span>
+                      <del style={{ fontSize: "12px", color: "#888", textDecoration: "line-through", fontWeight: 400 }}>
+                        {w.price.toLocaleString()}원
+                      </del>
+                    </div>
+                    <strong style={{ fontWeight: 700, fontSize: "16px", color: "#222" }}>
+                      {finalPrice.toLocaleString()}원
+                    </strong>
+                  </div>
+                ) : (
+                  <strong style={{ fontWeight: 700, fontSize: "16px", color: "#222" }}>
                     {w.price.toLocaleString()}원
-                  </del>
+                  </strong>
                 )}
               </div>
             </div>

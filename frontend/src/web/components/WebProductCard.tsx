@@ -61,10 +61,19 @@ export function WebProductCard({ product }: { product: Product }) {
         </div>
         {product.brand && <p className={styles.brand}>{product.brand}</p>}
         <h3>{product.name}</h3>
-        <div className={styles.priceRow}>
-          {product.discountRate ? <span className={styles.discount}>{product.discountRate}%</span> : null}
-          <strong>{salePrice.toLocaleString()}원</strong>
-        </div>
+        {product.discountRate && product.discountRate > 0 ? (
+          <div className={styles.priceContainer}>
+            <div className={styles.discountRow}>
+              <span className={styles.discount}>{product.discountRate}%</span>
+              <span className={styles.originalPrice}>{product.price.toLocaleString()}원</span>
+            </div>
+            <strong className={styles.salePrice}>{salePrice.toLocaleString()}원</strong>
+          </div>
+        ) : (
+          <div className={styles.priceRow}>
+            <strong>{product.price.toLocaleString()}원</strong>
+          </div>
+        )}
       </Link>
     </article>
   );
