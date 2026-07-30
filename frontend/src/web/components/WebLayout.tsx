@@ -6,6 +6,7 @@ import { getNotifications } from "../../api/notifications";
 import { getMembershipStatus } from "../../api/membership";
 import { useAuth } from "../../hooks/useAuth";
 import { logout } from "../../lib/auth";
+import { toMobilePath } from "../../routes/platformPath";
 import { WebQuickBar } from "./WebQuickBar";
 import { WebChatbot } from "./WebChatbot";
 import { WebFooter } from "./WebFooter";
@@ -85,7 +86,7 @@ export function WebLayout({ children }: Props) {
                 <Link to="/web/my/wishlist" className={styles.iconLink} aria-label="저장한 상품"><Bookmark size={21} /></Link>
                 <Link to="/web/notifications" className={styles.iconLink} aria-label={`알림 ${unreadCount}개`}><Bell size={21} />{unreadCount > 0 && <span className={styles.badge}>{unreadCount > 9 ? "9+" : unreadCount}</span>}</Link>
                 <Link to="/web/cart" className={styles.headerCart}><ShoppingCart size={22} aria-hidden="true" /><span className={styles.srOnly}>장바구니</span></Link>
-                <div className={styles.profileWrap}><button type="button" className={styles.profile} aria-label={`${user.name} 사용자 메뉴`} aria-expanded={profileOpen} onClick={() => setProfileOpen((open) => !open)}>{user.name.trim().slice(0, 1).toUpperCase()}</button>{profileOpen && <nav className={styles.profileMenu} aria-label="사용자 메뉴"><Link to="/web/my" onClick={() => setProfileOpen(false)}>마이페이지</Link><Link to="/web/membership" onClick={() => setProfileOpen(false)}>멤버십</Link><Link to="/web/support" onClick={() => setProfileOpen(false)}>고객센터</Link><Link to="/mobile" className={styles.viewMenuItem} onClick={() => setProfileOpen(false)}>모바일 화면</Link>{user.role === "ADMIN" && <Link to="/admin" className={styles.adminMenuItem} onClick={() => setProfileOpen(false)}>관리자 페이지</Link>}<button type="button" onClick={() => { logout(); setProfileOpen(false); }}>로그아웃</button></nav>}</div>
+                <div className={styles.profileWrap}><button type="button" className={styles.profile} aria-label={`${user.name} 사용자 메뉴`} aria-expanded={profileOpen} onClick={() => setProfileOpen((open) => !open)}>{user.name.trim().slice(0, 1).toUpperCase()}</button>{profileOpen && <nav className={styles.profileMenu} aria-label="사용자 메뉴"><Link to="/web/my" onClick={() => setProfileOpen(false)}>마이페이지</Link><Link to="/web/membership" onClick={() => setProfileOpen(false)}>멤버십</Link><Link to="/web/support" onClick={() => setProfileOpen(false)}>고객센터</Link><Link to={toMobilePath(path, location.search)} className={styles.viewMenuItem} onClick={() => setProfileOpen(false)}>모바일 화면</Link>{user.role === "ADMIN" && <Link to="/admin" className={styles.adminMenuItem} onClick={() => setProfileOpen(false)}>관리자 페이지</Link>}<button type="button" onClick={() => { logout(); setProfileOpen(false); }}>로그아웃</button></nav>}</div>
               </>
             ) : (
               <>
