@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Heart } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
-import { checkWishlist, addWishlist, deleteWishlist } from "../api/wishlist";
+import { useWishlist } from "../hooks/useWishlist";
 import type { Product } from "../types/product";
 import styles from "./ProductCard.module.css";
 
@@ -15,17 +14,9 @@ type Props = {
 export function ProductCard({ product, onWishChange, onClick }: Props) {
   const user = useAuth();
   const navigate = useNavigate();
-  const [wished, setWished] = useState(false);
+  const { isWished, toggleWishlist } = useWishlist();
 
-  useEffect(() => {
-    if (user) {
-      checkWishlist(product.id)
-        .then(setWished)
-        .catch(console.error);
-    } else {
-      setWished(false);
-    }
-  }, [product.id, user]);
+  const wished = isWished(product.id);
 
   const handleWishToggle = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -38,21 +29,9 @@ export function ProductCard({ product, onWishChange, onClick }: Props) {
       return;
     }
 
-    if (wished) {
-      deleteWishlist(product.id)
-        .then(() => {
-          setWished(false);
-          if (onWishChange) onWishChange(product.id, false);
-        })
-        .catch(console.error);
-    } else {
-      addWishlist(product.id)
-        .then(() => {
-          setWished(true);
-          if (onWishChange) onWishChange(product.id, true);
-        })
-        .catch(console.error);
-    }
+    toggleWishlist(product.id)
+      .then((next) => onWishChange?.(product.id, next))
+      .catch(console.error);
   };
 
   return (

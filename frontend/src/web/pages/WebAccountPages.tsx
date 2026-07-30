@@ -172,8 +172,9 @@ function ReviewPage({ write }: { write: boolean }) {
   const [imageUrl, setImageUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const loadData = () => {
-    setLoading(true);
+  // 조회와 "로딩 표시 켜기"를 나눈다. effect에서 동기 setState를 부르면 렌더가 한 번 더 돈다.
+  // 첫 진입은 loading 초기값(true)이 이미 담당하므로 fetch만 부르면 된다.
+  const fetchData = () =>
     Promise.all([
       getMyReviews().catch(() => []),
       getOrders().catch(() => []),
@@ -187,10 +188,14 @@ function ReviewPage({ write }: { write: boolean }) {
         setError(true);
       })
       .finally(() => setLoading(false));
+
+  const loadData = () => {
+    setLoading(true);
+    void fetchData();
   };
 
   useEffect(() => {
-    loadData();
+    void fetchData();
   }, []);
 
   const handleDelete = async (reviewId: number) => {
@@ -815,16 +820,19 @@ function WebOrdersBody() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  const loadOrders = () => {
-    setLoading(true);
+  const fetchOrders = () =>
     getOrders()
       .then(setOrders)
       .catch(() => setError(true))
       .finally(() => setLoading(false));
+
+  const loadOrders = () => {
+    setLoading(true);
+    void fetchOrders();
   };
 
   useEffect(() => {
-    loadOrders();
+    void fetchOrders();
   }, []);
 
   const handleCancelOrder = async (orderId: number) => {
@@ -978,16 +986,14 @@ function WebWishlistBody() {
   const [items, setItems] = useState<Wishlist[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadData = () => {
-    setLoading(true);
+  const fetchData = () =>
     getWishlist()
       .then(setItems)
       .catch(() => setItems([]))
       .finally(() => setLoading(false));
-  };
 
   useEffect(() => {
-    loadData();
+    void fetchData();
   }, []);
 
   const handleDelete = async (productId: number) => {

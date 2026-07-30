@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getNotifications, markNotificationClicked, markNotificationRead, type NotificationItem } from "../../api/notifications";
+import { getNotifications, markNotificationClicked, type NotificationItem } from "../../api/notifications";
 import { WebLayout } from "../components/WebLayout";
 import styles from "./WebNotificationsPage.module.css";
 
@@ -64,7 +64,8 @@ export function WebNotificationsPage() {
   const handleItemClick = (n: NotificationItem) => {
     if (!n.read) {
       setItems((prev) => prev.map((item) => (item.id === n.id ? { ...item, read: true } : item)));
-      markNotificationRead(n.id).catch(() => {});
+      // click 처리가 clicked·is_read를 함께 갱신한다(NotificationMapper.markAsClicked).
+      // read를 따로 부르면 같은 일을 하는 요청이 하나 더 나간다.
       markNotificationClicked(n.id).catch(() => {});
     }
   };
@@ -112,9 +113,9 @@ export function WebNotificationsPage() {
                   {innerContent}
                 </Link>
               ) : (
-                <div key={n.id} className={cardClass} onClick={() => handleItemClick(n)}>
+                <button type="button" key={n.id} className={cardClass} onClick={() => handleItemClick(n)}>
                   {innerContent}
-                </div>
+                </button>
               );
             })}
           </div>

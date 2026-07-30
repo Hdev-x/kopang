@@ -5,8 +5,8 @@ import { addToCart } from "../../api/cart";
 import { getProduct } from "../../api/products";
 import { getProductReviews, type Review } from "../../api/review";
 import { getProductQnaList } from "../../api/qna";
-import { addWishlist, checkWishlist, deleteWishlist } from "../../api/wishlist";
 import { useAuth } from "../../hooks/useAuth";
+import { useWishlist } from "../../hooks/useWishlist";
 import type { Product } from "../../types/product";
 import type { CartItem } from "../../types/cart";
 import type { QnaSummary } from "../../types/qna";
@@ -43,7 +43,7 @@ export function WebProductDetailPage() {
   const [productQna, setProductQna] = useState<QnaSummary[]>([]);
   const [activeTab, setActiveTab] = useState<DetailTab>(readDetailTab);
   const [isDescExpanded, setIsDescExpanded] = useState(false);
-  const [isWished, setIsWished] = useState(false);
+  const { isWished, toggleWishlist } = useWishlist();
   const [wishLoading, setWishLoading] = useState(false);
 
   useEffect(() => {
@@ -60,14 +60,11 @@ export function WebProductDetailPage() {
         setProductQna(qnaData);
         setError(false);
         saveRecentProduct(productData);
-
-        if (user) {
-          checkWishlist(productId).then(setIsWished).catch(() => setIsWished(false));
-        }
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [id, user]);
+    // 찜 여부는 useWishlist가 따로 들고 있어 로그인 상태가 바뀌어도 상품을 다시 받을 필요가 없다.
+  }, [id]);
 
   useEffect(() => {
     if (!product) return;
@@ -127,15 +124,8 @@ export function WebProductDetailPage() {
     if (!product || wishLoading) return;
     setWishLoading(true);
     try {
-      if (isWished) {
-        await deleteWishlist(product.id);
-        setIsWished(false);
-        window.alert("찜 목록에서 삭제되었습니다.");
-      } else {
-        await addWishlist(product.id);
-        setIsWished(true);
-        window.alert("찜 목록에 추가되었습니다.");
-      }
+      // 성공 안내는 하트 색 변화로 갈음한다 — 클릭마다 alert가 뜨면 탐색이 끊긴다.
+      await toggleWishlist(product.id);
     } catch {
       window.alert("찜하기 처리에 실패했습니다.");
     } finally {
@@ -277,9 +267,9 @@ export function WebProductDetailPage() {
                 className={styles.wish}
                 aria-label="찜하기"
                 onClick={handleToggleWishlist}
-                style={{ color: isWished ? "#ff4d4f" : "inherit" }}
+                style={{ color: isWished(product.id) ? "#ff4d4f" : "inherit" }}
               >
-                <Heart size={22} fill={isWished ? "#ff4d4f" : "none"} color={isWished ? "#ff4d4f" : "currentColor"} />
+                <Heart size={22} fill={isWished(product.id) ? "#ff4d4f" : "none"} color={isWished(product.id) ? "#ff4d4f" : "currentColor"} />
               </button>
               <button type="button" className={styles.cart} onClick={handleAddToCart}>장바구니</button>
               <button type="button" className={styles.buy} onClick={handleDirectBuy}>바로구매</button>
@@ -439,9 +429,9 @@ export function WebProductDetailPage() {
                 className={styles.wish}
                 aria-label="찜하기"
                 onClick={handleToggleWishlist}
-                style={{ color: isWished ? "#ff4d4f" : "inherit" }}
+                style={{ color: isWished(product.id) ? "#ff4d4f" : "inherit" }}
               >
-                <Heart size={22} fill={isWished ? "#ff4d4f" : "none"} color={isWished ? "#ff4d4f" : "currentColor"} />
+                <Heart size={22} fill={isWished(product.id) ? "#ff4d4f" : "none"} color={isWished(product.id) ? "#ff4d4f" : "currentColor"} />
               </button>
               <button type="button" className={styles.cart} onClick={handleAddToCart}>장바구니</button>
               <button type="button" className={styles.buy} onClick={handleDirectBuy}>바로구매</button>

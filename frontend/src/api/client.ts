@@ -86,7 +86,8 @@ client.interceptors.response.use(
         isRefreshing = false;
         onRefreshed(refreshError as Error);
         logout(); // 공통 로그아웃 처리 (sessionStorage, localStorage 모두 청소 + 이벤트 발행)
-        window.location.href = "/login";
+        // Web(/web/*)과 Mobile은 로그인 화면이 따로다. 경로를 고정하면 Web 사용 중 모바일 화면으로 튄다.
+        window.location.href = window.location.pathname.startsWith("/web") ? "/web/login" : "/login";
         return Promise.reject(refreshError);
       }
     }
