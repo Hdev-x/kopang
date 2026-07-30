@@ -2,6 +2,7 @@ import { useState, type FormEvent, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { checkEmail, signup } from "../../api/auth";
+import { getErrorMessage } from "../../utils/error";
 import { WebAuthLayout } from "../components/WebAuthLayout";
 import styles from "./WebAuthPages.module.css";
 
@@ -101,9 +102,8 @@ export function WebSignupPage() {
       });
       window.alert("회원가입이 완료되었습니다. 로그인해 주세요.");
       navigate("/web/login");
-    } catch (err: any) {
-      const msg = err.response?.data?.message || "회원가입에 실패했습니다. 입력값을 확인해 주세요.";
-      window.alert(msg);
+    } catch (error: unknown) {
+      window.alert(getErrorMessage(error, "회원가입에 실패했습니다. 입력값을 확인해 주세요."));
     } finally {
       setSubmitting(false);
     }
