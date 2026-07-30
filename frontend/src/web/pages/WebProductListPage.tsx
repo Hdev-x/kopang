@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { getCategories } from "../../api/categories";
 import { getProducts } from "../../api/products";
@@ -19,9 +19,10 @@ export function WebProductListPage() {
   const [expandedCategoryId, setExpandedCategoryId] = useState<number | null | "auto">("auto");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [discountOnly, setDiscountOnly] = useState(false);
+  const [inStockOnly, setInStockOnly] = useState(false);
   const categoryId = Number(params.get("cat")) || undefined;
   const sort = params.get("sort") ?? "popular";
-  const view = params.get("view");
 
   useEffect(() => { getCategories().then(setCategories).catch(() => setCategories([])); }, []);
   useEffect(() => { getProducts(categoryId, 0, 40, undefined, sort).then((page) => { setProducts(page.content); setError(false); }).catch(() => setError(true)).finally(() => setLoading(false)); }, [categoryId, sort]);
@@ -29,12 +30,15 @@ export function WebProductListPage() {
   const flatCategories = useMemo(() => flattenCategories(categories), [categories]);
   const activeCategory = flatCategories.find((category) => category.id === categoryId);
   const categoryPath = useMemo(() => buildCategoryPath(flatCategories, categoryId), [flatCategories, categoryId]);
-  const pageTitle = view === "deal" ? "오늘의딜" : view === "only" ? "단독상품" : activeCategory?.name ?? "전체 카테고리";
+  // ?view=deal·only는 제목만 바꾸고 목록은 전체상품과 같았다. 진입점을 없애면서 함께 제거.
+  const pageTitle = activeCategory?.name ?? "전체 카테고리";
   const deals = products.filter((product) => Boolean(product.discountRate)).slice(0, 6);
   const editorialProducts = products.length > 0 ? Array.from({ length: Math.min(3, products.length) }, (_, offset) => products[(editorialIndex + offset) % products.length]) : [];
 
   const updateParam = (key: "cat" | "sort", value?: string) => { const next = new URLSearchParams(params); if (value) next.set(key, value); else next.delete(key); setParams(next); };
   const moveEditorial = (direction: number) => { if (products.length > 0) setEditorialIndex((current) => (current + direction + products.length) % products.length); };
+  // 정렬은 서버가, 할인·재고 토글은 이미 받아온 목록에서 거른다 (해당 쿼리 파라미터가 API에 없다).
+  const visibleProducts = products.filter((product) => (!discountOnly || Boolean(product.discountRate)) && (!inStockOnly || (product.stock ?? 0) > 0));
 
   return <WebLayout><div className={styles.pageLayout}>
     <aside className={styles.sidebar}><h1>{pageTitle}</h1><Link to="/web/products" className={!categoryId ? styles.active : ""}>전체 상품</Link>{categories.map((category) => <CategoryBranch key={category.id} category={category} activeId={categoryId} expanded={expandedCategoryId === category.id || (expandedCategoryId === "auto" && containsCategory(category.children ?? [], categoryId))} onToggle={() => setExpandedCategoryId((current) => current === category.id ? null : category.id)} />)}</aside>
@@ -42,10 +46,10 @@ export function WebProductListPage() {
       <nav className={styles.breadcrumb} aria-label="카테고리 경로"><Link to="/web/products">전체</Link>{categoryPath.map((category) => <span key={category.id}><ChevronRight size={14} /><Link to={`/web/products?cat=${category.id}`} aria-current={category.id === categoryId ? "page" : undefined}>{category.name}</Link></span>)}</nav>
       <section className={styles.editorial}><header><h2>{pageTitle}</h2><span>상품과 브랜드를 새로운 테마로 만나보세요.</span></header><div className={styles.editorialGrid}>{editorialProducts.map((product, index) => <Link key={`${product.id}-${index}`} to={`/web/products/${product.id}`}><img src={product.imageUrl} alt="" /><div><span>CURATION {index + 1}</span><h3>{["디테일로 완성하는 일상", "나에게 꼭 맞는 상품", "쉽게 시작하는 새로운 선택"][index]}</h3><p>{product.name}</p></div></Link>)}</div><div className={styles.carouselButtons}><button type="button" onClick={() => moveEditorial(-1)} aria-label="이전 기획전"><ChevronLeft /></button><button type="button" onClick={() => moveEditorial(1)} aria-label="다음 기획전"><ChevronRight /></button></div></section>
 
-      <section className={styles.dealSection}><header><div><h2>#지금은 할인 중</h2><p>현재 할인율이 적용된 상품이에요.</p></div><Link to="/web/products?view=deal">더보기 <ChevronRight size={17} /></Link></header>{deals.length > 0 ? <div className={styles.dealGrid}>{deals.map((product) => <WebProductCard key={product.id} product={product} />)}</div> : <div className={styles.status}>현재 표시할 할인 상품이 없어요.</div>}</section>
+      <section className={styles.dealSection}><header><div><h2>#지금은 할인 중</h2><p>현재 할인율이 적용된 상품이에요.</p></div><Link to="/web/products?sort=discount">더보기 <ChevronRight size={17} /></Link></header>{deals.length > 0 ? <div className={styles.dealGrid}>{deals.map((product) => <WebProductCard key={product.id} product={product} />)}</div> : <div className={styles.status}>현재 표시할 할인 상품이 없어요.</div>}</section>
 
-      <section className={styles.allProducts}><header><div><h2>{pageTitle} 상품</h2><p>총 {products.length}개 상품</p></div><select value={sort} onChange={(event) => updateParam("sort", event.target.value)} aria-label="상품 정렬">{SORT_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></header><div className={styles.filters}><button type="button"><SlidersHorizontal size={16} />필터</button><button type="button">무료배송</button><button type="button">할인상품</button><button type="button">재고 있음</button></div>
-        {loading ? <div className={styles.status}>상품을 불러오는 중이에요.</div> : error ? <div className={styles.status}>상품을 불러오지 못했어요.</div> : products.length === 0 ? <div className={styles.status}>조건에 맞는 상품이 없어요.</div> : <div className={styles.productGrid}>{products.map((product) => <WebProductCard key={product.id} product={product} />)}</div>}
+      <section className={styles.allProducts}><header><div><h2>{pageTitle} 상품</h2><p>총 {visibleProducts.length}개 상품</p></div><select value={sort} onChange={(event) => updateParam("sort", event.target.value)} aria-label="상품 정렬">{SORT_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></header><div className={styles.filters}><button type="button" aria-pressed={discountOnly} onClick={() => setDiscountOnly((current) => !current)}>할인상품</button><button type="button" aria-pressed={inStockOnly} onClick={() => setInStockOnly((current) => !current)}>재고 있음</button></div>
+        {loading ? <div className={styles.status}>상품을 불러오는 중이에요.</div> : error ? <div className={styles.status}>상품을 불러오지 못했어요.</div> : visibleProducts.length === 0 ? <div className={styles.status}>조건에 맞는 상품이 없어요.</div> : <div className={styles.productGrid}>{visibleProducts.map((product) => <WebProductCard key={product.id} product={product} />)}</div>}
       </section>
     </main>
   </div></WebLayout>;

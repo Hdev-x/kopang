@@ -5,8 +5,8 @@ import { addToCart } from "../../api/cart";
 import { getProduct } from "../../api/products";
 import { getProductReviews, type Review } from "../../api/review";
 import { getProductQnaList } from "../../api/qna";
-import { addWishlist, checkWishlist, deleteWishlist } from "../../api/wishlist";
 import { useAuth } from "../../hooks/useAuth";
+import { useWishlist } from "../../hooks/useWishlist";
 import type { Product } from "../../types/product";
 import type { CartItem } from "../../types/cart";
 import type { QnaSummary } from "../../types/qna";
@@ -43,7 +43,7 @@ export function WebProductDetailPage() {
   const [productQna, setProductQna] = useState<QnaSummary[]>([]);
   const [activeTab, setActiveTab] = useState<DetailTab>(readDetailTab);
   const [isDescExpanded, setIsDescExpanded] = useState(false);
-  const [isWished, setIsWished] = useState(false);
+  const { isWished, toggleWishlist } = useWishlist();
   const [wishLoading, setWishLoading] = useState(false);
 
   useEffect(() => {
@@ -60,14 +60,11 @@ export function WebProductDetailPage() {
         setProductQna(qnaData);
         setError(false);
         saveRecentProduct(productData);
-
-        if (user) {
-          checkWishlist(productId).then(setIsWished).catch(() => setIsWished(false));
-        }
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [id, user]);
+    // 찜 여부는 useWishlist가 따로 들고 있어 로그인 상태가 바뀌어도 상품을 다시 받을 필요가 없다.
+  }, [id]);
 
   useEffect(() => {
     if (!product) return;
@@ -76,7 +73,8 @@ export function WebProductDetailPage() {
     let scrollEndTimer = 0;
 
     const syncActiveTab = () => {
-      const activationLine = 210;
+      // 헤더 73px + 탭 60px 아래가 실제로 보이는 첫 줄이다. 여유 25px을 둬서 조금 일찍 바뀐다.
+      const activationLine = 158;
       let currentTab: DetailTab = "product-info";
 
       for (const sectionId of sectionIds) {
@@ -117,6 +115,16 @@ export function WebProductDetailPage() {
     ? Math.round((product.price * (100 - product.discountRate)) / 100)
     : product.price;
 
+  // 재고를 모르면(응답에 없음) 수량을 막지 않는다. 최종 검증은 주문 생성에서 한다.
+  const stock = product.stock;
+  const maxQuantity = stock && stock > 0 ? stock : 99;
+  const soldOut = stock === 0;
+  const stockNotice = soldOut
+    ? "일시 품절된 상품이에요."
+    : stock !== undefined && stock <= 10
+      ? `재고가 ${stock}개 남았어요.`
+      : "재고가 충분해 바로 배송할 수 있어요.";
+
   const handleToggleWishlist = async () => {
     if (!user) {
       if (window.confirm("로그인이 필요한 서비스입니다. 로그인 페이지로 이동하시겠습니까?")) {
@@ -127,15 +135,8 @@ export function WebProductDetailPage() {
     if (!product || wishLoading) return;
     setWishLoading(true);
     try {
-      if (isWished) {
-        await deleteWishlist(product.id);
-        setIsWished(false);
-        window.alert("찜 목록에서 삭제되었습니다.");
-      } else {
-        await addWishlist(product.id);
-        setIsWished(true);
-        window.alert("찜 목록에 추가되었습니다.");
-      }
+      // 성공 안내는 하트 색 변화로 갈음한다 — 클릭마다 alert가 뜨면 탐색이 끊긴다.
+      await toggleWishlist(product.id);
     } catch {
       window.alert("찜하기 처리에 실패했습니다.");
     } finally {
@@ -274,15 +275,16 @@ export function WebProductDetailPage() {
             <div className={styles.actions}>
               <button
                 type="button"
-                className={styles.wish}
-                aria-label="찜하기"
+                className={`${styles.wish} ${isWished(product.id) ? styles.wished : ""}`}
+                aria-label={isWished(product.id) ? "찜 해제" : "찜하기"}
+                aria-pressed={isWished(product.id)}
+                disabled={wishLoading}
                 onClick={handleToggleWishlist}
-                style={{ color: isWished ? "#ff4d4f" : "inherit" }}
               >
-                <Heart size={22} fill={isWished ? "#ff4d4f" : "none"} color={isWished ? "#ff4d4f" : "currentColor"} />
+                <Heart size={22} fill={isWished(product.id) ? "currentColor" : "none"} />
               </button>
-              <button type="button" className={styles.cart} onClick={handleAddToCart}>장바구니</button>
-              <button type="button" className={styles.buy} onClick={handleDirectBuy}>바로구매</button>
+              <button type="button" className={styles.cart} onClick={handleAddToCart} disabled={soldOut}>장바구니</button>
+              <button type="button" className={styles.buy} onClick={handleDirectBuy} disabled={soldOut}>{soldOut ? "품절" : "바로구매"}</button>
             </div>
           </div>
         </div>
@@ -420,31 +422,31 @@ export function WebProductDetailPage() {
         <aside className={styles.stickyPurchase} aria-label="구매 옵션">
           <p className={styles.stickyName}>{product.name}</p>
           <div className={styles.stickyBody}>
-            <div className={styles.optionSelect}>옵션을 선택해 주세요<span>⌄</span></div>
             <div className={styles.stickySelected}>
-              <span>기본 상품</span>
+              <span>수량</span>
               <div className={styles.quantity}>
-                <button type="button" onClick={() => setQuantity((value) => Math.max(1, value - 1))}><Minus size={16} /></button>
-                <span>{quantity}</span>
-                <button type="button" onClick={() => setQuantity((value) => value + 1)}><Plus size={16} /></button>
+                <button type="button" onClick={() => setQuantity((value) => Math.max(1, value - 1))} disabled={quantity <= 1} aria-label="수량 줄이기"><Minus size={16} /></button>
+                <span aria-live="polite">{quantity}</span>
+                <button type="button" onClick={() => setQuantity((value) => Math.min(maxQuantity, value + 1))} disabled={quantity >= maxQuantity} aria-label="수량 늘리기"><Plus size={16} /></button>
               </div>
             </div>
-            <div className={styles.bundleRow}><PackageCheck size={20} /><span>다른 상품과 함께 장바구니에 담기</span></div>
+            <div className={styles.bundleRow}><PackageCheck size={20} /><span>{stockNotice}</span></div>
           </div>
           <div className={styles.stickyBottom}>
             <div className={styles.stickyTotal}><span>주문금액</span><strong>{(salePrice * quantity).toLocaleString()}원</strong></div>
             <div className={styles.actions}>
               <button
                 type="button"
-                className={styles.wish}
-                aria-label="찜하기"
+                className={`${styles.wish} ${isWished(product.id) ? styles.wished : ""}`}
+                aria-label={isWished(product.id) ? "찜 해제" : "찜하기"}
+                aria-pressed={isWished(product.id)}
+                disabled={wishLoading}
                 onClick={handleToggleWishlist}
-                style={{ color: isWished ? "#ff4d4f" : "inherit" }}
               >
-                <Heart size={22} fill={isWished ? "#ff4d4f" : "none"} color={isWished ? "#ff4d4f" : "currentColor"} />
+                <Heart size={22} fill={isWished(product.id) ? "currentColor" : "none"} />
               </button>
-              <button type="button" className={styles.cart} onClick={handleAddToCart}>장바구니</button>
-              <button type="button" className={styles.buy} onClick={handleDirectBuy}>바로구매</button>
+              <button type="button" className={styles.cart} onClick={handleAddToCart} disabled={soldOut}>장바구니</button>
+              <button type="button" className={styles.buy} onClick={handleDirectBuy} disabled={soldOut}>{soldOut ? "품절" : "바로구매"}</button>
             </div>
           </div>
         </aside>

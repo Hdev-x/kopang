@@ -7,7 +7,7 @@ import { Card } from "../../components/Card";
 import { AddToCartModal } from "../../components/AddToCartModal";
 import { getProduct, getAIRecommendations } from "../../api/products";
 import { addToCart } from "../../api/cart";
-import { checkWishlist, addWishlist, deleteWishlist } from "../../api/wishlist";
+import { useWishlist } from "../../hooks/useWishlist";
 import { getProductReviews } from "../../api/review";
 import { getProductQnaList } from "../../api/qna";
 import { useAuth } from "../../hooks/useAuth";
@@ -35,7 +35,7 @@ export function ProductDetailPage() {
   const [similarProducts, setSimilarProducts] = useState<Product[]>([]);
   const [togetherProducts, setTogetherProducts] = useState<Product[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(true);
-  const [wished, setWished] = useState(false);
+  const { isWished, toggleWishlist } = useWishlist();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [productQna, setProductQna] = useState<QnaSummary[]>([]);
@@ -59,13 +59,11 @@ export function ProductDetailPage() {
         .catch(console.error);
 
       if (user) {
-        checkWishlist(prodId).then(setWished).catch(console.error);
         recordProductView(prodId).catch(console.error);
         getMembershipStatus()
           .then((status) => setIsMembership(status?.status === "ACTIVE"))
           .catch(() => setIsMembership(false));
       } else {
-        setWished(false);
         setIsMembership(false);
       }
     }
@@ -88,16 +86,7 @@ export function ProductDetailPage() {
     }
 
     if (id) {
-      const prodId = Number(id);
-      if (wished) {
-        deleteWishlist(prodId)
-          .then(() => setWished(false))
-          .catch(console.error);
-      } else {
-        addWishlist(prodId)
-          .then(() => setWished(true))
-          .catch(console.error);
-      }
+      toggleWishlist(Number(id)).catch(console.error);
     }
   };
 
@@ -296,11 +285,11 @@ export function ProductDetailPage() {
       <div className={styles.ctaRow}>
         <button
           type="button"
-          className={`${styles.wish} ${wished ? styles.wishOn : ""}`}
+          className={`${styles.wish} ${isWished(product.id) ? styles.wishOn : ""}`}
           onClick={handleWishToggle}
           aria-label="찜"
         >
-          <Heart size={22} strokeWidth={2.2} fill={wished ? "currentColor" : "none"} />
+          <Heart size={22} strokeWidth={2.2} fill={isWished(product.id) ? "currentColor" : "none"} />
         </button>
         <Button
           className={`${styles.cta} ${styles.cartBtn}`}

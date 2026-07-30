@@ -2,7 +2,8 @@
 // 백엔드 붙이면 이 자리에 실제 토큰/유저가 들어감.
 const KEY = "kopang_auth";
 
-export type AuthUser = { name: string; email?: string; role?: "USER" | "ADMIN" };
+// role은 백엔드 응답에 따라 "ADMIN" 또는 Spring Security 접두사가 붙은 "ROLE_ADMIN"으로 올 수 있다.
+export type AuthUser = { name: string; email?: string; role?: "USER" | "ADMIN" | "ROLE_ADMIN" };
 
 export function getAuth(): AuthUser | null {
   try {

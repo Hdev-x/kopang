@@ -1,24 +1,18 @@
-import { useEffect, useState } from "react";
-import { Heart } from "lucide-react";
+import { useState } from "react";
+import { Heart, Image as ImageIcon } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { addWishlist, checkWishlist, deleteWishlist } from "../../api/wishlist";
 import { useAuth } from "../../hooks/useAuth";
+import { useWishlist } from "../../hooks/useWishlist";
 import type { Product } from "../../types/product";
 import styles from "./WebProductCard.module.css";
 
 export function WebProductCard({ product }: { product: Product }) {
   const user = useAuth();
   const navigate = useNavigate();
-  const [isWished, setIsWished] = useState(false);
+  const { isWished, toggleWishlist } = useWishlist();
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (user && product.id) {
-      checkWishlist(product.id)
-        .then(setIsWished)
-        .catch(() => setIsWished(false));
-    }
-  }, [user, product.id]);
+  const wished = isWished(product.id);
 
   const handleWishToggle = async (event: React.MouseEvent) => {
     event.preventDefault();
@@ -35,13 +29,7 @@ export function WebProductCard({ product }: { product: Product }) {
     setLoading(true);
 
     try {
-      if (isWished) {
-        await deleteWishlist(product.id);
-        setIsWished(false);
-      } else {
-        await addWishlist(product.id);
-        setIsWished(true);
-      }
+      await toggleWishlist(product.id);
     } catch {
       window.alert("찜하기 처리에 실패했습니다.");
     } finally {
@@ -57,15 +45,18 @@ export function WebProductCard({ product }: { product: Product }) {
     <article className={styles.card}>
       <Link to={`/web/products/${product.id}`} className={styles.link}>
         <div className={styles.imageWrap}>
-          {product.imageUrl ? <img src={product.imageUrl} alt={product.name} loading="lazy" /> : <div />}
+          {product.imageUrl
+            ? <img src={product.imageUrl} alt={product.name} loading="lazy" />
+            : <div className={styles.imageFallback} aria-hidden="true"><ImageIcon size={32} /><span>KOPANG</span></div>}
           <button
             type="button"
             className={styles.wish}
-            aria-label="찜하기"
+            aria-label={wished ? "찜 해제" : "찜하기"}
+            disabled={loading}
             onClick={handleWishToggle}
-            style={{ color: isWished ? "#ff4d4f" : "inherit" }}
+            style={{ color: wished ? "#ff4d4f" : "inherit" }}
           >
-            <Heart size={20} fill={isWished ? "#ff4d4f" : "none"} color={isWished ? "#ff4d4f" : "currentColor"} />
+            <Heart size={20} fill={wished ? "#ff4d4f" : "none"} color={wished ? "#ff4d4f" : "currentColor"} />
           </button>
         </div>
         {product.brand && <p className={styles.brand}>{product.brand}</p>}
