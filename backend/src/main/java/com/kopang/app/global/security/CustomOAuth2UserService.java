@@ -46,6 +46,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         String email = "";
         String name = "";
         String phone = "";
+        String birthDate = "";
 
         if ("google".equals(registrationId)) {
             email = (String) attributes.get("email");
@@ -56,6 +57,12 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 email = (String) response.get("email");
                 name = (String) response.get("name");
                 phone = (String) response.get("mobile"); // 네이버 연락처 (포맷: 010-XXXX-XXXX)
+
+                String birthyear = (String) response.get("birthyear"); // 예: 1995
+                String birthday = (String) response.get("birthday");   // 예: 05-15
+                if (birthyear != null && birthday != null) {
+                    birthDate = birthyear + "-" + birthday;
+                }
             }
         }
 
@@ -72,7 +79,8 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                     .password(passwordEncoder.encode(UUID.randomUUID().toString())) // 임의의 랜덤 비밀번호
                     .name(name != null ? name : "소셜회원")
                     .phone(phone != null ? phone : "")
-                    .role("USER")
+                    .birthDate(birthDate != null && !birthDate.isEmpty() ? birthDate : null)
+                    .role("ROLE_USER")
                     .status("ACTIVE")
                     .build();
             userMapper.create(user);
@@ -91,13 +99,22 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 user.setPhone(phone);
                 updated = true;
             }
+            if (birthDate != null && !birthDate.trim().isEmpty()
+                    && (user.getBirthDate() == null || user.getBirthDate().trim().isEmpty())) {
+                user.setBirthDate(birthDate);
+                updated = true;
+            }
             if (updated) {
                 userMapper.update(user);
             }
         }
 
+        String authorityRole = user.getRole() != null && user.getRole().startsWith("ROLE_")
+                ? user.getRole()
+                : "ROLE_" + user.getRole();
+
         return new DefaultOAuth2User(
-                Collections.singleton(new SimpleGrantedAuthority("ROLE_" + user.getRole())),
+                Collections.singleton(new SimpleGrantedAuthority(authorityRole)),
                 attributes,
                 userNameAttributeName);
     }

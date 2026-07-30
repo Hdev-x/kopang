@@ -47,9 +47,10 @@ public class CouponServiceImpl implements CouponService {
             throw new IllegalArgumentException("존재하지 않는 쿠폰입니다");
         }
 
-        // 만료일 검사 (오늘 날짜와 비교)
+        // 만료일 검사 (오늘 날짜 시작점과 비교)
         Date today = new Date();
-        if (coupon.getEndDate() != null && coupon.getEndDate().before(today)) {
+        Date todayStart = getStartOfToday();
+        if (coupon.getEndDate() != null && coupon.getEndDate().before(todayStart)) {
             throw new IllegalArgumentException("유효기간이 만료된 쿠폰입니다");
         }
 
@@ -64,8 +65,11 @@ public class CouponServiceImpl implements CouponService {
             throw new IllegalStateException("이미 다운로드 받은 쿠폰입니다");
         }
 
-        // 수량 1개 감소
-        couponMapper.decreaseCouponQuantity(couponId);
+        // 수량 1개 감소 (영향받은 행 수가 0이면 선착순 동시성 소진)
+        int updatedRows = couponMapper.decreaseCouponQuantity(couponId);
+        if (updatedRows == 0) {
+            throw new IllegalStateException("선착순 쿠폰 수량이 모두 소진되었습니다");
+        }
 
         // 쿠폰 발급 등록
         UserCouponDTO userCoupon = UserCouponDTO.builder()
@@ -80,15 +84,17 @@ public class CouponServiceImpl implements CouponService {
         couponMapper.insertUserCoupon(userCoupon);
 
         // 발급한 쿠폰 상세를 조인해서 리턴하기 위해 조회
-        List<UserCouponDTO> list = couponMapper.findUserCouponsByUserId(user.getUserId());
-        return list.stream()
-                .filter(uc -> uc.getCouponId().equals(couponId))
-                .findFirst()
-                .orElse(userCoupon);
+        UserCouponDTO created = couponMapper.findUserCouponById(userCoupon.getUserCouponId());
+        return created != null ? created : userCoupon;
     }
 
     @Override
     public void useCoupon(Long userCouponId) {
+        useCoupon(userCouponId, null);
+    }
+
+    @Override
+    public void useCoupon(Long userCouponId, Long userId) {
         if (userCouponId == null) {
             return;
         }
@@ -96,14 +102,27 @@ public class CouponServiceImpl implements CouponService {
         if (userCoupon == null) {
             throw new IllegalArgumentException("존재하지 않는 쿠폰입니다");
         }
+        if (userId != null && !userCoupon.getUserId().equals(userId)) {
+            throw new IllegalArgumentException("해당 쿠폰에 대한 접근 권한이 없습니다");
+        }
         if (userCoupon.isUsed()) {
             throw new IllegalStateException("이미 사용 처리된 쿠폰입니다");
         }
         Date today = new Date();
-        if (userCoupon.getExpiresAt() != null && userCoupon.getExpiresAt().before(today)) {
+        Date todayStart = getStartOfToday();
+        if (userCoupon.getExpiresAt() != null && userCoupon.getExpiresAt().before(todayStart)) {
             throw new IllegalArgumentException("유효기간이 만료된 쿠폰입니다");
         }
         couponMapper.useUserCoupon(userCouponId, today);
+    }
+
+    private Date getStartOfToday() {
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.set(java.util.Calendar.HOUR_OF_DAY, 0);
+        cal.set(java.util.Calendar.MINUTE, 0);
+        cal.set(java.util.Calendar.SECOND, 0);
+        cal.set(java.util.Calendar.MILLISECOND, 0);
+        return cal.getTime();
     }
 }
 

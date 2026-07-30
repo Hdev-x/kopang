@@ -62,12 +62,11 @@ public class QnAService {
 
         if ("PRODUCT".equals(qna.getType())) {
             if (qna.getProductId() == null) {
-                throw new IllegalArgumentException("VALIDATION_ERROR");
+                qna.setType("GENERAL");
             }
-        } else if ("GENERAL".equals(qna.getType())) {
-            qna.setProductId(null);
         } else {
-            throw new IllegalArgumentException("VALIDATION_ERROR");
+            qna.setType("GENERAL");
+            qna.setProductId(null);
         }
 
         qna.setStatus("답변대기");

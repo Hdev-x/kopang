@@ -41,26 +41,26 @@ export function AdminMembersPage() {
 
   useEffect(() => {
     getAdminMembers()
-      .then(setMembers)
+      .then((data) => setMembers(Array.isArray(data) ? data : []))
       .catch((e) => { console.error("회원 리스트를 불러오지 못했습니다.", e); setMembers([]); });
   }, []);
 
   useEffect(() => { setVisibleCount(30); }, [q, filter, sortBy]);
 
   const sorted = useMemo(() => {
-    if (!members) return [];
+    if (!Array.isArray(members)) return [];
     const kw = q.trim();
     const rows = members.filter((m) => {
-      if (filter === "멤버십" && m.membershipType !== "멤버십") return false;
-      if (filter === "고위험" && m.riskLevel !== "고위험") return false;
+      if (filter === "멤버십" && m?.membershipType !== "멤버십") return false;
+      if (filter === "고위험" && m?.riskLevel !== "고위험" && m?.riskLevel !== "HIGH") return false;
       if (!kw) return true;
-      return (m.name ?? "").includes(kw) || (m.email ?? "").includes(kw);
+      return (m?.name ?? "").includes(kw) || (m?.email ?? "").includes(kw);
     });
     return rows.sort((a, b) => {
-      if (sortBy === "join_desc") return b.userId - a.userId;
-      if (sortBy === "join_asc") return a.userId - b.userId;
-      if (sortBy === "name_asc") return (a.name || "").localeCompare(b.name || "");
-      if (sortBy === "risk_desc") return b.churnProbability - a.churnProbability;
+      if (sortBy === "join_desc") return (b?.userId ?? 0) - (a?.userId ?? 0);
+      if (sortBy === "join_asc") return (a?.userId ?? 0) - (b?.userId ?? 0);
+      if (sortBy === "name_asc") return (a?.name || "").localeCompare(b?.name || "");
+      if (sortBy === "risk_desc") return (b?.churnProbability ?? 0) - (a?.churnProbability ?? 0);
       return 0;
     });
   }, [members, q, filter, sortBy]);
@@ -140,7 +140,7 @@ export function AdminMembersPage() {
                 <>
                   {shown.map((m) => (
                     <tr
-                      key={m.userId}
+                      key={m.userId || Math.random()}
                       className={styles.rowLink}
                       onClick={() => navigate(`/admin/churn/customers/${m.userId}`)}
                       title="이탈 위험 상세 보기"
@@ -152,18 +152,18 @@ export function AdminMembersPage() {
                           className={styles.cellLink}
                           onClick={(e) => e.stopPropagation()}
                         >
-                          {m.name}
+                          {m.name || "이름없음"}
                         </Link>
                       </td>
-                      <td><span className={styles.ellip}>{m.email}</span></td>
+                      <td><span className={styles.ellip}>{m.email || "-"}</span></td>
                       <td>
                         <span className={`${styles.badge} ${m.membershipType === "멤버십" ? styles.bInfo : styles.bMuted}`}>
-                          {m.membershipType}
+                          {m.membershipType || "일반"}
                         </span>
                       </td>
                       <td>
-                        <span className={`${styles.badge} ${riskTone(m.riskLevel)}`}>{m.riskLevel}</span>
-                        <span className={styles.num} style={{ marginLeft: 6 }}>{m.churnProbability.toFixed(2)}</span>
+                        <span className={`${styles.badge} ${riskTone(m.riskLevel)}`}>{m.riskLevel || "저위험"}</span>
+                        <span className={styles.num} style={{ marginLeft: 6 }}>{(m.churnProbability ?? 0).toFixed(2)}</span>
                       </td>
                       <td className={styles.num}>{fmtDate(m.createdAt)}</td>
                     </tr>

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Bell, ShoppingCart, User, Search, ChevronLeft } from "lucide-react";
+import { Bell, ShoppingCart, User, Search, ChevronLeft, Monitor } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { ChatbotWidget } from "./ChatbotWidget";
 import { SearchBarInput } from "./SearchBarInput";
@@ -38,6 +38,10 @@ export function Layout({ children }: Props) {
             </Link>
           )}
           <div className={styles.icons}>
+            <Link to="/web" className={styles.pcSwitchBtn} title="PC 화면으로 전환" aria-label="PC 화면으로 전환">
+              <Monitor size={15} strokeWidth={2.2} />
+              <span>PC버전</span>
+            </Link>
             {user ? (
               // 로그인 상태: 알림·장바구니·마이 3개 아이콘
               <>

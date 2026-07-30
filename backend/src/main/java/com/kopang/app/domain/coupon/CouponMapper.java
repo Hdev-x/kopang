@@ -20,17 +20,20 @@ public interface CouponMapper {
     // 3. 단건 쿠폰 상세 정보 조회
     CouponDTO findCouponById(@Param("couponId") Long couponId);
 
-    // 4. 특정 이메일/회원의 동일 쿠폰 발급 여부 검사 (중복 다운로드 방지)
+    // 4. 특정 회원의 동일 쿠폰 발급 여부 검사 (중복 다운로드 방지)
     int countUserCouponByCouponId(@Param("userId") Long userId, @Param("couponId") Long couponId);
 
     // 5. 회원에게 쿠폰 등록 (user_coupons 테이블 추가)
     void insertUserCoupon(UserCouponDTO userCoupon);
 
     // 6. 마스터 쿠폰 잔여수량 1개 감소
-    void decreaseCouponQuantity(@Param("couponId") Long couponId);
+    int decreaseCouponQuantity(@Param("couponId") Long couponId);
 
     // 7. 결제 완료 시 보유 쿠폰 사용 처리 (used = true 및 used_at 입력)
     void useUserCoupon(@Param("userCouponId") Long userCouponId, @Param("usedAt") Date usedAt);
+
+    // 7-1. 결제 취소 시 보유 쿠폰 복구 처리 (used = false, used_at = null)
+    void restoreUserCoupon(@Param("userCouponId") Long userCouponId);
 
     // 8. 관리자: 전체 쿠폰 템플릿 목록 조회
     List<CouponDTO> findAllCoupons();

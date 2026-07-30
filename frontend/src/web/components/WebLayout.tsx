@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Bell, Bookmark, Search, ShoppingCart, X } from "lucide-react";
 import { getNotifications } from "../../api/notifications";
+import { getMembershipStatus } from "../../api/membership";
 import { useAuth } from "../../hooks/useAuth";
 import { logout } from "../../lib/auth";
 import { WebQuickBar } from "./WebQuickBar";
@@ -15,9 +16,10 @@ type Props = {
 };
 
 const PRIMARY_NAV = [
-  { to: "/web", label: "집구경" },
-  { to: "/web/products", label: "쇼핑" },
-  { to: "/web/products?cat=1", label: "생활/인테리어" },
+  { to: "/web", label: "쇼핑홈" },
+  { to: "/web/products", label: "전체상품" },
+  { to: "/web/products?sort=popular", label: "베스트" },
+  { to: "/web/products?sort=discount", label: "오늘의특가" },
 ];
 
 const SECONDARY_NAV = [
@@ -48,6 +50,7 @@ const SHOP_NAV = [
 export function WebLayout({ children }: Props) {
   const user = useAuth();
   const [promotionVisible, setPromotionVisible] = useState(true);
+  const [isMember, setIsMember] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [profileOpen, setProfileOpen] = useState(false);
   const location = useLocation();
@@ -58,13 +61,25 @@ export function WebLayout({ children }: Props) {
   const secondaryItems = inAccount ? ACCOUNT_NAV : inShop ? SHOP_NAV : SECONDARY_NAV;
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setIsMember(false);
+      return;
+    }
     getNotifications().then((items) => setUnreadCount(items.filter((item) => !item.read).length)).catch(() => setUnreadCount(0));
+    getMembershipStatus()
+      .then((status) => {
+        if (status && status.status === "ACTIVE") {
+          setIsMember(true);
+        } else {
+          setIsMember(false);
+        }
+      })
+      .catch(() => setIsMember(false));
   }, [user]);
 
   return (
     <div className={styles.page}>
-      {promotionVisible && <div className={styles.promotion}><Link to="/web/membership">첫 구매부터 시작되는 Kopang 멤버십 혜택 <strong>확인하기</strong></Link><button type="button" onClick={() => setPromotionVisible(false)} aria-label="프로모션 닫기"><X size={22} /></button></div>}
+      {promotionVisible && !isMember && <div className={styles.promotion}><Link to="/web/membership">첫 구매부터 시작되는 Kopang 멤버십 혜택 <strong>확인하기</strong></Link><button type="button" onClick={() => setPromotionVisible(false)} aria-label="프로모션 닫기"><X size={22} /></button></div>}
       <header className={styles.header}>
         <div className={styles.headerInner}>
           <Link to="/web" className={styles.logo}><span aria-hidden="true" />Kopang</Link>

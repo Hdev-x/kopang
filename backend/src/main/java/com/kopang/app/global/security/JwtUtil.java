@@ -30,11 +30,19 @@ public class JwtUtil {
         this.refreshTokenValidity = refreshTokenValidity;
     }
 
-    // Access Token 생성
-    public String generateAccessToken(String email, String role) {
+    // Access Token 생성 (userId 포함)
+    public String generateAccessToken(Long userId, String email, String role) {
         Map<String, Object> claims = new HashMap<>();
+        if (userId != null) {
+            claims.put("userId", userId);
+        }
         claims.put("role", role);
         return createToken(claims, email, accessTokenValidity);
+    }
+
+    // Access Token 생성 (하위 호환성 유지용)
+    public String generateAccessToken(String email, String role) {
+        return generateAccessToken(null, email, role);
     }
 
     // Refresh Token 생성
@@ -74,6 +82,15 @@ public class JwtUtil {
     // 토큰에서 권한(Role) 추출
     public String getRole(String token) {
         return getClaims(token).get("role", String.class);
+    }
+
+    // 토큰에서 유저 PK(userId) 추출
+    public Long getUserId(String token) {
+        Object userIdObj = getClaims(token).get("userId");
+        if (userIdObj instanceof Number) {
+            return ((Number) userIdObj).longValue();
+        }
+        return null;
     }
 
     // Claims 파싱

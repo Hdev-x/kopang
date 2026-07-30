@@ -59,7 +59,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         }
 
         // KOPANG 자체 JWT 토큰 발급
-        String accessToken = jwtUtil.generateAccessToken(user.getEmail(), user.getRole());
+        String accessToken = jwtUtil.generateAccessToken(user.getUserId(), user.getEmail(), user.getRole());
         String refreshToken = jwtUtil.generateRefreshToken(user.getEmail());
 
         // 마지막 로그인 업데이트
@@ -71,12 +71,14 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl + "/oauth2/callback")
                 .queryParam("accessToken", accessToken)
                 .queryParam("refreshToken", refreshToken)
-                .queryParam("name", URLEncoder.encode(user.getName(), StandardCharsets.UTF_8))
+                .queryParam("name", user.getName())
+                .queryParam("email", user.getEmail())
                 .queryParam("role", user.getRole())
                 .queryParam("hasPhone", hasPhone)
-                .build().toUriString();
+                .build()
+                .encode(StandardCharsets.UTF_8)
+                .toUriString();
 
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 }
-

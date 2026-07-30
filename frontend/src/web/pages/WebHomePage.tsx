@@ -21,6 +21,26 @@ const SHORTCUTS = [
   { label: "고객센터", to: "/web/support", icon: House },
 ];
 
+const CATEGORY_EMOJI_MAP: Record<string, string> = {
+  "식품": "🍎",
+  "생활용품": "🧴",
+  "가전/디지털": "📱",
+  "패션": "👕",
+  "뷰티": "💄",
+  "스포츠": "⚽",
+  "완구/취미": "🎮",
+  "반려동물": "🐶",
+  "자동차": "🚗",
+  "출산/유아동": "🍼",
+  "인테리어": "🛋️",
+  "주방용품": "🍳",
+};
+
+function getCategoryEmoji(category: Category) {
+  if (category.emoji && category.emoji !== "□") return category.emoji;
+  return CATEGORY_EMOJI_MAP[category.name] ?? "🛍️";
+}
+
 export function WebHomePage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [popular, setPopular] = useState<Product[]>([]);
@@ -61,7 +81,7 @@ export function WebHomePage() {
     <nav className={styles.shortcuts} aria-label="홈 바로가기">{SHORTCUTS.map(({ label, to, icon: Icon }) => <Link key={label} to={to}><span><Icon size={28} /></span><strong>{label}</strong></Link>)}</nav>
 
     <HomeSection title="카테고리별 상품 찾기" to="/web/products">
-      <div className={styles.categoryGrid}>{categories.slice(0, 10).map((category) => <Link key={category.id} to={`/web/products?cat=${category.id}`}><span>{category.emoji ?? "□"}</span><strong>{category.name}</strong></Link>)}</div>
+      <div className={styles.categoryGrid}>{categories.slice(0, 10).map((category) => <Link key={category.id} to={`/web/products?cat=${category.id}`}><span>{getCategoryEmoji(category)}</span><strong>{category.name}</strong></Link>)}</div>
     </HomeSection>
 
     <HomeSection title="오늘의 특가" subtitle="할인 중인 상품을 놓치지 마세요" to="/web/products?sort=popular">

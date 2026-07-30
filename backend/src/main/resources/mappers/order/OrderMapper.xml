@@ -69,8 +69,8 @@
             o.order_id AS orderId,
             o.user_id AS userId,
             o.total_price AS totalPrice,
-            o.payment_status AS paymentStatus,
-            o.order_status AS orderStatus,
+            COALESCE(o.payment_status, 'PAID') AS paymentStatus,
+            COALESCE(o.order_status, 'PAID') AS orderStatus,
             o.ordered_at AS createdAt,
             o.used_point AS usedPoint,
             o.user_coupon_id AS userCouponId,
@@ -87,7 +87,7 @@
                 <if test="ship != null and ship != ''">
                     <choose>
                         <when test="ship == '배송준비'">
-                            order_status = 'PAID'
+                            (order_status = 'PAID' OR order_status = 'PENDING' OR order_status = 'ORDERED' OR order_status IS NULL)
                         </when>
                         <when test="ship == '배송중'">
                             order_status = 'SHIPPING'

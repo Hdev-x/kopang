@@ -15,8 +15,7 @@ export async function getAdminQnaList() {
   const res =
     await client.get<ApiResponse<QnaSummary[]>>("/admin/inquiries");
 
-  return res.data.data;
-
+  return res.data?.data ?? [];
 }
 
 // 관리자 문의 상세 조회

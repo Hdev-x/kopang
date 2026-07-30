@@ -15,24 +15,37 @@
         #{userId} </select>
 
     <!-- 3. 회원가입 (INSERT) -->
-    <insert id="create" useGeneratedKeys="true" keyProperty="userId"> INSERT INTO users ( email,
-        password, name, phone, birth_date, role, status, created_at, updated_at ) VALUES ( #{email},
-        #{password}, #{name}, #{phone}, #{birthDate}, #{role}, #{status}, NOW(), NOW() ) </insert>
+    <insert id="create" useGeneratedKeys="true" keyProperty="userId">
+        INSERT INTO users (
+            email, password, name, phone, birth_date, role, status, created_at, updated_at
+        ) VALUES (
+            #{email}, #{password}, #{name}, #{phone},
+            <choose>
+                <when test="birthDate != null and birthDate != ''">CAST(#{birthDate} AS DATE)</when>
+                <otherwise>NULL</otherwise>
+            </choose>,
+            #{role}, #{status}, NOW(), NOW()
+        )
+    </insert>
 
     <!-- 4. 마지막 로그인 기록 갱신 -->
     <update id="updateLastLogin"> UPDATE users SET last_login_at = NOW() WHERE user_id = #{userId} </update>
 
     <!-- 5. 회원 정보 수정 -->
-    <update id="update"> UPDATE users <set>
+    <update id="update">
+        UPDATE users
+        <set>
             <if test="password != null">password = #{password},</if>
-            <if test="name != null">name =
-        #{name},</if>
+            <if test="name != null">name = #{name},</if>
             <if test="phone != null">phone = #{phone},</if>
-            <if test="birthDate != null">birth_date
-        = #{birthDate},</if>
+            <if test="birthDate != null and birthDate != ''">birth_date = CAST(#{birthDate} AS DATE),</if>
+            <if test="birthDate == ''">birth_date = NULL,</if>
             <if test="role != null">role = #{role},</if>
-            <if test="status != null">status
-        = #{status},</if> updated_at = NOW() </set> WHERE user_id = #{userId} </update>
+            <if test="status != null">status = #{status},</if>
+            updated_at = NOW()
+        </set>
+        WHERE user_id = #{userId}
+    </update>
 
     <!-- 6. 회원 탈퇴 -->
     <delete id="delete"> UPDATE users SET email = 'withdrawn_' || user_id || '_' || email, password

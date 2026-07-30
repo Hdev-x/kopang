@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, CreditCard, Heart, Minus, PackageCheck, Plus, RotateCcw, Share2, ShieldCheck, Star, Truck } from "lucide-react";
+import { ChevronLeft, ChevronRight, Heart, Minus, PackageCheck, Plus, RotateCcw, Share2, ShieldCheck, Star, Truck } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { addToCart } from "../../api/cart";
 import { getProduct } from "../../api/products";
 import { getProductReviews, type Review } from "../../api/review";
 import { getProductQnaList } from "../../api/qna";
+import { addWishlist, checkWishlist, deleteWishlist } from "../../api/wishlist";
+import { useAuth } from "../../hooks/useAuth";
 import type { Product } from "../../types/product";
 import type { CartItem } from "../../types/cart";
 import type { QnaSummary } from "../../types/qna";
@@ -31,6 +33,7 @@ function readDetailTab(): DetailTab {
 export function WebProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const user = useAuth();
   const [product, setProduct] = useState<Product | null>(null);
   const [selectedImgIndex, setSelectedImgIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -39,9 +42,9 @@ export function WebProductDetailPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [productQna, setProductQna] = useState<QnaSummary[]>([]);
   const [activeTab, setActiveTab] = useState<DetailTab>(readDetailTab);
-  const [benefitOpen, setBenefitOpen] = useState(true);
-  const [cardOpen, setCardOpen] = useState(false);
   const [isDescExpanded, setIsDescExpanded] = useState(false);
+  const [isWished, setIsWished] = useState(false);
+  const [wishLoading, setWishLoading] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -57,10 +60,14 @@ export function WebProductDetailPage() {
         setProductQna(qnaData);
         setError(false);
         saveRecentProduct(productData);
+
+        if (user) {
+          checkWishlist(productId).then(setIsWished).catch(() => setIsWished(false));
+        }
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, user]);
 
   useEffect(() => {
     if (!product) return;
@@ -109,6 +116,32 @@ export function WebProductDetailPage() {
   const salePrice = product.discountRate
     ? Math.round((product.price * (100 - product.discountRate)) / 100)
     : product.price;
+
+  const handleToggleWishlist = async () => {
+    if (!user) {
+      if (window.confirm("로그인이 필요한 서비스입니다. 로그인 페이지로 이동하시겠습니까?")) {
+        navigate("/web/login");
+      }
+      return;
+    }
+    if (!product || wishLoading) return;
+    setWishLoading(true);
+    try {
+      if (isWished) {
+        await deleteWishlist(product.id);
+        setIsWished(false);
+        window.alert("찜 목록에서 삭제되었습니다.");
+      } else {
+        await addWishlist(product.id);
+        setIsWished(true);
+        window.alert("찜 목록에 추가되었습니다.");
+      }
+    } catch {
+      window.alert("찜하기 처리에 실패했습니다.");
+    } finally {
+      setWishLoading(false);
+    }
+  };
 
   const handleAddToCart = () => {
     addToCart(product.id, quantity)
@@ -223,48 +256,6 @@ export function WebProductDetailPage() {
             {product.discountRate ? <del>{product.price.toLocaleString()}원</del> : null}
           </div>
 
-          <button type="button" className={styles.couponButton}>쿠폰 받기</button>
-
-          <section className={styles.orderBenefits} aria-label="결제 및 적립 혜택">
-            <button
-              type="button"
-              className={styles.benefitToggle}
-              aria-expanded={benefitOpen}
-              onClick={() => setBenefitOpen((open) => !open)}
-            >
-              <span><strong>{Math.round(salePrice * 0.85).toLocaleString()}원</strong> 결제할인가</span>
-              <ChevronDown className={benefitOpen ? styles.chevronOpen : ""} size={20} />
-            </button>
-            <div className={`${styles.accordionBody} ${benefitOpen ? styles.accordionOpen : ""}`}>
-              <div>
-                <p>제휴카드 결제 시 최대 15% 할인</p>
-                <span>카드사와 결제 조건에 따라 할인 금액이 달라질 수 있어요.</span>
-              </div>
-            </div>
-          </section>
-
-          <section className={styles.rewardCard} aria-label="적립 혜택">
-            <button
-              type="button"
-              className={styles.benefitToggle}
-              aria-expanded={cardOpen}
-              onClick={() => setCardOpen((open) => !open)}
-            >
-              <span><strong>최대 {Math.round(salePrice * 0.05).toLocaleString()}원 적립</strong></span>
-              <ChevronDown className={cardOpen ? styles.chevronOpen : ""} size={20} />
-            </button>
-            <div className={`${styles.accordionBody} ${cardOpen ? styles.accordionOpen : ""}`}>
-              <div className={styles.rewardDetail}>
-                <div><span>기본 구매 적립</span><strong>{Math.round(salePrice * 0.02).toLocaleString()}원</strong></div>
-                <div><span>간편결제 추가 적립</span><strong>{Math.round(salePrice * 0.01).toLocaleString()}원</strong></div>
-                <div className={styles.membershipReward}>
-                  <CreditCard size={20} />
-                  <span><strong>KOPANG 멤버십</strong> 가입 시 최대 5% 적립</span>
-                </div>
-              </div>
-            </div>
-          </section>
-
           <dl className={styles.delivery}>
             <dt>배송</dt><dd><strong>3,000원</strong> (제주/도서 4,500원 · 멤버십 회원 0원)<br />평균 1~2일 이내 도착 예정</dd>
             <dt>판매자</dt><dd>{product.brand ?? "Kopang 입점 판매자"}</dd>
@@ -281,7 +272,15 @@ export function WebProductDetailPage() {
             </div>
             <div className={styles.total}><span>주문금액</span><strong>{(salePrice * quantity).toLocaleString()}원</strong></div>
             <div className={styles.actions}>
-              <button type="button" className={styles.wish} aria-label="찜하기"><Heart size={22} /></button>
+              <button
+                type="button"
+                className={styles.wish}
+                aria-label="찜하기"
+                onClick={handleToggleWishlist}
+                style={{ color: isWished ? "#ff4d4f" : "inherit" }}
+              >
+                <Heart size={22} fill={isWished ? "#ff4d4f" : "none"} color={isWished ? "#ff4d4f" : "currentColor"} />
+              </button>
               <button type="button" className={styles.cart} onClick={handleAddToCart}>장바구니</button>
               <button type="button" className={styles.buy} onClick={handleDirectBuy}>바로구매</button>
             </div>
@@ -430,15 +429,22 @@ export function WebProductDetailPage() {
                 <button type="button" onClick={() => setQuantity((value) => value + 1)}><Plus size={16} /></button>
               </div>
             </div>
-            <div className={styles.couponRow}><span>받지 않은 쿠폰이 더 있어요</span><button type="button">쿠폰 받기</button></div>
             <div className={styles.bundleRow}><PackageCheck size={20} /><span>다른 상품과 함께 장바구니에 담기</span></div>
           </div>
           <div className={styles.stickyBottom}>
             <div className={styles.stickyTotal}><span>주문금액</span><strong>{(salePrice * quantity).toLocaleString()}원</strong></div>
             <div className={styles.actions}>
-              <button type="button" className={styles.wish} aria-label="찜하기"><Heart size={22} /></button>
+              <button
+                type="button"
+                className={styles.wish}
+                aria-label="찜하기"
+                onClick={handleToggleWishlist}
+                style={{ color: isWished ? "#ff4d4f" : "inherit" }}
+              >
+                <Heart size={22} fill={isWished ? "#ff4d4f" : "none"} color={isWished ? "#ff4d4f" : "currentColor"} />
+              </button>
               <button type="button" className={styles.cart} onClick={handleAddToCart}>장바구니</button>
-              <button type="button" className={styles.buy} onClick={() => navigate("/web/checkout")}>바로구매</button>
+              <button type="button" className={styles.buy} onClick={handleDirectBuy}>바로구매</button>
             </div>
           </div>
         </aside>

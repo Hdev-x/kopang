@@ -27,9 +27,9 @@ export function LoginPage() {
 
     try {
       const data = await apiLogin(email, password);
-      // 실제 로그인 정보 저장 (이름, 권한, 토큰, 자동로그인 여부)
+      // 실제 로그인 정보 저장 (이름, 이메일, 권한, 토큰, 자동로그인 여부)
       authLogin(
-        { name: data.user.name, role: data.user.role },
+        { name: data.user.name, email: data.user.email || email, role: data.user.role },
         data.accessToken,
         data.refreshToken,
         rememberMe
@@ -49,7 +49,7 @@ export function LoginPage() {
           <Input
             label="이메일"
             type="text"
-            placeholder="email@example.com 또는 admin"
+            placeholder="이메일 입력"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -82,18 +82,23 @@ export function LoginPage() {
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: "15px" }}>
-            <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", cursor: "pointer", color: "var(--color-text)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px", fontSize: "13px" }}>
+            <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", color: "var(--color-text, #333)" }}>
               <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
               자동 로그인
             </label>
+            <div style={{ display: "flex", gap: "8px", color: "var(--color-text-muted, #888)" }}>
+              <Link to="/find-email" style={{ color: "var(--color-text-muted, #666)", textDecoration: "none" }}>아이디 찾기</Link>
+              <span>|</span>
+              <Link to="/find-password" style={{ color: "var(--color-text-muted, #666)", textDecoration: "none" }}>비밀번호 찾기</Link>
+            </div>
           </div>
           <Button type="submit" className={styles.submit}>
             로그인
           </Button>
         </form>
         <p className={styles.switch}>
-          아직 회원이 아니신가요? <Link to="/signup">회원가입</Link> | <Link to="/find-email">아이디 찾기</Link> | <Link to="/find-password">비밀번호 찾기</Link>
+          아직 회원이 아니신가요? <Link to="/signup">회원가입</Link>
         </p>
 
         <div style={{ display: "flex", alignItems: "center", margin: "20px 0", color: "var(--color-text-muted, #888)" }}>

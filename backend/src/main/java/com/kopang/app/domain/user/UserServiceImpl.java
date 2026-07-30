@@ -101,7 +101,7 @@ public class UserServiceImpl implements UserService {
                 .name(request.getName())
                 .phone(request.getPhone())
                 .birthDate(request.getBirthDate())
-                .role("USER") // 기본 회원 권한
+                .role("ROLE_USER") // 기본 회원 권한
                 .status("ACTIVE")
                 .build();
 
@@ -128,7 +128,7 @@ public class UserServiceImpl implements UserService {
         userMapper.updateLastLogin(user.getUserId());
 
         // JWT 토큰 발급 후 DTO 필드에 직접 보관
-        user.setAccessToken(jwtUtil.generateAccessToken(user.getEmail(), user.getRole()));
+        user.setAccessToken(jwtUtil.generateAccessToken(user.getUserId(), user.getEmail(), user.getRole()));
         user.setRefreshToken(jwtUtil.generateRefreshToken(user.getEmail()));
 
         // 보안상 패스워드 제거 후 리턴
@@ -149,7 +149,7 @@ public class UserServiceImpl implements UserService {
         }
 
         // 새 토큰 생성 후 DTO 필드에 직접 보관
-        user.setAccessToken(jwtUtil.generateAccessToken(user.getEmail(), user.getRole()));
+        user.setAccessToken(jwtUtil.generateAccessToken(user.getUserId(), user.getEmail(), user.getRole()));
         user.setRefreshToken(jwtUtil.generateRefreshToken(user.getEmail()));
 
         // 보안상 패스워드 제거 후 리턴
@@ -308,6 +308,10 @@ public class UserServiceImpl implements UserService {
         UserDTO user = userMapper.detailByEmail(email);
         if (user == null) {
             throw new IllegalArgumentException("가입되지 않은 이메일입니다");
+        }
+
+        if (code == null || code.trim().isEmpty()) {
+            throw new IllegalArgumentException("인증번호를 입력해 주세요.");
         }
 
         VerificationInfo info = verificationCache.get(email);

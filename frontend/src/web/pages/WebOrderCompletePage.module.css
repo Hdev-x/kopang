@@ -1,0 +1,163 @@
+.container {
+  max-width: 680px;
+  margin: 60px auto 100px;
+  padding: 0 20px;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid var(--color-border, #eee);
+  border-radius: 16px;
+  padding: 48px 32px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.icon {
+  color: #52c41a;
+  margin-bottom: 20px;
+}
+
+.title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #222;
+  margin-bottom: 8px;
+}
+
+.orderNo {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-primary, #007bff);
+  margin-bottom: 8px;
+}
+
+.desc {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 32px;
+}
+
+.survey {
+  width: 100%;
+  max-width: 440px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.surveyThanks {
+  font-size: 15px;
+  font-weight: 600;
+  color: #2b8a3e;
+}
+
+.surveyLabel {
+  font-size: 15px;
+  font-weight: 700;
+  color: #333;
+}
+
+.stars {
+  display: flex;
+  gap: 8px;
+}
+
+.starBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.reasonRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.reasonChip {
+  padding: 6px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 20px;
+  background: #fff;
+  font-size: 13px;
+  color: #495057;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reasonChipOn {
+  border-color: var(--color-primary, #007bff);
+  background: #e6f7ff;
+  color: var(--color-primary, #007bff);
+  font-weight: 600;
+}
+
+.surveyBtn {
+  width: 100%;
+  padding: 10px;
+  background: var(--color-primary, #007bff);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.surveyBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.actions {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  max-width: 440px;
+}
+
+.homeBtn {
+  flex: 1;
+  padding: 14px;
+  border: 1px solid #ced4da;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #333;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.homeBtn:hover {
+  background: #f8f9fa;
+}
+
+.ordersBtn {
+  flex: 1;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  background: var(--color-primary, #007bff);
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.ordersBtn:hover {
+  background: #0056b3;
+}
