@@ -1,16 +1,13 @@
 import { useEffect, useState, useRef } from "react";
-import { ChevronRight, Download, Heart, Image, Package, Ticket, UserRound, Eye, EyeOff } from "lucide-react";
+import { ChevronRight, Download, Heart, MapPin, Package, Search, Star, Ticket, UserRound, Eye, EyeOff } from "lucide-react";
 import { getProfile, updateProfile } from "../../api/auth";
 import { getAvailableCoupons, getMyCoupons, downloadCoupon, type CouponResponse, type UserCouponResponse } from "../../api/coupon";
 import { getPointBalance } from "../../api/point";
-import { formatOrderStatus, getOrders, type Order } from "../../api/order";
-import { getWishlist, type Wishlist } from "../../api/wishlist";
+import { getOrders } from "../../api/order";
+import { getWishlist } from "../../api/wishlist";
 import { Link, useParams } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
-import { getErrorMessage } from "../../utils/error";
 import { WebLayout } from "../components/WebLayout";
-import { WebMyInquiriesPage, WebMyInquiryDetailPage, WebOrderDetailPage, WebOrdersPage, WebReviewsPage, WebWishlistPage } from "./WebShoppingAccountPages";
-import { WebAddressBook } from "./WebAddressBook";
 import styles from "./WebAccountPages.module.css";
 
 type AccountKind = "home" | "profile" | "notifications" | "password" | "orders" | "order" | "addresses" | "wishlist" | "points" | "coupons" | "inquiries" | "inquiry" | "reviews" | "review-write";
@@ -29,7 +26,7 @@ export function WebAccountPage({ kind }: { kind: AccountKind }) {
 
   return <WebLayout>
     {shopping ? <WebShoppingNav activeKind={kind} /> : tabs.length > 0 && <nav className={styles.localNav}>{tabs.map((item) => <Link key={item.to} to={item.to} className={isActive(kind, item.to) ? styles.active : ""}>{item.label}</Link>)}</nav>}
-    {kind === "home" ? <ProfileHome name={user?.name ?? "Kopang 사용자"} /> : kind === "orders" ? <WebOrdersPage /> : kind === "order" ? <WebOrderDetailPage orderId={no} /> : kind === "wishlist" ? <WebWishlistPage /> : kind === "inquiries" ? <WebMyInquiriesPage /> : kind === "inquiry" ? <WebMyInquiryDetailPage inquiryId={id} /> : review ? <WebReviewsPage write={kind === "review-write"} /> : setting ? <SettingsBody kind={kind} name={user?.name ?? ""} /> : kind === "coupons" ? <WebCouponsTab /> : <WebOrdersPage />}
+    {kind === "home" ? <ProfileHome name={user?.name ?? "Kopang 사용자"} /> : review ? <ReviewPage write={kind === "review-write"} /> : setting ? <SettingsBody kind={kind} name={user?.name ?? ""} /> : kind === "coupons" ? <WebCouponsTab /> : <ShoppingPage kind={kind} suffix={kind === "order" ? no : kind === "inquiry" ? id : undefined} />}
   </WebLayout>;
 }
 
@@ -39,18 +36,15 @@ export function WebShoppingNav({ activeKind }: { activeKind: string }) {
 
 function ProfileHome({ name }: { name: string }) {
   const [couponsCount, setCouponsCount] = useState(0);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [wishlist, setWishlist] = useState<Wishlist[]>([]);
-  const [points, setPoints] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [ordersCount, setOrdersCount] = useState(0);
+  const [wishlistCount, setWishlistCount] = useState(0);
 
   useEffect(() => {
     Promise.all([
       getMyCoupons().catch(() => []),
       getOrders().catch(() => []),
       getWishlist().catch(() => []),
-      getPointBalance().catch(() => ({ balance: 0 })),
-    ]).then(([couponData, orderData, wishlistData, pointData]) => {
+    ]).then(([couponData, orderData, wishlistData]) => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const validCoupons = couponData.filter((c) => {
@@ -59,10 +53,9 @@ function ProfileHome({ name }: { name: string }) {
         return new Date(c.expiresAt) >= today;
       });
       setCouponsCount(validCoupons.length);
-      setOrders(orderData);
-      setWishlist(wishlistData);
-      setPoints(pointData.balance);
-    }).catch(console.error).finally(() => setLoading(false));
+      setOrdersCount(orderData.length);
+      setWishlistCount(wishlistData.length);
+    }).catch(console.error);
   }, []);
 
   return (
@@ -72,41 +65,30 @@ function ProfileHome({ name }: { name: string }) {
           <UserRound size={42} />
         </div>
         <h1>{name}</h1>
-        <p>반가워요. 오늘의 쇼핑 현황을 확인해 보세요.</p>
-        <Link to="/web/my/profile">회원정보 관리</Link>
         <div className={styles.profileStats}>
-          <Link to="/web/my/wishlist" className={styles.statLink}>
-            <span><Heart />찜<b>{wishlist.length}</b></span>
+          <Link to="/web/my/wishlist" style={{ textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <span><Heart />찜<b>{wishlistCount}</b></span>
           </Link>
-          <Link to="/web/my/coupons" className={styles.statLink}>
+          <Link to="/web/my/coupons" style={{ textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column", alignItems: "center" }}>
             <span><Ticket />쿠폰<b>{couponsCount}</b></span>
           </Link>
-          <Link to="/web/my/orders" className={styles.statLink}>
-            <span><Package />주문<b>{orders.length}</b></span>
+          <Link to="/web/my/orders" style={{ textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <span><Package />주문<b>{ordersCount}</b></span>
           </Link>
         </div>
       </aside>
       <main className={styles.profileContent}>
-        <section className={styles.dashboardSummary}>
-          <Link to="/web/membership"><span>KOPANG MEMBERSHIP</span><strong>멤버십 혜택 확인</strong><ChevronRight /></Link>
-          <Link to="/web/my/points"><span>사용 가능 포인트</span><strong>{points.toLocaleString()}P</strong><ChevronRight /></Link>
-          <Link to="/web/my/coupons"><span>사용 가능 쿠폰</span><strong>{couponsCount}장</strong><ChevronRight /></Link>
-        </section>
         <section>
-          <header className={styles.sectionHeading}><h2>최근 주문</h2><Link to="/web/my/orders">전체보기 <ChevronRight /></Link></header>
-          {loading ? <div className={styles.uploadEmpty}>쇼핑 정보를 불러오는 중이에요.</div> : orders.length === 0 ? <div className={styles.uploadEmpty}>아직 주문한 상품이 없어요.</div> : (
-            <div className={styles.recentOrders}>{orders.slice(0, 2).map((order) => <Link key={order.orderId} to={`/web/my/orders/${order.orderId}`}><Package /><div><strong>{order.items[0]?.name ?? `주문 #${order.orderId}`}{order.items.length > 1 ? ` 외 ${order.items.length - 1}개` : ""}</strong><span>{formatOrderStatus(order.orderStatus)}</span></div><b>{order.totalPrice.toLocaleString()}원</b><ChevronRight /></Link>)}</div>
-          )}
-        </section>
-        <section>
-          <header className={styles.sectionHeading}><h2>찜한 상품</h2><Link to="/web/my/wishlist">전체보기 <ChevronRight /></Link></header>
-          {loading ? <div className={styles.uploadEmpty}>관심 상품을 불러오는 중이에요.</div> : wishlist.length === 0 ? <div className={styles.uploadEmpty}>관심 상품을 저장하면 여기에 표시됩니다.</div> : (
-            <div className={styles.wishlistPreview}>{wishlist.slice(0, 4).map((item) => <Link key={item.wishlistId} to={`/web/products/${item.productId}`}>{item.imageUrl ? <img src={item.imageUrl} alt={item.name} /> : <div><Image /></div>}<strong>{item.name}</strong><span>{(item.discountPrice ?? item.price).toLocaleString()}원</span></Link>)}</div>
-          )}
+          <h2>찜한 상품</h2>
+          <div className={styles.uploadEmpty}>관심 상품을 저장하면 여기에 표시됩니다.</div>
         </section>
       </main>
     </div>
   );
+}
+
+function ReviewPage({ write }: { write: boolean }) {
+  return <main className={styles.reviewPage}>{write ? <><h1>내가 사용한 상품 리뷰쓰기</h1><div className={styles.reviewSearch}><input placeholder="브랜드명 혹은 상품명 입력" /><button type="button"><Search size={18} />검색</button></div><div className={styles.empty}><Star size={36} /><strong>작성 가능한 리뷰가 없어요.</strong><p>구매 확정된 상품이 생기면 리뷰를 작성할 수 있어요.</p></div></> : <div className={styles.empty}><Star size={36} /><strong>내가 남긴 리뷰가 없어요.</strong><p>상품을 사용한 경험을 다른 사용자와 공유해 보세요.</p></div>}</main>;
 }
 
 function SettingsPage({ name: initialName }: { name: string }) {
@@ -121,6 +103,8 @@ function SettingsPage({ name: initialName }: { name: string }) {
   const phone3Ref = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (user?.email) setEmail(user.email);
+    if (user?.name) setName(user.name);
     getProfile()
       .then((profile) => {
         if (profile.email) setEmail(profile.email);
@@ -159,8 +143,8 @@ function SettingsPage({ name: initialName }: { name: string }) {
         birthDate: birthDate || undefined,
       });
       window.alert("회원 정보가 성공적으로 수정되었습니다.");
-    } catch (error: unknown) {
-      window.alert(getErrorMessage(error, "회원 정보 수정 중 오류가 발생했습니다."));
+    } catch (err: any) {
+      window.alert(err.response?.data?.message || "회원 정보 수정 중 오류가 발생했습니다.");
     } finally {
       setSubmitting(false);
     }
@@ -251,10 +235,75 @@ function SettingsPage({ name: initialName }: { name: string }) {
   );
 }
 
+function ShoppingPage({ kind, suffix }: { kind: AccountKind; suffix?: string }) {
+  const [points, setPoints] = useState(0);
+  const [couponsCount, setCouponsCount] = useState(0);
+  const [ordersCount, setOrdersCount] = useState(0);
+
+  useEffect(() => {
+    Promise.all([
+      getPointBalance().catch(() => ({ balance: 0 })),
+      getMyCoupons().catch(() => []),
+      getOrders().catch(() => []),
+    ]).then(([pointData, couponData, orderData]) => {
+      setPoints(pointData.balance);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const validCoupons = couponData.filter((c) => {
+        if (c.used) return false;
+        if (!c.expiresAt) return true;
+        return new Date(c.expiresAt) >= today;
+      });
+      setCouponsCount(validCoupons.length);
+      setOrdersCount(orderData.length);
+    }).catch(console.error);
+  }, []);
+
+  const titleMap: Partial<Record<AccountKind, string>> = {
+    orders: "주문배송목록",
+    order: `주문 상세 #${suffix ?? ""}`,
+    addresses: "배송지 관리",
+    wishlist: "상품 스크랩북",
+    points: "포인트",
+    coupons: "쿠폰",
+    inquiries: "나의 문의내역",
+    inquiry: `문의 상세 #${suffix ?? ""}`
+  };
+
+  return (
+    <main className={styles.shopping}>
+      <section className={styles.summary}>
+        <Link to="/web/my/coupons" style={{ display: "contents", textDecoration: "none", color: "inherit" }}>
+          <span><Ticket />쿠폰 <b>{couponsCount}</b></span>
+        </Link>
+        <Link to="/web/my/points" style={{ display: "contents", textDecoration: "none", color: "inherit" }}>
+          <span><Star />포인트 <b>{points.toLocaleString()}P</b></span>
+        </Link>
+        <Link to="/web/my/orders" style={{ display: "contents", textDecoration: "none", color: "inherit" }}>
+          <span><Package />진행 중인 주문 <b>{ordersCount}</b></span>
+        </Link>
+      </section>
+      <h1>{titleMap[kind] ?? "나의 쇼핑"}</h1>
+      <div className={styles.orderSteps}>
+        {["입금대기", "결제완료", "배송준비", "배송중", "배송완료", "구매확정"].map((step, index) => (
+          <span key={step}>
+            {step}<b>{index === 1 ? ordersCount : 0}</b>{index < 5 && <ChevronRight />}
+          </span>
+        ))}
+      </div>
+      <div className={styles.empty}>
+        <Package size={36} />
+        <strong>표시할 내역이 없어요.</strong>
+        <p>실제 API가 연결되면 이 영역에 최신 내역이 표시됩니다.</p>
+      </div>
+    </main>
+  );
+}
+
 function SettingsBody({ kind, name }: { kind: AccountKind; name: string }) {
   if (kind === "notifications") return <NotificationSettings />;
   if (kind === "password") return <PasswordChange />;
-  if (kind === "addresses") return <WebAddressBook />;
+  if (kind === "addresses") return <AddressBook />;
   return <SettingsPage name={name} />;
 }
 
@@ -312,8 +361,9 @@ function PasswordChange() {
       window.alert("비밀번호가 성공적으로 변경되었습니다.");
       setNewPassword("");
       setConfirmPassword("");
-    } catch (error: unknown) {
-      window.alert(getErrorMessage(error, "비밀번호 변경에 실패했습니다."));
+    } catch (err: any) {
+      const msg = err.response?.data?.message || "비밀번호 변경에 실패했습니다.";
+      window.alert(msg);
     } finally {
       setSubmitting(false);
     }
@@ -410,6 +460,20 @@ function PasswordChange() {
   );
 }
 
+function AddressBook() {
+  return (
+    <main className={styles.shopping}>
+      <h1>배송지 관리</h1>
+      <div className={styles.empty}>
+        <MapPin size={36} />
+        <strong>등록된 배송지가 없어요.</strong>
+        <p>자주 쓰는 배송지를 등록해두면 주문이 빨라져요.</p>
+        <button type="button" className={styles.addBtn}>새 배송지 추가</button>
+      </div>
+    </main>
+  );
+}
+
 function WebCouponsTab() {
   const [loading, setLoading] = useState(true);
   const [myCoupons, setMyCoupons] = useState<UserCouponResponse[]>([]);
@@ -439,7 +503,7 @@ function WebCouponsTab() {
   };
 
   useEffect(() => {
-    Promise.resolve().then(loadData);
+    loadData();
   }, []);
 
   const handleDownload = async (couponId: number) => {
@@ -447,8 +511,8 @@ function WebCouponsTab() {
       await downloadCoupon(couponId);
       window.alert("쿠폰이 다운로드되어 쿠폰함에 발급되었습니다!");
       loadData();
-    } catch (error: unknown) {
-      window.alert(getErrorMessage(error, "이미 다운로드받았거나 소진된 쿠폰입니다."));
+    } catch (err: any) {
+      window.alert(err.response?.data?.message || "이미 다운로드받았거나 소진된 쿠폰입니다.");
     }
   };
 

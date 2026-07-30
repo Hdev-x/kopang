@@ -5,8 +5,6 @@ import { addToCart } from "../../api/cart";
 import { getProduct } from "../../api/products";
 import { getProductReviews, type Review } from "../../api/review";
 import { getProductQnaList } from "../../api/qna";
-import { addWishlist, checkWishlist, deleteWishlist } from "../../api/wishlist";
-import { useAuth } from "../../hooks/useAuth";
 import type { Product } from "../../types/product";
 import type { CartItem } from "../../types/cart";
 import type { QnaSummary } from "../../types/qna";
@@ -33,7 +31,6 @@ function readDetailTab(): DetailTab {
 export function WebProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const user = useAuth();
   const [product, setProduct] = useState<Product | null>(null);
   const [selectedImgIndex, setSelectedImgIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -45,8 +42,6 @@ export function WebProductDetailPage() {
   const [benefitOpen, setBenefitOpen] = useState(true);
   const [cardOpen, setCardOpen] = useState(false);
   const [isDescExpanded, setIsDescExpanded] = useState(false);
-  const [wished, setWished] = useState(false);
-  const [wishPending, setWishPending] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -66,11 +61,6 @@ export function WebProductDetailPage() {
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [id]);
-
-  useEffect(() => {
-    if (!user || !id) return;
-    checkWishlist(Number(id)).then(setWished).catch(() => setWished(false));
-  }, [id, user]);
 
   useEffect(() => {
     if (!product) return;
@@ -139,36 +129,6 @@ export function WebProductDetailPage() {
         imageUrl: product.imageUrl || "",
       };
       navigate("/web/checkout", { state: { selectedItems: [directItem] } });
-    }
-  };
-
-  const handleWish = async () => {
-    if (!user) {
-      navigate("/web/login");
-      return;
-    }
-    if (wishPending) return;
-    setWishPending(true);
-    try {
-      if (wished) await deleteWishlist(product.id);
-      else await addWishlist(product.id);
-      setWished((current) => !current);
-    } catch {
-      window.alert("찜 상태를 변경하지 못했어요.");
-    } finally {
-      setWishPending(false);
-    }
-  };
-
-  const handleShare = async () => {
-    try {
-      if (navigator.share) await navigator.share({ title: product.name, url: window.location.href });
-      else {
-        await navigator.clipboard.writeText(window.location.href);
-        window.alert("상품 주소를 복사했어요.");
-      }
-    } catch {
-      return;
     }
   };
 
@@ -248,7 +208,7 @@ export function WebProductDetailPage() {
               {product.brand && <Link to="/web/products" className={styles.brand}>{product.brand}</Link>}
               <h1>{product.name}</h1>
             </div>
-            <button type="button" aria-label="공유하기" onClick={handleShare}><Share2 size={22} /></button>
+            <button type="button" aria-label="공유하기"><Share2 size={22} /></button>
           </div>
 
           <div className={styles.ratingSummary}>
@@ -263,7 +223,7 @@ export function WebProductDetailPage() {
             {product.discountRate ? <del>{product.price.toLocaleString()}원</del> : null}
           </div>
 
-          <button type="button" className={styles.couponButton} onClick={() => navigate("/web/my/coupons")}>쿠폰 받기</button>
+          <button type="button" className={styles.couponButton}>쿠폰 받기</button>
 
           <section className={styles.orderBenefits} aria-label="결제 및 적립 혜택">
             <button
@@ -321,7 +281,7 @@ export function WebProductDetailPage() {
             </div>
             <div className={styles.total}><span>주문금액</span><strong>{(salePrice * quantity).toLocaleString()}원</strong></div>
             <div className={styles.actions}>
-              <button type="button" className={styles.wish} aria-label={wished ? "찜 해제" : "찜하기"} aria-pressed={wished} disabled={wishPending} onClick={handleWish}><Heart size={22} fill={wished ? "currentColor" : "none"} /></button>
+              <button type="button" className={styles.wish} aria-label="찜하기"><Heart size={22} /></button>
               <button type="button" className={styles.cart} onClick={handleAddToCart}>장바구니</button>
               <button type="button" className={styles.buy} onClick={handleDirectBuy}>바로구매</button>
             </div>
@@ -461,7 +421,7 @@ export function WebProductDetailPage() {
         <aside className={styles.stickyPurchase} aria-label="구매 옵션">
           <p className={styles.stickyName}>{product.name}</p>
           <div className={styles.stickyBody}>
-            <div className={styles.optionSelect}>기본 상품<span>단일 구성</span></div>
+            <div className={styles.optionSelect}>옵션을 선택해 주세요<span>⌄</span></div>
             <div className={styles.stickySelected}>
               <span>기본 상품</span>
               <div className={styles.quantity}>
@@ -470,15 +430,15 @@ export function WebProductDetailPage() {
                 <button type="button" onClick={() => setQuantity((value) => value + 1)}><Plus size={16} /></button>
               </div>
             </div>
-            <div className={styles.couponRow}><span>받지 않은 쿠폰이 더 있어요</span><button type="button" onClick={() => navigate("/web/my/coupons")}>쿠폰 받기</button></div>
+            <div className={styles.couponRow}><span>받지 않은 쿠폰이 더 있어요</span><button type="button">쿠폰 받기</button></div>
             <div className={styles.bundleRow}><PackageCheck size={20} /><span>다른 상품과 함께 장바구니에 담기</span></div>
           </div>
           <div className={styles.stickyBottom}>
             <div className={styles.stickyTotal}><span>주문금액</span><strong>{(salePrice * quantity).toLocaleString()}원</strong></div>
             <div className={styles.actions}>
-              <button type="button" className={styles.wish} aria-label={wished ? "찜 해제" : "찜하기"} aria-pressed={wished} disabled={wishPending} onClick={handleWish}><Heart size={22} fill={wished ? "currentColor" : "none"} /></button>
+              <button type="button" className={styles.wish} aria-label="찜하기"><Heart size={22} /></button>
               <button type="button" className={styles.cart} onClick={handleAddToCart}>장바구니</button>
-              <button type="button" className={styles.buy} onClick={handleDirectBuy}>바로구매</button>
+              <button type="button" className={styles.buy} onClick={() => navigate("/web/checkout")}>바로구매</button>
             </div>
           </div>
         </aside>

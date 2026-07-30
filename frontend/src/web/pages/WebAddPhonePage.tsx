@@ -1,7 +1,6 @@
 import { useState, type FormEvent, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { updateProfile } from "../../api/auth";
-import { getErrorMessage } from "../../utils/error";
 import { WebAuthLayout } from "../components/WebAuthLayout";
 import styles from "./WebAuthPages.module.css";
 
@@ -33,8 +32,9 @@ export function WebAddPhonePage() {
             await updateProfile({ phone: phoneFull });
             window.alert("연락처 등록이 완료되었습니다. 반갑습니다!");
             navigate("/web");
-        } catch (error: unknown) {
-            window.alert(getErrorMessage(error, "연락처 등록에 실패했습니다. 다시 시도해 주세요."));
+        } catch (err: any) {
+            const msg = err.response?.data?.message || "연락처 등록에 실패했습니다. 다시 시도해 주세요.";
+            window.alert(msg);
         } finally {
             setSubmitting(false);
         }
