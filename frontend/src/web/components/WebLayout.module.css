@@ -68,14 +68,6 @@
   text-decoration: none;
 }
 
-.logo > span {
-  width: 28px;
-  height: 28px;
-  display: block;
-  background: var(--color-primary);
-  border-radius: var(--radius-md) var(--radius-md) var(--radius-sm) var(--radius-sm);
-}
-
 .srOnly {
   position: absolute;
   width: 1px;

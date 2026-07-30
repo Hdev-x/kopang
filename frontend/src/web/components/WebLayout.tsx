@@ -82,7 +82,7 @@ export function WebLayout({ children }: Props) {
       {promotionVisible && !isMember && <div className={styles.promotion}><Link to="/web/membership">첫 구매부터 시작되는 Kopang 멤버십 혜택 <strong>확인하기</strong></Link><button type="button" onClick={() => setPromotionVisible(false)} aria-label="프로모션 닫기"><X size={22} /></button></div>}
       <header className={styles.header}>
         <div className={styles.headerInner}>
-          <Link to="/web" className={styles.logo}><span aria-hidden="true" />Kopang</Link>
+          <Link to="/web" className={styles.logo}>Kopang</Link>
 
           <nav className={styles.nav} aria-label="웹 주요 메뉴">
             {PRIMARY_NAV.map((item) => (

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Heart } from "lucide-react";
+import { Heart, Image as ImageIcon } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { useWishlist } from "../../hooks/useWishlist";
@@ -45,11 +45,14 @@ export function WebProductCard({ product }: { product: Product }) {
     <article className={styles.card}>
       <Link to={`/web/products/${product.id}`} className={styles.link}>
         <div className={styles.imageWrap}>
-          {product.imageUrl ? <img src={product.imageUrl} alt={product.name} loading="lazy" /> : <div />}
+          {product.imageUrl
+            ? <img src={product.imageUrl} alt={product.name} loading="lazy" />
+            : <div className={styles.imageFallback} aria-hidden="true"><ImageIcon size={32} /><span>KOPANG</span></div>}
           <button
             type="button"
             className={styles.wish}
-            aria-label="찜하기"
+            aria-label={wished ? "찜 해제" : "찜하기"}
+            disabled={loading}
             onClick={handleWishToggle}
             style={{ color: wished ? "#ff4d4f" : "inherit" }}
           >

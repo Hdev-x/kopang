@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { ChevronLeft, ChevronRight, Gift, Heart, House, PackageCheck, ShoppingBag, Sparkles, Truck, Zap } from "lucide-react";
+import { ChevronLeft, ChevronRight, Gift, Heart, House, Image as ImageIcon, PackageCheck, ShoppingBag, Sparkles, Truck, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getCategories } from "../../api/categories";
 import { getProducts } from "../../api/products";
+import { Skeleton, SkeletonThumb } from "../../components/Skeleton";
 import type { Category } from "../../types/category";
 import type { Product } from "../../types/product";
 import { WebLayout } from "../components/WebLayout";
@@ -68,11 +69,11 @@ export function WebHomePage() {
   return <WebLayout>
     <section className={styles.hero}>
       <Link to={hero ? `/web/products/${hero.id}` : "/web/products"} className={styles.heroMain}>
-        {hero?.imageUrl ? <img src={hero.imageUrl} alt="" /> : <div className={styles.imagePlaceholder} />}
+        {hero?.imageUrl ? <img src={hero.imageUrl} alt={hero.name} /> : <ProductImageFallback featured />}
         <div className={styles.heroOverlay}><span>오늘의 추천</span><h1>{hero?.name ?? "생활을 바꾸는 상품을 만나보세요"}</h1><p>{hero?.brand ?? "Kopang 큐레이션"}</p></div>
       </Link>
       <Link to={popular[1] ? `/web/products/${popular[1].id}` : "/web/products"} className={styles.heroSide}>
-        {popular[1]?.imageUrl ? <img src={popular[1].imageUrl} alt="" /> : <div className={styles.imagePlaceholder} />}
+        {popular[1]?.imageUrl ? <img src={popular[1].imageUrl} alt={popular[1].name} /> : <ProductImageFallback />}
         <div><strong>이번 주 인기 상품</strong><span>{popular[1]?.name ?? "인기 상품을 확인해 보세요"}</span></div>
       </Link>
       <div className={styles.heroControl}><button type="button" onClick={() => moveHero(-1)} aria-label="이전 배너"><ChevronLeft size={18} /></button><span>{heroProducts.length ? heroIndex + 1 : 0} / {heroProducts.length}</span><button type="button" onClick={() => moveHero(1)} aria-label="다음 배너"><ChevronRight size={18} /></button></div>
@@ -81,7 +82,13 @@ export function WebHomePage() {
     <nav className={styles.shortcuts} aria-label="홈 바로가기">{SHORTCUTS.map(({ label, to, icon: Icon }) => <Link key={label} to={to}><span><Icon size={28} /></span><strong>{label}</strong></Link>)}</nav>
 
     <HomeSection title="카테고리별 상품 찾기" to="/web/products">
-      <div className={styles.categoryGrid}>{categories.slice(0, 10).map((category) => <Link key={category.id} to={`/web/products?cat=${category.id}`}><span>{getCategoryEmoji(category)}</span><strong>{category.name}</strong></Link>)}</div>
+      {loading
+        ? <div className={styles.categoryGrid} aria-label="카테고리를 불러오는 중">{Array.from({ length: 10 }, (_, index) => <div key={index} className={styles.categorySkeleton} />)}</div>
+        : error
+          ? <div className={styles.status}>카테고리를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.</div>
+          : categories.length === 0
+            ? <div className={styles.status}>등록된 카테고리가 없어요.</div>
+            : <div className={styles.categoryGrid}>{categories.slice(0, 10).map((category) => <Link key={category.id} to={`/web/products?cat=${category.id}`}><span aria-hidden="true">{getCategoryEmoji(category)}</span><strong>{category.name}</strong></Link>)}</div>}
     </HomeSection>
 
     <HomeSection title="오늘의 특가" subtitle="할인 중인 상품을 놓치지 마세요" to="/web/products?sort=popular">
@@ -95,7 +102,7 @@ export function WebHomePage() {
     </HomeSection>
 
     <HomeSection title="생활을 바꾸는 쇼핑 테마" subtitle="상품을 용도별로 묶어 빠르게 둘러보세요">
-      <div className={styles.themeGrid}>{popular.slice(0, 4).map((product, index) => <Link key={product.id} to={`/web/products/${product.id}`}><img src={product.imageUrl} alt="" /><div><span>THEME {String(index + 1).padStart(2, "0")}</span><h3>{["편안한 하루를 위한 선택", "공간을 단정하게 만드는 방법", "매일 쓰기 좋은 생활 아이템", "선물하기 좋은 인기 상품"][index]}</h3></div></Link>)}</div>
+      <div className={styles.themeGrid}>{popular.slice(0, 4).map((product, index) => <Link key={product.id} to={`/web/products/${product.id}`}>{product.imageUrl ? <img src={product.imageUrl} alt={product.name} /> : <ProductImageFallback />}<div><span>THEME {String(index + 1).padStart(2, "0")}</span><h3>{["편안한 하루를 위한 선택", "공간을 단정하게 만드는 방법", "매일 쓰기 좋은 생활 아이템", "선물하기 좋은 인기 상품"][index]}</h3></div></Link>)}</div>
     </HomeSection>
 
     <HomeSection title="새로 들어온 상품" subtitle="Kopang의 새로운 상품을 먼저 만나보세요" to="/web/products?sort=latest">
@@ -109,8 +116,14 @@ function HomeSection({ title, subtitle, to, children }: { title: string; subtitl
 }
 
 function ProductContent({ loading, error, products }: { loading: boolean; error: boolean; products: Product[] }) {
-  if (loading) return <div className={styles.status}>상품을 불러오는 중이에요.</div>;
-  if (error) return <div className={styles.status}>상품을 불러오지 못했어요.</div>;
+  // 문구 한 줄로 갈아끼우면 데이터가 오는 순간 5열 그리드로 레이아웃이 튄다. 틀을 그대로 두고 값 자리만 비운다.
+  if (loading) return <div className={styles.productGrid} aria-label="상품을 불러오는 중">{Array.from({ length: 5 }, (_, index) => <div key={index} className={styles.productSkeleton}><SkeletonThumb /><Skeleton w="86%" /><Skeleton w="55%" /></div>)}</div>;
+  if (error) return <div className={styles.status}>상품을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.</div>;
   if (products.length === 0) return <div className={styles.status}>표시할 상품이 없어요.</div>;
   return <div className={styles.productGrid}>{products.map((product) => <WebProductCard key={product.id} product={product} />)}</div>;
+}
+
+/** 이미지가 없는 상품 자리. 빈 회색 사각형 대신 브랜드 표식을 보여준다. */
+function ProductImageFallback({ featured = false }: { featured?: boolean }) {
+  return <div className={`${styles.imagePlaceholder} ${featured ? styles.imagePlaceholderFeatured : ""}`} aria-hidden="true"><ImageIcon size={featured ? 56 : 40} /><span>KOPANG</span></div>;
 }
