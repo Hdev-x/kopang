@@ -16,9 +16,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ChurnScoreServiceImpl implements ChurnScoreService {
 
     private final ChurnMapper churnMapper;
@@ -494,11 +496,17 @@ public class ChurnScoreServiceImpl implements ChurnScoreService {
         return new BatchRunResult(detected, mlScored, willSend, sent, control, measured);
     }
 
-    /** ML 서빙(:8000)이 꺼져 있어도 룰·대응·지표는 진행되어야 한다. */
+    /**
+     * ML 서빙(:8000)이 꺼져 있어도 룰·대응·지표는 진행되어야 한다.
+     *
+     * 조용히 넘기되 흔적은 남긴다 — 아무 로그도 없으면 "ML 점수가 왜 안 늘었나"를
+     * 추적할 방법이 없다(2026-07-30에 원인 찾는 데 시간이 걸렸다).
+     */
     private int runMlScoringQuietly() {
         try {
             return churnMlService.runMlScoring();
         } catch (Exception e) {
+            log.warn("ML 스코어링 실패 — 룰 기반으로 계속 진행한다. 원인: {}", e.toString());
             return 0;
         }
     }

@@ -53,9 +53,15 @@ function reliability(x1: number, n1: number, x2: number, n2: number): Reliabilit
 }
 
 // 처치 vs 대조 이중 바 (재사용)
+/** 대조군이 0명이면 비교가 성립하지 않는다. 0%로 그리면 "대조군이 전혀 전환 안 했다"로 읽힌다. */
+function hasControl(row: { controlN?: number; controlPct?: number | null }) {
+  return (row.controlN ?? 0) > 0 && row.controlPct != null;
+}
+
 function DualBar({ label, meta, treatPct, controlPct, lift, maxPct, rel }: {
-  label: string; meta: string; treatPct: number; controlPct: number; lift: number; maxPct: number; rel: Reliability;
+  label: string; meta: string; treatPct: number; controlPct: number | null; lift: number | null; maxPct: number; rel: Reliability;
 }) {
+  const comparable = controlPct != null && lift != null;
   return (
     <div className={styles.liftRow}>
       <div>
@@ -72,14 +78,15 @@ function DualBar({ label, meta, treatPct, controlPct, lift, maxPct, rel }: {
           </div>
           <div className={styles.dualRow}>
             <span className={styles.tag}>대조</span>
-            <span className={styles.dualTrack}><span className={`${styles.dualFill} ${styles.controlFill}`} style={{ width: `${(controlPct / maxPct) * 100}%` }} /></span>
-            <span className={styles.dualPct}>{controlPct}%</span>
+            <span className={styles.dualTrack}>{comparable && <span className={`${styles.dualFill} ${styles.controlFill}`} style={{ width: `${(controlPct / maxPct) * 100}%` }} />}</span>
+            <span className={styles.dualPct}>{comparable ? `${controlPct}%` : "대조군 없음"}</span>
           </div>
         </div>
       </div>
       <div className={styles.liftValue}>
-        <b className={lift >= 0 ? styles.pos : styles.neg}>{lift >= 0 ? "+" : ""}{lift}</b>
-        <small>%p</small>
+        {comparable
+          ? <><b className={lift >= 0 ? styles.pos : styles.neg}>{lift >= 0 ? "+" : ""}{lift}</b><small>%p</small></>
+          : <><b className={styles.na}>—</b><small>비교 불가</small></>}
       </div>
     </div>
   );
@@ -109,23 +116,23 @@ export function AdminChurnReportPage() {
 
   useEffect(() => { load(0); }, [load]);
 
-  const rows = useMemo(() => {
-    if (!data) return [];
-    return data.effect
-      .map((e) => ({ ...e, lift: Math.round((e.treatPct - e.controlPct) * 10) / 10 }))
-      .sort((a, b) => b.lift - a.lift);
-  }, [data]);
+  // 대조군이 없으면 lift 를 내지 않는다(null). 0으로 두면 비교 불가인 행이
+  // "차이 없음"으로 보이고 best/worst 순위에도 끼어든다.
+  const withLift = <T extends { treatPct: number; controlPct?: number | null; controlN?: number }>(e: T) => ({
+    ...e,
+    lift: hasControl(e) ? Math.round((e.treatPct - (e.controlPct as number)) * 10) / 10 : null,
+  });
+  const byLiftDesc = (a: { lift: number | null }, b: { lift: number | null }) =>
+    (b.lift ?? Number.NEGATIVE_INFINITY) - (a.lift ?? Number.NEGATIVE_INFINITY);
 
-  const typeRows = useMemo(() => {
-    if (!data) return [];
-    return data.typeEffect
-      .map((e) => ({ ...e, lift: Math.round(((e.treatPct ?? 0) - (e.controlPct ?? 0)) * 10) / 10 }))
-      .sort((a, b) => b.lift - a.lift);
-  }, [data]);
+  const rows = useMemo(() => (data ? data.effect.map(withLift).sort(byLiftDesc) : []), [data]);
+  const typeRows = useMemo(() => (data ? data.typeEffect.map(withLift).sort(byLiftDesc) : []), [data]);
 
-  const best = rows[0];
-  const worst = rows[rows.length - 1];
-  const maxPct = Math.max(...rows.flatMap((r) => [r.treatPct, r.controlPct]), 1);
+  // 인사이트는 비교 가능한 행에서만 뽑는다
+  const comparableRows = rows.filter((r): r is typeof r & { lift: number } => r.lift != null);
+  const best = comparableRows[0];
+  const worst = comparableRows[comparableRows.length - 1];
+  const maxPct = Math.max(...rows.flatMap((r) => [r.treatPct, r.controlPct ?? 0]), 1);
   const typeMaxPct = Math.max(...typeRows.flatMap((r) => [r.treatPct ?? 0, r.controlPct ?? 0]), 1);
 
   const kpi = data?.kpi;

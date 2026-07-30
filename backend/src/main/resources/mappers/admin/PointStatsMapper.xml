@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kopang.app.domain.admin.PointStatsMapper">
+
+    <!--
+      멤버십 판정 기준: user_membership.status = 'ACTIVE'인 행이 있으면 멤버십.
+      해지(CANCELLED)는 기간이 남아 혜택은 유지되지만, 적립률 판정은
+      OrderService.confirmPurchase가 'ACTIVE'만 5%로 보므로 여기서도 같은 기준을 쓴다.
+    -->
+    <sql id="tierExpr">
+        CASE WHEN EXISTS (
+            SELECT 1 FROM user_membership um
+            WHERE um.user_id = ph.user_id AND um.status = 'ACTIVE'
+        ) THEN 'MEMBERSHIP' ELSE 'GENERAL' END
+    </sql>
+
+    <select id="findTotals" resultType="com.kopang.app.domain.admin.PointStatsResponse">
+        SELECT
+            COALESCE(SUM(CASE WHEN amount > 0 THEN amount END), 0) AS totalEarned,
+            COALESCE(ABS(SUM(CASE WHEN amount &lt; 0 THEN amount END)), 0) AS totalUsed,
+            COALESCE(SUM(amount), 0) AS totalBalance,
+            COUNT(*) FILTER (WHERE amount > 0) AS earnCount
+        FROM point_history
+    </select>
+
+    <!--
+      구매확정 적립만 센다. 리뷰·이벤트 적립이 섞이면 멤버십 5% 대 일반 1% 비교가 흐려진다.
+      description은 OrderService가 "구매확정 포인트 적립 (N% 적립, 주문 ID: ...)" 형식으로 남긴다.
+    -->
+    <select id="findTierStats" resultType="com.kopang.app.domain.admin.PointStatsResponse$TierStat">
+        SELECT
+            tier,
+            COUNT(DISTINCT user_id) AS memberCount,
+            COUNT(*) AS earnCount,
+            COALESCE(SUM(amount), 0) AS earnedAmount,
+            COALESCE(ROUND(AVG(amount)), 0) AS averageEarned,
+            CASE WHEN tier = 'MEMBERSHIP' THEN 5 ELSE 1 END AS ratePercent
+        FROM (
+            SELECT
+                ph.user_id,
+                ph.amount,
+                <include refid="tierExpr" /> AS tier
+            FROM point_history ph
+            WHERE ph.amount > 0
+              AND ph.description LIKE '구매확정 포인트 적립%'
+        ) t
+        GROUP BY tier
+        ORDER BY tier
+    </select>
+
+    <select id="findRecentLogs" resultType="com.kopang.app.domain.admin.PointStatsResponse$PointLog">
+        SELECT
+            ph.point_id      AS pointId,
+            ph.user_id       AS userId,
+            u.name           AS userName,
+            <include refid="tierExpr" /> AS tier,
+            ph.amount,
+            ph.type,
+            ph.description,
+            TO_CHAR(ph.created_at, 'YYYY-MM-DD HH24:MI') AS createdAt
+        FROM point_history ph
+        JOIN users u ON u.user_id = ph.user_id
+        ORDER BY ph.created_at DESC, ph.point_id DESC
+        LIMIT #{limit}
+    </select>
+
+</mapper>

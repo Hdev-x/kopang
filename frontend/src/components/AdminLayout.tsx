@@ -8,6 +8,7 @@ import {
   ChevronRight,
   CircleHelp,
   ClipboardList,
+  Coins,
   FileClock,
   Home,
   Menu,
@@ -43,6 +44,7 @@ const GROUPS: { title: string; items: Item[] }[] = [
       { to: "/admin/coupons", label: "쿠폰·이벤트", icon: TicketPercent },
       { to: "/admin/recommendations", label: "추천 관리", icon: Sparkles },
       { to: "/admin/stats", label: "구매 분석", icon: ChartPie },
+      { to: "/admin/points", label: "포인트 관리", icon: Coins },
     ],
   },
   {
