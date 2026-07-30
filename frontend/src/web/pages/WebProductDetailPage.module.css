@@ -416,7 +416,9 @@
 
 .tabs {
   position: sticky;
-  top: 125px;
+  /* 헤더 바로 아래에 붙는다. 헤더(min-height) + 하단 border 1px.
+     이전에는 125px 고정값이었는데 2단 내비 시절 높이라 내비가 빠지자 그만큼 떠 있었다. */
+  top: calc(var(--web-header-height) + 1px);
   z-index: calc(var(--z-header) - 1);
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -476,7 +478,8 @@
 }
 
 .detailSection {
-  scroll-margin-top: 185px;
+  /* 탭으로 이동했을 때 헤더·탭에 가리지 않는 위치에서 멈춘다 (헤더 73px + 탭 60px). */
+  scroll-margin-top: calc(var(--web-header-height) + 61px);
   padding: 96px 80px;
 }
 

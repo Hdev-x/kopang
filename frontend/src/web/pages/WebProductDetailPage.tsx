@@ -73,7 +73,8 @@ export function WebProductDetailPage() {
     let scrollEndTimer = 0;
 
     const syncActiveTab = () => {
-      const activationLine = 210;
+      // 헤더 73px + 탭 60px 아래가 실제로 보이는 첫 줄이다. 여유 25px을 둬서 조금 일찍 바뀐다.
+      const activationLine = 158;
       let currentTab: DetailTab = "product-info";
 
       for (const sectionId of sectionIds) {

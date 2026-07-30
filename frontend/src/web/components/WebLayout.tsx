@@ -15,36 +15,22 @@ type Props = {
   children: ReactNode;
 };
 
+// 라벨과 실제 결과가 1:1이 되도록 4개만 남겼다.
+// 뺀 것: "쇼핑홈"(로고가 같은 /web로 간다) · "카테고리"(전체상품과 같은 URL이고 목록 사이드바가 담당)
+//        "오늘의딜"·"단독상품"(?view=는 제목만 바꾸고 목록이 같았다) · "추천"(?sort=recommended를 백엔드가 모른다)
 const PRIMARY_NAV = [
-  { to: "/web", label: "쇼핑홈" },
   { to: "/web/products", label: "전체상품" },
   { to: "/web/products?sort=popular", label: "베스트" },
   { to: "/web/products?sort=discount", label: "오늘의특가" },
-];
-
-const SECONDARY_NAV = [
-  { to: "/web", label: "홈" },
-  { to: "/web/products?sort=recommended", label: "추천" },
-  { to: "/web/products", label: "카테고리" },
-  { to: "/web/products?sort=popular", label: "베스트" },
   { to: "/web/products?sort=latest", label: "신상품" },
 ];
 
+// 2차 내비는 마이페이지에만 둔다. 홈·쇼핑에서는 상단 메뉴·목록 사이드바와 항목이 겹쳤다.
 const ACCOUNT_NAV = [
   { to: "/web/my", label: "프로필" },
   { to: "/web/my/orders", label: "나의 쇼핑" },
   { to: "/web/my/reviews", label: "나의 리뷰" },
   { to: "/web/my/profile", label: "설정" },
-];
-
-const SHOP_NAV = [
-  { to: "/web", label: "쇼핑홈" },
-  { to: "/web/products", label: "카테고리" },
-  { to: "/web/products?sort=popular", label: "베스트" },
-  { to: "/web/products?view=deal", label: "오늘의딜" },
-  { to: "/web/products?view=only", label: "단독상품" },
-  { to: "/web/membership", label: "멤버십" },
-  { to: "/web/products?sort=latest", label: "신상품" },
 ];
 
 export function WebLayout({ children }: Props) {
@@ -57,8 +43,6 @@ export function WebLayout({ children }: Props) {
   const path = location.pathname;
   const currentLocation = `${location.pathname}${location.search}`;
   const inAccount = path.startsWith("/web/my");
-  const inShop = path.startsWith("/web/products") || path === "/web/search" || path === "/web/cart";
-  const secondaryItems = inAccount ? ACCOUNT_NAV : inShop ? SHOP_NAV : SECONDARY_NAV;
 
   useEffect(() => {
     if (!user) {
@@ -113,7 +97,7 @@ export function WebLayout({ children }: Props) {
             )}
           </div>
         </div>
-        <nav className={`${styles.secondaryNav} ${inAccount ? styles.accountNav : ""}`} aria-label={inAccount ? "마이페이지 메뉴" : inShop ? "쇼핑 메뉴" : "웹 홈 세부 메뉴"}><div>{secondaryItems.map((item) => <Link key={item.label} to={item.to} className={(item.to.includes("?") ? currentLocation === item.to : (item.to === "/web/my" || item.to === "/web/products" ? path === item.to : path.startsWith(item.to))) ? styles.secondaryActive : ""}>{item.label}</Link>)}</div></nav>
+        {inAccount && <nav className={`${styles.secondaryNav} ${styles.accountNav}`} aria-label="마이페이지 메뉴"><div>{ACCOUNT_NAV.map((item) => <Link key={item.label} to={item.to} className={(item.to === "/web/my" ? path === item.to : path.startsWith(item.to)) ? styles.secondaryActive : ""}>{item.label}</Link>)}</div></nav>}
       </header>
 
       <main className={styles.main}>{children}</main>
