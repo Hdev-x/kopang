@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { ChevronRight, Download, Heart, MapPin, Package, Search, Star, Ticket, UserRound, Eye, EyeOff } from "lucide-react";
+import { ChevronRight, Download, Heart, Package, Search, Star, Ticket, UserRound, Eye, EyeOff } from "lucide-react";
 import { getProfile, updateProfile } from "../../api/auth";
 import { getAvailableCoupons, getMyCoupons, downloadCoupon, type CouponResponse, type UserCouponResponse } from "../../api/coupon";
 import { getPointBalance } from "../../api/point";
@@ -13,6 +13,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { updateAuthUser } from "../../lib/auth";
 import { WebLayout } from "../components/WebLayout";
+import { WebAddressBook } from "./WebAddressBook";
 import styles from "./WebAccountPages.module.css";
 
 type AccountKind = "home" | "profile" | "notifications" | "password" | "orders" | "order" | "addresses" | "wishlist" | "points" | "coupons" | "inquiries" | "inquiry" | "reviews" | "review-write";
@@ -1138,7 +1139,7 @@ function WebInquiriesBody() {
 function SettingsBody({ kind, name }: { kind: AccountKind; name: string }) {
   if (kind === "notifications") return <NotificationSettings />;
   if (kind === "password") return <PasswordChange />;
-  if (kind === "addresses") return <AddressBook />;
+  if (kind === "addresses") return <WebAddressBook />;
   return <SettingsPage name={name} />;
 }
 
@@ -1291,20 +1292,6 @@ function PasswordChange() {
           {submitting ? "변경 중..." : "비밀번호 변경"}
         </button>
       </form>
-    </main>
-  );
-}
-
-function AddressBook() {
-  return (
-    <main className={styles.shopping}>
-      <h1>배송지 관리</h1>
-      <div className={styles.empty}>
-        <MapPin size={36} />
-        <strong>등록된 배송지가 없어요.</strong>
-        <p>자주 쓰는 배송지를 등록해두면 주문이 빨라져요.</p>
-        <button type="button" className={styles.addBtn}>새 배송지 추가</button>
-      </div>
     </main>
   );
 }
