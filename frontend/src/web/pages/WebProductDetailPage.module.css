@@ -483,34 +483,6 @@
   padding: 96px 80px;
 }
 
-.detailIntro {
-  max-width: 760px;
-  margin: 0 auto 56px;
-  text-align: center;
-}
-
-.detailIntro > p,
-.storyCopy > p,
-.sectionLabel {
-  color: var(--color-primary);
-  font-size: var(--font-xs);
-  font-weight: var(--weight-bold);
-  letter-spacing: 0.12em;
-}
-
-.detailIntro h2 {
-  margin-top: var(--space-3);
-  font-size: 38px;
-  line-height: 1.35;
-}
-
-.detailIntro span {
-  display: block;
-  margin-top: var(--space-5);
-  color: var(--color-text-muted);
-  line-height: 1.8;
-}
-
 .descWrapper {
   position: relative;
   margin-top: var(--space-5);
@@ -560,121 +532,68 @@
   margin-bottom: var(--space-3);
 }
 
-.editorialImage {
-  width: min(100%, 860px);
-  aspect-ratio: 16 / 10;
-  overflow: hidden;
-  margin: 0 auto;
-  background: var(--gray-100);
-  border-radius: var(--radius-lg);
-}
-
-.editorialImage img,
-.editorialImage div,
-.storyVisual img,
-.storyVisual div {
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: cover;
-}
-
-.storyBlock {
-  display: grid;
-  grid-template-columns: 0.8fr 1.2fr;
-  align-items: center;
-  gap: 72px;
-  margin-top: 112px;
-}
-
-.storyCopy h3 {
-  margin-top: var(--space-3);
-  font-size: var(--font-2xl);
-  line-height: 1.4;
-}
-
-.storyCopy span {
-  display: block;
-  margin-top: var(--space-5);
-  color: var(--color-text-muted);
-  line-height: 1.8;
-}
-
-.storyVisual {
-  aspect-ratio: 4 / 3;
-  overflow: hidden;
-  background: var(--gray-100);
-  border-radius: var(--radius-lg);
-}
-
-.benefits {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-4);
-  margin-top: 112px;
-}
-
-.benefits article {
-  min-height: 210px;
-  padding: var(--space-8);
-  background: var(--gray-50);
-  border-radius: var(--radius-lg);
-}
-
-.benefits svg {
-  color: var(--color-primary);
-}
-
-.benefits h3 {
-  margin-top: var(--space-5);
-  font-size: var(--font-lg);
-}
-
-.benefits p {
-  margin-top: var(--space-3);
-  color: var(--color-text-muted);
-  font-size: var(--font-sm);
-  line-height: 1.7;
-}
-
-.specSection {
-  display: grid;
-  grid-template-columns: 240px minmax(0, 1fr);
-  gap: 64px;
-  margin-top: 112px;
-  padding-top: 64px;
-  border-top: 1px solid var(--color-border);
-}
-
-.specSection h2,
 .communitySection h2,
 .policySection h2 {
   margin-top: var(--space-2);
   font-size: var(--font-xl);
 }
 
-.specTable {
-  display: grid;
-  grid-template-columns: 150px minmax(0, 1fr);
-  border-top: 1px solid var(--gray-700);
+.sectionLabel {
+  color: var(--color-primary);
+  font-size: var(--font-xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.12em;
 }
 
-.specTable dt,
-.specTable dd {
-  padding: var(--space-4);
-  border-bottom: 1px solid var(--color-border);
+/* 상품 상세정보 제목 — 모바일 상세의 sectionHeader와 같은 역할 */
+.sectionHeader {
+  margin-bottom: var(--space-5);
+  font-size: var(--font-xl);
+}
+
+/* 전자상거래 고시 표. 모바일과 항목·문구는 같고 폭만 웹에 맞춘다. */
+.specContainer {
+  max-width: 860px;
+  margin: 56px auto 0;
+  padding: var(--space-6);
+  background: var(--gray-50);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.specHeader {
+  margin-bottom: var(--space-4);
+  font-size: var(--font-md);
+}
+
+.specTable {
+  width: 100%;
+  border-collapse: collapse;
   font-size: var(--font-sm);
 }
 
-.specTable dt {
+.specTable th,
+.specTable td {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.specTable th {
+  width: 220px;
   color: var(--color-text-muted);
-  background: var(--gray-50);
+  background: var(--color-surface);
   font-weight: var(--weight-bold);
+}
+
+.specTable td {
+  background: var(--color-surface);
 }
 
 .communitySection,
 .policySection {
-  scroll-margin-top: 185px;
+  /* 리뷰·문의·배송 섹션도 상품정보와 같은 기준으로 멈춘다 (헤더 73px + 탭 60px). */
+  scroll-margin-top: calc(var(--web-header-height) + 61px);
   min-height: 640px;
   padding: 72px 32px;
   border-top: 1px solid var(--color-border);

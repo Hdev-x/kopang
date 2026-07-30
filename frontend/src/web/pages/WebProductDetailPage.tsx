@@ -300,65 +300,53 @@ export function WebProductDetailPage() {
       <div className={styles.detailWorkspace}>
         <div className={styles.tabContent}>
       <section id="product-info" className={styles.detailSection}>
-        <header className={styles.detailIntro}>
-          <p>KOPANG PRODUCT STORY</p>
-          <h2>일상에 자연스럽게 스며드는<br />{product.name}</h2>
-          {product.description ? (
-            <div className={styles.descWrapper}>
-              <div
-                className={`${styles.descriptionHtml} ${
-                  !isDescExpanded ? styles.descCollapsed : ""
-                }`}
-                dangerouslySetInnerHTML={{ __html: product.description }}
-              />
-              <button
-                type="button"
-                className={styles.expandBtn}
-                onClick={() => setIsDescExpanded((prev) => !prev)}
-              >
-                {isDescExpanded ? "상세설명 접기 ∧" : "상품 상세설명 펼쳐보기 ∨"}
-              </button>
-            </div>
-          ) : (
-            <span>필요한 기능과 편안한 사용 경험을 균형 있게 담은 상품입니다.</span>
-          )}
-        </header>
+        {product.description && (
+          <div className={styles.descWrapper}>
+            <h2 className={styles.sectionHeader}>상품 상세정보</h2>
+            <div
+              className={`${styles.descriptionHtml} ${
+                !isDescExpanded ? styles.descCollapsed : ""
+              }`}
+              dangerouslySetInnerHTML={{ __html: product.description }}
+            />
+            <button
+              type="button"
+              className={styles.expandBtn}
+              onClick={() => setIsDescExpanded((prev) => !prev)}
+            >
+              {isDescExpanded ? "상세설명 접기 ∧" : "상품 상세설명 펼쳐보기 ∨"}
+            </button>
+          </div>
+        )}
 
-        <div className={styles.editorialImage}>
-          {product.imageUrl ? <img src={product.imageUrl} alt={`${product.name} 연출 이미지`} /> : <div />}
+        {/* 전자상거래 고시 항목. 모바일 상세와 같은 구성·문구를 쓴다. */}
+        <div className={styles.specContainer}>
+          <h3 className={styles.specHeader}>상품 필수 정보 (전자상거래 고시)</h3>
+          <table className={styles.specTable}>
+            <tbody>
+              <tr>
+                <th>품명 및 모델명</th>
+                <td>{product.name}</td>
+              </tr>
+              <tr>
+                <th>제조사 / 브랜드</th>
+                <td>{product.brand || "KOPANG 협력사"}</td>
+              </tr>
+              <tr>
+                <th>상품번호</th>
+                <td>{product.id}</td>
+              </tr>
+              <tr>
+                <th>재고수량</th>
+                <td>{typeof product.stock === "number" ? `${product.stock.toLocaleString()}개 남음` : "재고 보유 중"}</td>
+              </tr>
+              <tr>
+                <th>A/S 책임자와 전화번호</th>
+                <td>KOPANG 고객만족센터 (1544-0000)</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-
-        <section className={styles.storyBlock}>
-          <div className={styles.storyCopy}>
-            <p>POINT 01</p>
-            <h3>매일 사용하기 좋은<br />단정한 기본</h3>
-            <span>복잡한 장식을 덜어내고 상품 본연의 쓰임에 집중했습니다. 어느 공간에서도 자연스럽게 어울리는 구성을 확인해 보세요.</span>
-          </div>
-          <div className={styles.storyVisual}>
-            {product.imageUrl ? <img src={product.imageUrl} alt="상품 특징" /> : <div />}
-          </div>
-        </section>
-
-        <section className={styles.benefits} aria-label="상품 주요 특징">
-          <article><PackageCheck size={28} /><h3>꼼꼼한 상품 검수</h3><p>출고 전 상품 상태를 확인하고 안전하게 포장합니다.</p></article>
-          <article><ShieldCheck size={28} /><h3>안심 구매</h3><p>상품 정보와 주문 내역을 기준으로 구매 과정을 보호합니다.</p></article>
-          <article><Truck size={28} /><h3>배송 현황 확인</h3><p>주문 후 마이페이지에서 배송 진행 상태를 확인할 수 있습니다.</p></article>
-        </section>
-
-        <section className={styles.specSection}>
-          <div>
-            <p className={styles.sectionLabel}>PRODUCT INFO</p>
-            <h2>상품 기본정보</h2>
-          </div>
-          <dl className={styles.specTable}>
-            <dt>상품명</dt><dd>{product.name}</dd>
-            <dt>브랜드</dt><dd>{product.brand ?? "Kopang 입점 판매자"}</dd>
-            <dt>상품번호</dt><dd>{product.id}</dd>
-            <dt>카테고리</dt><dd>{product.categoryId ?? "상세 카테고리 확인 필요"}</dd>
-            <dt>재고상태</dt><dd>{typeof product.stock === "number" ? `${product.stock.toLocaleString()}개` : "판매자 확인"}</dd>
-            <dt>판매가</dt><dd>{salePrice.toLocaleString()}원</dd>
-          </dl>
-        </section>
       </section>
 
       <section id="review" className={styles.communitySection}>
