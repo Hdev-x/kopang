@@ -7,6 +7,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 
@@ -22,8 +23,17 @@ public class ChurnMlServiceImpl implements ChurnMlService {
     @Value("${ml.api.base-url}")
     private String mlBaseUrl;
 
+    /**
+     * 독립 트랜잭션으로 분리한다(REQUIRES_NEW).
+     *
+     * 일 배치(runDailyBatch)도 @Transactional 이라 기본 REQUIRED 로 두면 같은 트랜잭션에 합류한다.
+     * 그 상태에서 FastAPI 호출이 실패하면 공유 트랜잭션이 rollback-only 로 표시되고,
+     * 호출부(runMlScoringQuietly)가 예외를 잡아도 그 표시는 지워지지 않아
+     * 커밋 시점에 감지·발송·측정·지표까지 전부 롤백된다(2026-07-30 실제 발생).
+     * 분리해 두면 ML 실패는 ML 저장분만 되돌리고 배치는 룰 기반으로 계속 진행한다.
+     */
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public int runMlScoring() {
         // 1) 전체 회원 피처 조회 (학습과 동일 집계 SQL)
         List<ChurnFeatureDTO> features = mlMapper.selectFeatures();

@@ -180,6 +180,8 @@
 .liftValue small { display: block; margin-top: 2px; color: #8b94a5; font-size: 10.5px; }
 .pos { color: #12a150; }
 .neg { color: #e4453a; }
+/* 대조군이 없어 비교 자체가 불가한 행 */
+.na  { color: #8b94a5; }
 
 .note { margin-top: 20px; color: #8b94a5; font-size: 12px; line-height: 1.6; }
 
