@@ -5,6 +5,7 @@ import type { ApiResponse } from "../types/api";
 export type InterventionLog = {
   createdAt: string; // ISO datetime
   userName: string;
+  userEmail: string;
   actionType: string; // COUPON / PUSH / MODAL / RECOMMEND
   channel: string; // PUSH / EMAIL / IN_APP
   isControl: boolean;

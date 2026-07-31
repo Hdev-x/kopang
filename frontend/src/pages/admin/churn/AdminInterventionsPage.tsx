@@ -48,6 +48,7 @@ export function AdminInterventionsPage() {
   const [logs, setLogs] = useState<InterventionLog[]>([]);
   const [tab, setTab] = useState("전체");
   const [riskType, setRiskType] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(0);
 
   useEffect(() => {
@@ -73,8 +74,18 @@ export function AdminInterventionsPage() {
 
   const activeCode = TABS.find((t) => t.label === tab)?.code ?? null;
   const filtered = useMemo(
-    () => logs.filter((l) => (activeCode ? l.outcome === activeCode : true)).filter((l) => (riskType ? l.riskType === riskType : true)),
-    [logs, activeCode, riskType]
+    () =>
+      logs
+        .filter((l) => (activeCode ? l.outcome === activeCode : true))
+        .filter((l) => (riskType ? l.riskType === riskType : true))
+        .filter((l) => {
+          if (!searchQuery.trim()) return true;
+          const q = searchQuery.trim().toLowerCase();
+          const nameMatch = l.userName ? l.userName.toLowerCase().includes(q) : false;
+          const emailMatch = l.userEmail ? l.userEmail.toLowerCase().includes(q) : false;
+          return nameMatch || emailMatch;
+        }),
+    [logs, activeCode, riskType, searchQuery]
   );
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -128,6 +139,14 @@ export function AdminInterventionsPage() {
               <option key={value} value={value}>{label}</option>
             ))}
           </select>
+          <input
+            type="text"
+            className={styles.searchInput}
+            placeholder="이름 또는 이메일 검색"
+            value={searchQuery}
+            onChange={(e) => { setSearchQuery(e.target.value); resetPage(); }}
+            aria-label="이름 또는 이메일 검색"
+          />
           <span className={styles.count}>{filtered.length.toLocaleString()}건</span>
         </div>
 
@@ -137,7 +156,7 @@ export function AdminInterventionsPage() {
           <div className={styles.tableWrap}>
             <table className={styles.tbl}>
               <thead>
-                <tr><th>일시</th><th>고객</th><th>위험 유형</th><th>대응</th><th>채널</th><th>구분</th><th>결과</th></tr>
+                <tr><th>일시</th><th>고객 (이메일)</th><th>위험 유형</th><th>대응</th><th>채널</th><th>구분</th><th>결과</th></tr>
               </thead>
               <tbody><SkeletonRows rows={12} cols={7} widths={["72%", "58%", "64%", "50%", "46%", "40%", "44%"]} /></tbody>
             </table>
@@ -151,13 +170,16 @@ export function AdminInterventionsPage() {
             <div className={styles.tableWrap}>
               <table className={styles.tbl}>
                 <thead>
-                  <tr><th>일시</th><th>고객</th><th>위험 유형</th><th>대응</th><th>채널</th><th>구분</th><th>결과</th></tr>
+                  <tr><th>일시</th><th>고객 (이메일)</th><th>위험 유형</th><th>대응</th><th>채널</th><th>구분</th><th>결과</th></tr>
                 </thead>
                 <tbody>
                   {pageRows.map((l, i) => (
                     <tr key={safePage * PAGE_SIZE + i}>
                       <td className={styles.num}>{fmtDateTime(l.createdAt)}</td>
-                      <td className={styles.name}>{l.userName}</td>
+                      <td className={styles.name}>
+                        <div>{l.userName}</div>
+                        {l.userEmail && <div className={styles.subText}>{l.userEmail}</div>}
+                      </td>
                       <td>{RISK_TYPE_LABEL[l.riskType] ?? l.riskType}</td>
                       <td>{ACTION_LABEL[l.actionType] ?? l.actionType}</td>
                       <td>{CHANNEL_LABEL[l.channel] ?? l.channel}</td>
