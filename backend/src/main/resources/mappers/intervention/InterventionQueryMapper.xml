@@ -11,6 +11,7 @@
         SELECT
             ri.created_at   AS createdAt,
             u.name          AS userName,
+            u.email         AS userEmail,
             ri.action_type  AS actionType,
             ri.channel      AS channel,
             ri.is_control   AS isControl,

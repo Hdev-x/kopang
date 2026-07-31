@@ -50,12 +50,15 @@ SEND_TYPES = {   # riskType: (action_type, channel, notification.type, 메시지
                        "오랜만에 뵙네요! 복귀 기념 특별 5,000원 할인 쿠폰이 발급되었습니다. 💖"),
 }
 CONTROL_BUCKET = 5                                        # 대조군 = 해시 % 5 == 0 (20%)
-EXCLUSIVE_TYPES = {"FIRST_ORDER_ONLY", "LOGIN_INACTIVE"}  # 상호 배타(평생 1회)
+# 백엔드에서 평생 배타는 웰컴백·복귀 "쿠폰" 두 종에만 걸린다(ChurnMapper 상한②).
+# 위험유형에는 평생 배타가 없고 유형별 7일 중복만 적용된다 — 여기에 유형을 넣어두면
+# 과거 재현이 실제 배치보다 훨씬 적게 나가 "매일 돌아간 것처럼"이 성립하지 않는다.
+EXCLUSIVE_TYPES: set[str] = set()
 # ──────────────────────────────────────────────────────────────────
 
-# 하루 감지 대상 중 대응을 보낼 최대 인원. 실제 배치엔 이 상한이 없지만,
-# 시연 데이터가 하루 수천 건으로 불어나면 그래프가 읽히지 않아 규모만 제한한다.
-DAILY_SEND_CAP = 70
+# 하루 대응 상한. 실제 배치엔 없는 제약이라 0(=무제한)이 실제와 일치한다.
+# 70으로 묶어두면 과거는 하루 70건, 실배치는 수천 건이 되어 시계열이 어긋난다.
+DAILY_SEND_CAP = 0
 
 # ── 시연용 가정값 (실측이 아님) ────────────────────────────────────────
 # 대응 이후 구매 확률. 이 8%p 차이는 **관측된 효과가 아니라 입력한 가정**이다.
@@ -178,7 +181,7 @@ def simulate_day(cur, day, dry):
         treated_today.add(uid)
         if rtype in EXCLUSIVE_TYPES:
             exclusive_received.add(uid)
-        if len(targets) >= DAILY_SEND_CAP:
+        if DAILY_SEND_CAP and len(targets) >= DAILY_SEND_CAP:
             break
     if not targets:
         return len(score_rows), 0, 0

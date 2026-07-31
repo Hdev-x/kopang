@@ -41,6 +41,8 @@
 .chip { padding: 6px 12px; border: 1px solid #e5e8ef; border-radius: 999px; background: #fff; color: #626d80; font-size: 12px; font-weight: 600; cursor: pointer; }
 .chip.on { border-color: #2f6bff; background: #2f6bff; color: #fff; }
 .typeSelect { padding: 7px 10px; border: 1px solid #e5e8ef; border-radius: 8px; background: #fff; color: #626d80; font-size: 12.5px; }
+.searchInput { padding: 7px 12px; border: 1px solid #e5e8ef; border-radius: 8px; background: #fff; color: #171d2b; font-size: 12.5px; width: 180px; }
+.searchInput::placeholder { color: #8b94a5; }
 .count { margin-left: auto; color: #8b94a5; font-size: 12px; }
 
 /* 풀폭 테이블 — 남는 높이 채우고 내부 스크롤 */
@@ -48,19 +50,20 @@
 .tbl th { position: sticky; top: 0; z-index: 1; }
 .tbl { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
 /* 필터 탭이 바뀌어도 컬럼 폭 고정 */
-.tbl th:nth-child(1), .tbl td:nth-child(1) { width: 15%; }
-.tbl th:nth-child(2), .tbl td:nth-child(2) { width: 13%; }
-.tbl th:nth-child(3), .tbl td:nth-child(3) { width: 16%; }
-.tbl th:nth-child(4), .tbl td:nth-child(4) { width: 13%; }
+.tbl th:nth-child(1), .tbl td:nth-child(1) { width: 13%; }
+.tbl th:nth-child(2), .tbl td:nth-child(2) { width: 18%; }
+.tbl th:nth-child(3), .tbl td:nth-child(3) { width: 14%; }
+.tbl th:nth-child(4), .tbl td:nth-child(4) { width: 12%; }
 .tbl th:nth-child(5), .tbl td:nth-child(5) { width: 9%; }
-.tbl th:nth-child(6), .tbl td:nth-child(6) { width: 11%; }
-.tbl th:nth-child(7), .tbl td:nth-child(7) { width: 11%; }
+.tbl th:nth-child(6), .tbl td:nth-child(6) { width: 10%; }
+.tbl th:nth-child(7), .tbl td:nth-child(7) { width: 10%; }
 .tbl td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tbl th { text-align: left; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: #8b94a5; font-weight: 700; padding: 11px 16px; background: #fbfcfe; border-bottom: 1px solid #e5e8ef; }
 .tbl td { padding: 11px 16px; border-bottom: 1px solid #f0f2f5; color: #3a4553; }
 .tbl tr:last-child td { border-bottom: 0; }
 .tbl tr:hover td { background: #fbfcfe; }
 .tbl .name { color: #171d2b; font-weight: 600; }
+.tbl .subText { font-size: 11.5px; color: #8b94a5; font-weight: 400; margin-top: 1px; }
 .tbl .num { font-variant-numeric: tabular-nums; }
 
 .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
