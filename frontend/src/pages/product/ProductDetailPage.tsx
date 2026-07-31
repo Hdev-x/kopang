@@ -61,7 +61,7 @@ export function ProductDetailPage() {
       if (user) {
         recordProductView(prodId).catch(console.error);
         getMembershipStatus()
-          .then((status) => setIsMembership(status?.status === "ACTIVE"))
+          .then((status) => setIsMembership(Boolean(status && (status.status === "ACTIVE" || status.status === "CANCELLED"))))
           .catch(() => setIsMembership(false));
       } else {
         setIsMembership(false);

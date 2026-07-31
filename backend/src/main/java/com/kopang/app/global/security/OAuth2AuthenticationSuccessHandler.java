@@ -52,9 +52,23 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             }
         }
 
+        // 동적으로 프론트엔드 URL 감지 (기본값이 localhost:5173 이더라도 EC2 IP/도메인에서 접속 시 해당 주소로 리다이렉트)
+        String baseUrl = frontendUrl;
+        String xForwardedHost = request.getHeader("X-Forwarded-Host");
+        String hostHeader = request.getHeader("Host");
+        String effectiveHost = (xForwardedHost != null && !xForwardedHost.isEmpty()) ? xForwardedHost : hostHeader;
+
+        if (effectiveHost != null && !effectiveHost.contains("localhost") && !effectiveHost.contains("127.0.0.1")) {
+            String scheme = request.getHeader("X-Forwarded-Proto");
+            if (scheme == null || scheme.isEmpty()) {
+                scheme = request.getScheme();
+            }
+            baseUrl = scheme + "://" + effectiveHost;
+        }
+
         UserDTO user = userMapper.detailByEmail(email);
         if (user == null) {
-            response.sendRedirect(frontendUrl + "/login?error=user_not_found");
+            response.sendRedirect(baseUrl + "/login?error=user_not_found");
             return;
         }
 
@@ -68,7 +82,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         boolean hasPhone = user.getPhone() != null && !user.getPhone().trim().isEmpty();
 
         // React 프론트엔드의 OAuth 콜백 전용 화면으로 JWT를 실어서 리다이렉트 수행
-        String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl + "/oauth2/callback")
+        String targetUrl = UriComponentsBuilder.fromUriString(baseUrl + "/oauth2/callback")
                 .queryParam("accessToken", accessToken)
                 .queryParam("refreshToken", refreshToken)
                 .queryParam("name", user.getName())
