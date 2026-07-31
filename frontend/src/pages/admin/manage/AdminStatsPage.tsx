@@ -64,7 +64,7 @@ export function AdminStatsPage() {
           )}
         </div>
 
-        <div className={styles.sec}>
+        <div className={`${styles.sec} ${styles.secGrow}`}>
           <h2 className={styles.secHead}>인기 상품 · 재구매율</h2>
           {top.length === 0 ? (
             <div className={styles.tableWrap}>

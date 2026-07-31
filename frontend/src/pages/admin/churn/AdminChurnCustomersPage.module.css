@@ -367,3 +367,8 @@
   .detailCol { border-left: 0; border-top: 1px solid #e5e8ef; padding: 0 16px; }
   .mGrid, .mGrid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* 세로가 짧은 화면(≤820px): 고정 높이를 풀고 페이지 스크롤로 전환 — 잘림 방지 */
+@media (max-height: 820px) {
+  .split { height: auto; min-height: calc(100vh - 62px); }
+}

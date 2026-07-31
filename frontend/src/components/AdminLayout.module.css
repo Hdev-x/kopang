@@ -164,6 +164,17 @@
   .workspaceFixed { height: auto; min-height: 100vh; overflow: visible; }
 }
 
+/* 세로가 짧은 화면(≤820px)도 같은 이유로 잠금을 푼다 — 각 페이지의
+   max-height 규칙과 짝. 사이드바는 간격을 줄여 메뉴 자체 스크롤을 늦춘다. */
+@media (max-height: 820px) {
+  .workspaceFixed { height: auto; min-height: 100vh; overflow: visible; }
+  .brandRow { padding: 14px 22px 2px; }
+  .menu { padding: 10px 14px; }
+  .group + .group { margin-top: 12px; }
+  .menuItem { min-height: 33px; }
+  .storeLink { min-height: 48px; }
+}
+
 .workspaceFixed .main { flex: 1; min-height: 0; }
 
 .topbar {
