@@ -131,3 +131,18 @@
   background: var(--gray-50);
   border-radius: var(--radius-md);
 }
+
+.scrollTarget {
+  height: 60px;
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loadingMore {
+  font-size: var(--font-sm);
+  color: var(--color-text-muted);
+}
+
+

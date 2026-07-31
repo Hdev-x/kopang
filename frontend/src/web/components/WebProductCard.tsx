@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { useWishlist } from "../../hooks/useWishlist";
 import type { Product } from "../../types/product";
+import { calculateSalePrice, floorToTen } from "../../utils/price";
 import styles from "./WebProductCard.module.css";
 
 export function WebProductCard({ product }: { product: Product }) {
@@ -37,9 +38,8 @@ export function WebProductCard({ product }: { product: Product }) {
     }
   };
 
-  const salePrice = product.discountRate
-    ? Math.round((product.price * (100 - product.discountRate)) / 100)
-    : product.price;
+  const salePrice = calculateSalePrice(product.price, product.discountRate);
+  const displayOriginalPrice = floorToTen(product.price);
 
   return (
     <article className={styles.card}>
@@ -65,13 +65,13 @@ export function WebProductCard({ product }: { product: Product }) {
           <div className={styles.priceContainer}>
             <div className={styles.discountRow}>
               <span className={styles.discount}>{product.discountRate}%</span>
-              <span className={styles.originalPrice}>{product.price.toLocaleString()}원</span>
+              <span className={styles.originalPrice}>{displayOriginalPrice.toLocaleString()}원</span>
             </div>
             <strong className={styles.salePrice}>{salePrice.toLocaleString()}원</strong>
           </div>
         ) : (
           <div className={styles.priceRow}>
-            <strong>{product.price.toLocaleString()}원</strong>
+            <strong>{salePrice.toLocaleString()}원</strong>
           </div>
         )}
       </Link>

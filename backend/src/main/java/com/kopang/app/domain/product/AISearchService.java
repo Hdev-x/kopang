@@ -87,9 +87,16 @@ public class AISearchService {
             scoredProducts.add(new ScoredProduct(product, score));
         }
 
-        // Sort by score descending
+        // Map popularity rank from rawProducts (fetched with "popular" DB sort order)
+        Map<ProductDTO, Integer> popRankMap = new HashMap<>();
+        for (int i = 0; i < rawProducts.size(); i++) {
+            popRankMap.put(rawProducts.get(i), i);
+        }
+
+        // Sort by relevance score descending, then by popular order (most sold/ordered first)
         List<ProductDTO> sortedList = scoredProducts.stream()
-                .sorted(Comparator.comparingInt(ScoredProduct::getScore).reversed())
+                .sorted(Comparator.comparingInt(ScoredProduct::getScore).reversed()
+                        .thenComparingInt(sp -> popRankMap.getOrDefault(sp.getProduct(), 999999)))
                 .map(ScoredProduct::getProduct)
                 .collect(Collectors.toList());
 

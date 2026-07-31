@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Heart, Minus, PackageCheck, Plus, RotateCcw, Share2, ShieldCheck, Star, Truck } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { addToCart } from "../../api/cart";
-import { getProduct } from "../../api/products";
+import { getProduct, getAIRecommendations } from "../../api/products";
 import { getProductReviews, type Review } from "../../api/review";
 import { getProductQnaList } from "../../api/qna";
 import { useAuth } from "../../hooks/useAuth";
@@ -10,6 +10,7 @@ import { useWishlist } from "../../hooks/useWishlist";
 import type { Product } from "../../types/product";
 import type { CartItem } from "../../types/cart";
 import type { QnaSummary } from "../../types/qna";
+import { calculateSalePrice, floorToTen } from "../../utils/price";
 import { WebLayout } from "../components/WebLayout";
 import styles from "./WebProductDetailPage.module.css";
 
@@ -45,26 +46,47 @@ export function WebProductDetailPage() {
   const [isDescExpanded, setIsDescExpanded] = useState(false);
   const { isWished, toggleWishlist } = useWishlist();
   const [wishLoading, setWishLoading] = useState(false);
+  const [similarProducts, setSimilarProducts] = useState<Product[]>([]);
+  const [togetherProducts, setTogetherProducts] = useState<Product[]>([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(true);
+
+  const similarScrollRef = useRef<HTMLDivElement>(null);
+  const togetherScrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollTrack = (ref: React.RefObject<HTMLDivElement | null>, direction: "left" | "right") => {
+    if (ref.current) {
+      const scrollAmount = direction === "left" ? -540 : 540;
+      ref.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  };
 
   useEffect(() => {
     if (!id) return;
     const productId = Number(id);
+    setLoadingRecommendations(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
     Promise.all([
       getProduct(productId),
       getProductReviews(productId).catch(() => []),
       getProductQnaList(productId).catch(() => []),
+      getAIRecommendations(productId).catch(() => ({ similarProducts: [], frequentlyBoughtTogether: [] })),
     ])
-      .then(([productData, reviewData, qnaData]) => {
+      .then(([productData, reviewData, qnaData, recoData]) => {
         setProduct(productData);
         setReviews(Array.isArray(reviewData) ? reviewData : []);
         setProductQna(Array.isArray(qnaData) ? qnaData : []);
+        setSimilarProducts(recoData?.similarProducts || []);
+        setTogetherProducts(recoData?.frequentlyBoughtTogether || []);
         setError(false);
         if (productData) {
           saveRecentProduct(productData);
         }
       })
       .catch(() => setError(true))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        setLoadingRecommendations(false);
+      });
     // 찜 여부는 useWishlist가 따로 들고 있어 로그인 상태가 바뀌어도 상품을 다시 받을 필요가 없다.
   }, [id]);
 
@@ -113,9 +135,7 @@ export function WebProductDetailPage() {
   if (loading) return <WebLayout><div className={styles.status}>상품을 불러오는 중이에요.</div></WebLayout>;
   if (error || !product) return <WebLayout><div className={styles.status}>상품을 불러오지 못했어요.</div></WebLayout>;
 
-  const salePrice = product.discountRate
-    ? Math.round((product.price * (100 - product.discountRate)) / 100)
-    : product.price;
+  const salePrice = calculateSalePrice(product.price, product.discountRate);
 
   // 재고를 모르면(응답에 없음) 수량을 막지 않는다. 최종 검증은 주문 생성에서 한다.
   const stock = product.stock;
@@ -258,7 +278,7 @@ export function WebProductDetailPage() {
           <div className={styles.priceBlock}>
             {product.discountRate ? <span className={styles.discount}>{product.discountRate}%</span> : null}
             <strong>{salePrice.toLocaleString()}원</strong>
-            {product.discountRate ? <del>{product.price.toLocaleString()}원</del> : null}
+            {product.discountRate ? <del>{floorToTen(product.price).toLocaleString()}원</del> : null}
           </div>
 
           <dl className={styles.delivery}>
@@ -293,6 +313,146 @@ export function WebProductDetailPage() {
           </div>
         </div>
       </section>
+
+      {/* 비슷한 상품 */}
+      {(loadingRecommendations || similarProducts.length > 0) && (
+        <section className={styles.recommendSection}>
+          <header className={styles.recommendHeader}>
+            <div>
+              <p className={styles.sectionLabel}>RECOMMENDED FOR YOU</p>
+              <h2>비슷한 상품</h2>
+            </div>
+            {!loadingRecommendations && similarProducts.length > 0 && (
+              <div className={styles.sliderNav}>
+                <button
+                  type="button"
+                  onClick={() => scrollTrack(similarScrollRef, "left")}
+                  aria-label="이전 비슷한 상품"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollTrack(similarScrollRef, "right")}
+                  aria-label="다음 비슷한 상품"
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            )}
+          </header>
+          <div ref={similarScrollRef} className={styles.recommendRow}>
+            {loadingRecommendations ? (
+              [1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                <div key={n} className={styles.recommendSkeletonCard}>
+                  <div className={styles.skeletonThumb} />
+                  <div className={styles.skeletonLine} />
+                  <div className={styles.skeletonLineShort} />
+                </div>
+              ))
+            ) : (
+              similarProducts.slice(0, 8).map((sim, idx) => {
+                const discountedPrice = calculateSalePrice(sim.price, sim.discountRate);
+                const displayPrice = sim.discountRate && sim.discountRate > 0 ? discountedPrice : floorToTen(sim.price);
+                return (
+                  <div
+                    key={sim.id ? `sim-${sim.id}-${idx}` : `sim-${idx}`}
+                    className={styles.recommendCard}
+                    onClick={() => sim.id && navigate(`/web/products/${sim.id}`)}
+                  >
+                    <div className={styles.recommendThumbWrapper}>
+                      {sim.imageUrl ? (
+                        <img src={sim.imageUrl} alt={sim.name || "상품 이미지"} className={styles.recommendThumb} />
+                      ) : (
+                        <div className={styles.recommendThumbPlaceholder} />
+                      )}
+                    </div>
+                    <p className={styles.recommendName}>{sim.name || "상품명 없음"}</p>
+                    {sim.discountRate && sim.discountRate > 0 ? (
+                      <div className={styles.recommendPriceArea}>
+                        <span className={styles.recommendDiscount}>{sim.discountRate}%</span>
+                        <strong className={styles.recommendPrice}>{discountedPrice.toLocaleString()}원</strong>
+                      </div>
+                    ) : (
+                      <p className={styles.recommendPrice}>{displayPrice.toLocaleString()}원</p>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* 함께 구매하면 좋은 상품 */}
+      {(loadingRecommendations || togetherProducts.length > 0) && (
+        <section className={styles.recommendSection}>
+          <header className={styles.recommendHeader}>
+            <div>
+              <p className={styles.sectionLabel}>TOGETHER</p>
+              <h2>함께 구매하면 좋은 상품</h2>
+            </div>
+            {!loadingRecommendations && togetherProducts.length > 0 && (
+              <div className={styles.sliderNav}>
+                <button
+                  type="button"
+                  onClick={() => scrollTrack(togetherScrollRef, "left")}
+                  aria-label="이전 함께 구매하면 좋은 상품"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollTrack(togetherScrollRef, "right")}
+                  aria-label="다음 함께 구매하면 좋은 상품"
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            )}
+          </header>
+          <div ref={togetherScrollRef} className={styles.recommendRow}>
+            {loadingRecommendations ? (
+              [1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                <div key={n} className={styles.recommendSkeletonCard}>
+                  <div className={styles.skeletonThumb} />
+                  <div className={styles.skeletonLine} />
+                  <div className={styles.skeletonLineShort} />
+                </div>
+              ))
+            ) : (
+              togetherProducts.slice(0, 8).map((item, idx) => {
+                const discountedPrice = calculateSalePrice(item.price, item.discountRate);
+                const displayPrice = item.discountRate && item.discountRate > 0 ? discountedPrice : floorToTen(item.price);
+                return (
+                  <div
+                    key={item.id ? `tog-${item.id}-${idx}` : `tog-${idx}`}
+                    className={styles.recommendCard}
+                    onClick={() => item.id && navigate(`/web/products/${item.id}`)}
+                  >
+                    <div className={styles.recommendThumbWrapper}>
+                      {item.imageUrl ? (
+                        <img src={item.imageUrl} alt={item.name || "상품 이미지"} className={styles.recommendThumb} />
+                      ) : (
+                        <div className={styles.recommendThumbPlaceholder} />
+                      )}
+                    </div>
+                    <p className={styles.recommendName}>{item.name || "상품명 없음"}</p>
+                    {item.discountRate && item.discountRate > 0 ? (
+                      <div className={styles.recommendPriceArea}>
+                        <span className={styles.recommendDiscount}>{item.discountRate}%</span>
+                        <strong className={styles.recommendPrice}>{discountedPrice.toLocaleString()}원</strong>
+                      </div>
+                    ) : (
+                      <p className={styles.recommendPrice}>{displayPrice.toLocaleString()}원</p>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </section>
+      )}
 
       <nav id="web-detail-tabs" className={styles.tabs} aria-label="상품 상세 메뉴">
         <button type="button" className={activeTab === "product-info" ? styles.tabActive : ""} onClick={() => selectTab("product-info")}>상품정보</button>

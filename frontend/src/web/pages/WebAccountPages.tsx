@@ -10,6 +10,7 @@ import { addToCart } from "../../api/cart";
 import { getQnaList } from "../../api/qna";
 import type { QnaSummary } from "../../types/qna";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { calculateSalePrice, floorToTen } from "../../utils/price";
 import { useAuth } from "../../hooks/useAuth";
 import { updateAuthUser } from "../../lib/auth";
 import { WebLayout } from "../components/WebLayout";
@@ -120,7 +121,7 @@ function ProfileHome({ name }: { name: string }) {
               {wishlist.slice(0, 4).map((item) => {
                 const rate = item.discountRate || (item.discountPrice && item.discountPrice > 0 && item.discountPrice < item.price ? Math.round(((item.price - item.discountPrice) / item.price) * 100) : 0);
                 const hasDiscount = Boolean(rate && rate > 0);
-                const finalPrice = hasDiscount ? Math.round((item.price * (100 - rate)) / 100) : item.price;
+                const finalPrice = calculateSalePrice(item.price, rate);
 
                 return (
                   <Link key={item.wishlistId} to={`/web/products/${item.productId}`}>
@@ -1018,13 +1019,11 @@ function WebWishlistBody() {
   return (
     <div style={{ marginTop: "24px", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "20px" }}>
       {items.map((w) => {
-        const finalPrice = (w.discountPrice && w.discountPrice > 0 && w.discountPrice < w.price)
-          ? w.discountPrice
-          : w.price;
         const hasDiscount = Boolean(w.discountPrice && w.discountPrice > 0 && w.discountPrice < w.price);
         const discountRate = hasDiscount
           ? Math.round(((w.price - w.discountPrice!) / w.price) * 100)
           : 0;
+        const finalPrice = calculateSalePrice(w.price, discountRate);
 
         return (
           <div key={w.wishlistId || w.productId} style={{ border: "1px solid #eee", borderRadius: "12px", padding: "16px", background: "#fff", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
@@ -1041,7 +1040,7 @@ function WebWishlistBody() {
                         {discountRate}%
                       </span>
                       <del style={{ fontSize: "12px", color: "#888", textDecoration: "line-through", fontWeight: 400 }}>
-                        {w.price.toLocaleString()}원
+                        {floorToTen(w.price).toLocaleString()}원
                       </del>
                     </div>
                     <strong style={{ fontWeight: 700, fontSize: "16px", color: "#222" }}>
@@ -1050,7 +1049,7 @@ function WebWishlistBody() {
                   </div>
                 ) : (
                   <strong style={{ fontWeight: 700, fontSize: "16px", color: "#222" }}>
-                    {w.price.toLocaleString()}원
+                    {floorToTen(w.price).toLocaleString()}원
                   </strong>
                 )}
               </div>
