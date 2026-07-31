@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Bell, Bookmark, Search, ShoppingCart, X } from "lucide-react";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Bell, Bookmark, Clock3, Search, ShoppingCart, X } from "lucide-react";
+import { addSearchHistory, clearSearchHistory, deleteSearchHistory, getSearchHistory, type SearchHistory } from "../../api/products";
 import { getNotifications } from "../../api/notifications";
 import { useAuth } from "../../hooks/useAuth";
 import { useMembership } from "../../hooks/useMembership";
@@ -57,6 +58,109 @@ export function WebLayout({ children }: Props) {
     setPromotionDismissed(true);
   };
 
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const searchWrapperRef = useRef<HTMLDivElement>(null);
+
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [recentKeywords, setRecentKeywords] = useState<SearchHistory[]>([]);
+
+  useEffect(() => {
+    setSearchQuery(searchParams.get("q") || "");
+  }, [location.search]);
+
+  const loadRecentKeywords = () => {
+    getSearchHistory()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setRecentKeywords(data);
+        } else {
+          loadLocalHistory();
+        }
+      })
+      .catch(() => loadLocalHistory());
+  };
+
+  const loadLocalHistory = () => {
+    try {
+      const localData = JSON.parse(localStorage.getItem("kopang_recent_searches") || "[]");
+      setRecentKeywords(
+        Array.isArray(localData)
+          ? localData.map((k: string, idx: number) => ({ searchId: idx, userId: 0, keyword: k, searchedAt: "" }))
+          : []
+      );
+    } catch {
+      setRecentKeywords([]);
+    }
+  };
+
+  const saveLocalHistory = (keyword: string) => {
+    try {
+      const current = JSON.parse(localStorage.getItem("kopang_recent_searches") || "[]") as string[];
+      const next = [keyword, ...current.filter((k) => k !== keyword)].slice(0, 10);
+      localStorage.setItem("kopang_recent_searches", JSON.stringify(next));
+    } catch {
+      // ignore
+    }
+  };
+
+  const executeSearch = (keyword: string) => {
+    const trimmed = keyword.trim();
+    if (!trimmed) return;
+    setSearchQuery(trimmed);
+    setIsSearchOpen(false);
+
+    if (user) {
+      addSearchHistory(trimmed).catch(() => undefined);
+    }
+    saveLocalHistory(trimmed);
+    navigate(`/web/search?q=${encodeURIComponent(trimmed)}`);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    executeSearch(searchQuery);
+  };
+
+  const handleDeleteHistoryItem = (item: SearchHistory) => {
+    if (user && item.searchId !== undefined) {
+      deleteSearchHistory(item.searchId).catch(() => undefined);
+    }
+    try {
+      const current = JSON.parse(localStorage.getItem("kopang_recent_searches") || "[]") as string[];
+      const next = current.filter((k) => k !== item.keyword);
+      localStorage.setItem("kopang_recent_searches", JSON.stringify(next));
+    } catch {
+      // ignore
+    }
+    setRecentKeywords((prev) => prev.filter((k) => k.keyword !== item.keyword));
+  };
+
+  const handleClearAllHistory = () => {
+    if (user) {
+      clearSearchHistory().catch(() => undefined);
+    }
+    try {
+      localStorage.removeItem("kopang_recent_searches");
+    } catch {
+      // ignore
+    }
+    setRecentKeywords([]);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchWrapperRef.current && !searchWrapperRef.current.contains(event.target as Node)) {
+        setIsSearchOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   useEffect(() => {
     if (!user) return;
     getNotifications().then((items) => setUnreadCount(items.filter((item) => !item.read).length)).catch(() => setUnreadCount(0));
@@ -75,10 +179,84 @@ export function WebLayout({ children }: Props) {
             ))}
           </nav>
 
-          <Link to="/web/search" className={styles.search}>
-            <Search size={20} aria-hidden="true" />
-            <span>통합검색</span>
-          </Link>
+          <div className={styles.searchWrapper} ref={searchWrapperRef}>
+            <form className={styles.searchForm} onSubmit={handleSearchSubmit}>
+              <Search size={18} className={styles.searchIcon} aria-hidden="true" />
+              <input
+                type="text"
+                className={styles.searchInput}
+                placeholder="통합검색 (상품명, 브랜드)"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => {
+                  setIsSearchOpen(true);
+                  loadRecentKeywords();
+                }}
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  className={styles.clearSearchBtn}
+                  onClick={() => setSearchQuery("")}
+                  aria-label="검색어 지우기"
+                >
+                  <X size={15} />
+                </button>
+              )}
+              <button type="submit" className={styles.searchSubmitBtn}>
+                검색
+              </button>
+            </form>
+
+            {isSearchOpen && (
+              <div className={styles.searchDropdown}>
+                <div className={styles.dropdownHeader}>
+                  <div className={styles.dropdownTitle}>
+                    <Clock3 size={15} />
+                    <span>최근 검색어</span>
+                  </div>
+                  {recentKeywords.length > 0 && (
+                    <button
+                      type="button"
+                      className={styles.clearAllBtn}
+                      onClick={handleClearAllHistory}
+                    >
+                      전체 삭제
+                    </button>
+                  )}
+                </div>
+
+                {recentKeywords.length > 0 ? (
+                  <ul className={styles.historyList}>
+                    {recentKeywords.map((item, idx) => (
+                      <li key={item.searchId ?? `${item.keyword}-${idx}`} className={styles.historyItem}>
+                        <button
+                          type="button"
+                          className={styles.keywordBtn}
+                          onClick={() => executeSearch(item.keyword)}
+                        >
+                          <span>{item.keyword}</span>
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.deleteItemBtn}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteHistoryItem(item);
+                          }}
+                          aria-label="검색어 삭제"
+                        >
+                          <X size={13} />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className={styles.emptyHistory}>최근 검색한 상품이 없어요.</div>
+                )}
+              </div>
+            )}
+          </div>
 
           <div className={styles.accountLinks}>
             {user ? (

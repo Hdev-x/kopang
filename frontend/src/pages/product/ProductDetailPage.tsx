@@ -17,9 +17,10 @@ import { calculateShippingFee } from "../../utils/shipping";
 import type { Product } from "../../types/product";
 import type { CartItem } from "../../types/cart";
 import type { Review } from "../../api/review";
-import styles from "./ProductDetailPage.module.css";
 import type { QnaSummary } from "../../types/qna";
 import { Link } from "react-router-dom";
+import { calculateSalePrice, floorToTen } from "../../utils/price";
+import styles from "./ProductDetailPage.module.css";
 
 type DetailTab = "product-info" | "review" | "qna" | "delivery";
 
@@ -90,9 +91,7 @@ export function ProductDetailPage() {
     }
   };
 
-  const discounted = product.discountRate
-    ? Math.round((product.price * (100 - product.discountRate)) / 100)
-    : product.price;
+  const discounted = calculateSalePrice(product.price, product.discountRate);
 
   const handleDirectBuy = () => {
     if (!user) {
@@ -219,7 +218,7 @@ export function ProductDetailPage() {
         {product.discountRate ? (
           <div className={styles.originalPriceRow}>
             <span className={styles.discountBadge}>{product.discountRate}%</span>
-            <span className={styles.originPrice}>{product.price.toLocaleString()}원</span>
+            <span className={styles.originPrice}>{floorToTen(product.price).toLocaleString()}원</span>
           </div>
         ) : null}
         <div className={styles.finalPriceRow}>
@@ -505,10 +504,8 @@ export function ProductDetailPage() {
               ))
             ) : (
               similarProducts.map((sim, idx) => {
-                const hasDiscount = Boolean(sim.discountRate && sim.discountRate > 0);
-                const discountedPrice = hasDiscount
-                  ? Math.round((sim.price * (100 - (sim.discountRate || 0))) / 100)
-                  : sim.price;
+                const discountedPrice = calculateSalePrice(sim.price, sim.discountRate);
+                const displayPrice = sim.discountRate && sim.discountRate > 0 ? discountedPrice : floorToTen(sim.price);
                 return (
                   <Card
                     key={sim.id ? `sim-${sim.id}-${idx}` : `sim-${idx}`}
@@ -521,13 +518,13 @@ export function ProductDetailPage() {
                       <div className={styles.similarThumb} />
                     )}
                     <p className={styles.similarName}>{sim.name || "상품명 없음"}</p>
-                    {hasDiscount ? (
+                    {sim.discountRate && sim.discountRate > 0 ? (
                       <div className={styles.similarPriceArea}>
                         <span className={styles.similarDiscount}>{sim.discountRate}%</span>
                         <span className={styles.similarPrice}>{discountedPrice.toLocaleString()}원</span>
                       </div>
                     ) : (
-                      <p className={styles.similarPrice}>{(sim.price ?? 0).toLocaleString()}원</p>
+                      <p className={styles.similarPrice}>{displayPrice.toLocaleString()}원</p>
                     )}
                   </Card>
                 );
@@ -552,10 +549,8 @@ export function ProductDetailPage() {
               ))
             ) : (
               togetherProducts.map((item, idx) => {
-                const hasDiscount = Boolean(item.discountRate && item.discountRate > 0);
-                const discountedPrice = hasDiscount
-                  ? Math.round((item.price * (100 - (item.discountRate || 0))) / 100)
-                  : item.price;
+                const discountedPrice = calculateSalePrice(item.price, item.discountRate);
+                const displayPrice = item.discountRate && item.discountRate > 0 ? discountedPrice : floorToTen(item.price);
                 return (
                   <Card
                     key={item.id ? `tog-${item.id}-${idx}` : `tog-${idx}`}
@@ -568,13 +563,13 @@ export function ProductDetailPage() {
                       <div className={styles.similarThumb} />
                     )}
                     <p className={styles.similarName}>{item.name || "상품명 없음"}</p>
-                    {hasDiscount ? (
+                    {item.discountRate && item.discountRate > 0 ? (
                       <div className={styles.similarPriceArea}>
                         <span className={styles.similarDiscount}>{item.discountRate}%</span>
                         <span className={styles.similarPrice}>{discountedPrice.toLocaleString()}원</span>
                       </div>
                     ) : (
-                      <p className={styles.similarPrice}>{(item.price ?? 0).toLocaleString()}원</p>
+                      <p className={styles.similarPrice}>{displayPrice.toLocaleString()}원</p>
                     )}
                   </Card>
                 );

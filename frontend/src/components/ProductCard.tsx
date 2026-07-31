@@ -3,6 +3,7 @@ import { Heart } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useWishlist } from "../hooks/useWishlist";
 import type { Product } from "../types/product";
+import { calculateSalePrice, floorToTen } from "../utils/price";
 import styles from "./ProductCard.module.css";
 
 type Props = { 
@@ -64,15 +65,15 @@ export function ProductCard({ product, onWishChange, onClick }: Props) {
         <div className={styles.priceRow}>
           <div className={styles.discountArea}>
             <span className={styles.discount}>{product.discountRate}%</span>
-            <span className={styles.originalPrice}>{product.price.toLocaleString()}원</span>
+            <span className={styles.originalPrice}>{floorToTen(product.price).toLocaleString()}원</span>
           </div>
           <span className={styles.price}>
-            {Math.round((product.price * (100 - product.discountRate)) / 100).toLocaleString()}원
+            {calculateSalePrice(product.price, product.discountRate).toLocaleString()}원
           </span>
         </div>
       ) : (
         <div className={styles.priceRow}>
-          <span className={styles.price}>{product.price.toLocaleString()}원</span>
+          <span className={styles.price}>{floorToTen(product.price).toLocaleString()}원</span>
         </div>
       )}
     </Link>
