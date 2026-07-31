@@ -457,3 +457,8 @@
   .fKpis .fCell:nth-child(3) { border-left: 0; }
   .subRow > .sec + .sec, .subRow2 > .sec + .sec { border-left: 0; border-top: 1px solid #e5e8ef; }
 }
+
+/* 세로가 짧은 화면(≤820px): 고정 높이를 풀고 페이지 스크롤로 전환 — 잘림 방지 */
+@media (max-height: 820px) {
+  .railGrid { height: auto; min-height: calc(100vh - 62px); }
+}

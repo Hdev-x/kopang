@@ -235,3 +235,8 @@
 .rel_high { background: #e3f6ec; color: #12a150; }
 .rel_mid { background: #fff5e6; color: #d98a06; }
 .rel_low { background: #eef1f5; color: #8b94a5; }
+
+/* 세로가 짧은 화면(≤820px): 고정 높이를 풀고 페이지 스크롤로 전환 — 잘림 방지 */
+@media (max-height: 820px) {
+  .page { height: auto; min-height: calc(100vh - 62px); }
+}
