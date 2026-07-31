@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Heart, Minus, PackageCheck, Plus, RotateCcw, Share2, ShieldCheck, Star, Truck } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { addToCart } from "../../api/cart";
-import { getProduct } from "../../api/products";
+import { getProduct, getAIRecommendations } from "../../api/products";
 import { getProductReviews, type Review } from "../../api/review";
 import { getProductQnaList } from "../../api/qna";
 import { useAuth } from "../../hooks/useAuth";
@@ -45,26 +45,47 @@ export function WebProductDetailPage() {
   const [isDescExpanded, setIsDescExpanded] = useState(false);
   const { isWished, toggleWishlist } = useWishlist();
   const [wishLoading, setWishLoading] = useState(false);
+  const [similarProducts, setSimilarProducts] = useState<Product[]>([]);
+  const [togetherProducts, setTogetherProducts] = useState<Product[]>([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(true);
+
+  const similarScrollRef = useRef<HTMLDivElement>(null);
+  const togetherScrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollTrack = (ref: React.RefObject<HTMLDivElement | null>, direction: "left" | "right") => {
+    if (ref.current) {
+      const scrollAmount = direction === "left" ? -540 : 540;
+      ref.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  };
 
   useEffect(() => {
     if (!id) return;
     const productId = Number(id);
+    setLoadingRecommendations(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
     Promise.all([
       getProduct(productId),
       getProductReviews(productId).catch(() => []),
       getProductQnaList(productId).catch(() => []),
+      getAIRecommendations(productId).catch(() => ({ similarProducts: [], frequentlyBoughtTogether: [] })),
     ])
-      .then(([productData, reviewData, qnaData]) => {
+      .then(([productData, reviewData, qnaData, recoData]) => {
         setProduct(productData);
         setReviews(Array.isArray(reviewData) ? reviewData : []);
         setProductQna(Array.isArray(qnaData) ? qnaData : []);
+        setSimilarProducts(recoData?.similarProducts || []);
+        setTogetherProducts(recoData?.frequentlyBoughtTogether || []);
         setError(false);
         if (productData) {
           saveRecentProduct(productData);
         }
       })
       .catch(() => setError(true))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        setLoadingRecommendations(false);
+      });
     // 찜 여부는 useWishlist가 따로 들고 있어 로그인 상태가 바뀌어도 상품을 다시 받을 필요가 없다.
   }, [id]);
 
@@ -409,6 +430,150 @@ export function WebProductDetailPage() {
         </div>
         <p className={styles.policyNotice}>상품별 판매자 정책이 우선 적용될 수 있으며, 정확한 조건은 주문 전에 상품 고지 내용을 확인해야 합니다.</p>
       </section>
+
+      {/* 비슷한 상품 */}
+      {(loadingRecommendations || similarProducts.length > 0) && (
+        <section className={styles.recommendSection}>
+          <header className={styles.recommendHeader}>
+            <div>
+              <p className={styles.sectionLabel}>RECOMMENDED FOR YOU</p>
+              <h2>비슷한 상품</h2>
+            </div>
+            {!loadingRecommendations && similarProducts.length > 0 && (
+              <div className={styles.sliderNav}>
+                <button
+                  type="button"
+                  onClick={() => scrollTrack(similarScrollRef, "left")}
+                  aria-label="이전 비슷한 상품"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollTrack(similarScrollRef, "right")}
+                  aria-label="다음 비슷한 상품"
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            )}
+          </header>
+          <div ref={similarScrollRef} className={styles.recommendRow}>
+            {loadingRecommendations ? (
+              [1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                <div key={n} className={styles.recommendSkeletonCard}>
+                  <div className={styles.skeletonThumb} />
+                  <div className={styles.skeletonLine} />
+                  <div className={styles.skeletonLineShort} />
+                </div>
+              ))
+            ) : (
+              similarProducts.slice(0, 8).map((sim, idx) => {
+                const hasDiscount = Boolean(sim.discountRate && sim.discountRate > 0);
+                const discountedPrice = hasDiscount
+                  ? Math.round((sim.price * (100 - (sim.discountRate || 0))) / 100)
+                  : sim.price;
+                return (
+                  <div
+                    key={sim.id ? `sim-${sim.id}-${idx}` : `sim-${idx}`}
+                    className={styles.recommendCard}
+                    onClick={() => sim.id && navigate(`/web/products/${sim.id}`)}
+                  >
+                    <div className={styles.recommendThumbWrapper}>
+                      {sim.imageUrl ? (
+                        <img src={sim.imageUrl} alt={sim.name || "상품 이미지"} className={styles.recommendThumb} />
+                      ) : (
+                        <div className={styles.recommendThumbPlaceholder} />
+                      )}
+                    </div>
+                    <p className={styles.recommendName}>{sim.name || "상품명 없음"}</p>
+                    {hasDiscount ? (
+                      <div className={styles.recommendPriceArea}>
+                        <span className={styles.recommendDiscount}>{sim.discountRate}%</span>
+                        <strong className={styles.recommendPrice}>{discountedPrice.toLocaleString()}원</strong>
+                      </div>
+                    ) : (
+                      <p className={styles.recommendPrice}>{(sim.price ?? 0).toLocaleString()}원</p>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* 함께 구매하면 좋은 상품 */}
+      {(loadingRecommendations || togetherProducts.length > 0) && (
+        <section className={styles.recommendSection}>
+          <header className={styles.recommendHeader}>
+            <div>
+              <p className={styles.sectionLabel}>TOGETHER</p>
+              <h2>함께 구매하면 좋은 상품</h2>
+            </div>
+            {!loadingRecommendations && togetherProducts.length > 0 && (
+              <div className={styles.sliderNav}>
+                <button
+                  type="button"
+                  onClick={() => scrollTrack(togetherScrollRef, "left")}
+                  aria-label="이전 함께 구매하면 좋은 상품"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollTrack(togetherScrollRef, "right")}
+                  aria-label="다음 함께 구매하면 좋은 상품"
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            )}
+          </header>
+          <div ref={togetherScrollRef} className={styles.recommendRow}>
+            {loadingRecommendations ? (
+              [1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                <div key={n} className={styles.recommendSkeletonCard}>
+                  <div className={styles.skeletonThumb} />
+                  <div className={styles.skeletonLine} />
+                  <div className={styles.skeletonLineShort} />
+                </div>
+              ))
+            ) : (
+              togetherProducts.slice(0, 8).map((item, idx) => {
+                const hasDiscount = Boolean(item.discountRate && item.discountRate > 0);
+                const discountedPrice = hasDiscount
+                  ? Math.round((item.price * (100 - (item.discountRate || 0))) / 100)
+                  : item.price;
+                return (
+                  <div
+                    key={item.id ? `tog-${item.id}-${idx}` : `tog-${idx}`}
+                    className={styles.recommendCard}
+                    onClick={() => item.id && navigate(`/web/products/${item.id}`)}
+                  >
+                    <div className={styles.recommendThumbWrapper}>
+                      {item.imageUrl ? (
+                        <img src={item.imageUrl} alt={item.name || "상품 이미지"} className={styles.recommendThumb} />
+                      ) : (
+                        <div className={styles.recommendThumbPlaceholder} />
+                      )}
+                    </div>
+                    <p className={styles.recommendName}>{item.name || "상품명 없음"}</p>
+                    {hasDiscount ? (
+                      <div className={styles.recommendPriceArea}>
+                        <span className={styles.recommendDiscount}>{item.discountRate}%</span>
+                        <strong className={styles.recommendPrice}>{discountedPrice.toLocaleString()}원</strong>
+                      </div>
+                    ) : (
+                      <p className={styles.recommendPrice}>{(item.price ?? 0).toLocaleString()}원</p>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </section>
+      )}
         </div>
 
         <aside className={styles.stickyPurchase} aria-label="구매 옵션">
