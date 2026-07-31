@@ -56,7 +56,7 @@ public class ChatbotService {
                     """ + message;
 
             String url = "https://generativelanguage.googleapis.com/v1beta/models/"
-                    + "gemini-flash-latest:generateContent?key=" + geminiApiKey;
+                    + "gemini-3.1-flash-lite:generateContent?key=" + geminiApiKey;
 
             Map<String, Object> requestBody = Map.of(
                     "contents", List.of(
