@@ -133,7 +133,7 @@ export function CheckoutPage() {
     loadDefaultAddress();
     getPointBalance().then((d) => setAvailablePoint(d.balance)).catch(console.error);
     getMembershipStatus()
-      .then((status) => setIsMembership(status?.status === "ACTIVE"))
+      .then((status) => setIsMembership(Boolean(status && (status.status === "ACTIVE" || status.status === "CANCELLED"))))
       .catch(() => setIsMembership(false));
     getMyCoupons()
       .then((list) => {
