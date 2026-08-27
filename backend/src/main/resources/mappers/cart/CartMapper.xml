@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kopang.app.domain.cart.CartMapper">
+
+    <select id="findCartIdByUserId" resultType="long">
+        SELECT cart_id FROM cart WHERE user_id = #{userId}
+    </select>
+
+    <insert id="insertCart">
+        INSERT INTO cart (user_id) VALUES (#{userId})
+    </insert>
+
+    <select id="findCartItemsByCartId" resultType="com.kopang.app.domain.cart.CartItemDTO">
+        SELECT 
+            ci.cart_item_id AS itemId,
+            ci.cart_id AS cartId,
+            ci.product_id AS productId,
+            ci.quantity AS quantity,
+            ci.added_at AS addedAt,
+            p.name AS name,
+            CASE 
+                WHEN p.discount_price > 0 AND p.discount_price &lt; p.price THEN p.discount_price 
+                ELSE p.price 
+            END AS price,
+            p.price AS originalPrice,
+            p.discount_price AS discountPrice,
+            p.image_url AS imageUrl
+        FROM cart_item ci
+        INNER JOIN products p ON ci.product_id = p.product_id
+        WHERE ci.cart_id = #{cartId}
+        ORDER BY ci.cart_item_id DESC
+    </select>
+
+    <select id="findCartItemByProduct" resultType="com.kopang.app.domain.cart.CartItemDTO">
+        SELECT 
+            cart_item_id AS itemId,
+            cart_id AS cartId,
+            product_id AS productId,
+            quantity AS quantity
+        FROM cart_item
+        WHERE cart_id = #{cartId} AND product_id = #{productId}
+    </select>
+
+    <insert id="insertCartItem">
+        INSERT INTO cart_item (cart_id, product_id, quantity)
+        VALUES (#{cartId}, #{productId}, #{quantity})
+    </insert>
+
+    <update id="updateCartItemQuantity">
+        UPDATE cart_item
+        SET quantity = #{quantity}
+        WHERE cart_item_id = #{cartItemId}
+    </update>
+
+    <select id="findCartItemById" resultType="com.kopang.app.domain.cart.CartItemDTO">
+        SELECT 
+            ci.cart_item_id AS itemId,
+            ci.cart_id AS cartId,
+            ci.product_id AS productId,
+            ci.quantity AS quantity,
+            p.name AS name,
+            CASE 
+                WHEN p.discount_price > 0 AND p.discount_price &lt; p.price THEN p.discount_price 
+                ELSE p.price 
+            END AS price,
+            p.price AS originalPrice,
+            p.discount_price AS discountPrice,
+            p.stock AS stock
+        FROM cart_item ci
+        INNER JOIN products p ON ci.product_id = p.product_id
+        WHERE ci.cart_item_id = #{cartItemId}
+    </select>
+
+    <delete id="deleteCartItem">
+        DELETE FROM cart_item
+        WHERE cart_item_id = #{cartItemId}
+    </delete>
+
+    <delete id="deleteCartItemByProduct">
+        DELETE FROM cart_item
+        WHERE cart_id = #{cartId} AND product_id = #{productId}
+    </delete>
+
+</mapper>

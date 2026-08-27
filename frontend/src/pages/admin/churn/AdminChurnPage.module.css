@@ -1,0 +1,277 @@
+/* 이탈 방지 대시보드 — C-2 v2 시안(구분선 플랫 레이아웃) 기준 */
+
+/* AdminLayout main 패딩 위로 흰 면을 페이지 끝까지 확장 */
+/* 높이를 화면에 고정한다 — min-height 면 내용만큼 늘어나서
+   데이터가 들어오는 순간 영역이 커지며 화면이 밀린다. */
+.page {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 24px 40px 36px;
+  background: #fff;
+  height: calc(100vh - 62px);
+  overflow: hidden;
+}
+
+/* 오른쪽 배지 문구가 데이터에 따라 길어진다 — 줄바꿈되면 머리 높이가 변한다 */
+.pageHead {
+  display: flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.basis {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border: 1px solid #e5e8ef;
+  border-radius: 999px;
+  background: #fff;
+  color: #626d80;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.basis i { width: 7px; height: 7px; border-radius: 50%; background: #2f6bff; }
+
+.caption { margin: 0; color: #8b94a5; font-size: 12.5px; }
+
+/* 구분선 그리드 */
+.fRow { display: grid; }
+.fRow + .fRow { border-top: 1px solid #e5e8ef; }
+.fKpis { grid-template-columns: repeat(4, 1fr); flex: 0 0 auto; }
+
+/* 가운데·아래 행이 남은 높이를 나눠 갖는다. 항목 수가 달라져도 행 높이는 그대로다. */
+.fMid { grid-template-columns: 1.4fr 1fr; flex: 1 1 0; min-height: 0; }
+.fBot { grid-template-columns: 1.25fr 1fr 1fr; flex: 1 1 0; min-height: 0; }
+
+.fCell { min-width: 0; min-height: 0; padding: 19px 29px; overflow: hidden; }
+.fCell + .fCell { border-left: 1px solid #e5e8ef; }
+.fRow .fCell:first-child { padding-left: 0; }
+.fRow > .fCell:last-child { padding-right: 0; }
+.fMid > .fCell, .fBot > .fCell { display: flex; flex-direction: column; }
+
+/* 아래 행의 목록(Top 3 등)은 칸을 넘치면 그 안에서 스크롤한다 */
+.fBot > .fCell > *:last-child { min-height: 0; overflow-y: auto; }
+
+/* KPI 칸 높이를 못박는다 — 보조 문구가 데이터에 따라 한 줄/두 줄로 바뀌면
+   아래 구분선이 통째로 밀린다. */
+.fKpis > .fCell { min-height: 104px; }
+
+.label {
+  color: #8b94a5;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+/* KPI */
+.kTop { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+
+/* 기준 시점 배지 — 카드마다 보는 시점이 달라(현재 상태 vs 마감 집계) 표시한다.
+   이게 없으면 "어제 값이 왜 보이지?" 같은 오해가 생긴다. */
+.asOfNow, .asOfDone {
+  margin-left: auto; flex-shrink: 0;
+  padding: 1px 6px; border-radius: 9px;
+  font-size: 9.5px; font-style: normal; font-weight: 600; letter-spacing: -0.2px;
+  white-space: nowrap;
+}
+.asOfNow  { background: #eaf1fe; color: #2f6bff; }   /* 실시간 */
+.asOfDone { background: #f0f1f5; color: #7c8598; }   /* 마감 집계 */
+.kIcon { display: inline-flex; align-items: center; flex: 0 0 auto; }
+.kValue { display: block; font-size: 22px; font-weight: 750; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+/* "미대응 82명 → 발송 실행" 처럼 길어지면 줄바꿈돼 칸이 커진다. 한 줄로 고정. */
+.kSub {
+  display: block;
+  overflow: hidden;
+  margin-top: 3px;
+  color: #626d80;
+  font-size: 11.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pos { color: #12a150; }
+.neg { color: #e4453a; }
+
+/* 섹션 헤더 */
+.secHead { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 9px; }
+.secHead h2 { margin: 0; font-size: 14px; font-weight: 800; letter-spacing: -0.01em; }
+/* 섹션 설명에 배지(목표 초과 N일 등)가 붙었다 빠졌다 하면서 두 줄이 되지 않도록 */
+.secHead p { margin: 0; overflow: hidden; color: #8b94a5; font-size: 11.5px; text-overflow: ellipsis; white-space: nowrap; }
+
+.chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.chipGood { background: #e3f6ec; color: #12a150; }
+.chipMl { background: #f0e9ff; color: #7a3ff2; }
+
+.textLink { color: #2f6bff; font-size: 12.5px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+
+/* 이탈률 추이 리치 차트 */
+.chartWrap { position: relative; flex: 1; min-height: 150px; }
+.chartWrap svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+.yTick {
+  position: absolute;
+  left: 0;
+  z-index: 1;
+  transform: translateY(-140%);
+  color: #8b94a5;
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.dot {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border: 1.5px solid rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  background: rgba(47, 107, 255, 0.72);
+  box-shadow: 0 1px 5px rgba(47, 107, 255, 0.35);
+  transform: translate(-50%, -50%);
+  backdrop-filter: blur(2px);
+}
+
+.dotCrit { background: rgba(228, 69, 58, 0.72); box-shadow: 0 1px 5px rgba(228, 69, 58, 0.35); }
+
+.dotToday {
+  width: 13px;
+  height: 13px;
+  border-width: 2px;
+  background: rgba(47, 107, 255, 0.82);
+  box-shadow: 0 2px 8px rgba(47, 107, 255, 0.45);
+}
+
+.todayBadge {
+  position: absolute;
+  right: 2.5%;
+  top: 8%;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #2f6bff;
+  box-shadow: 0 2px 8px rgba(47, 107, 255, 0.35);
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.overLabel { position: absolute; left: 30%; top: 6%; color: #e4453a; font-size: 9.5px; font-weight: 600; white-space: nowrap; }
+.targetLabel { position: absolute; left: 0; color: #12a150; font-size: 9.5px; font-weight: 700; transform: translateY(4px); }
+
+.xAxis { display: flex; justify-content: space-between; padding: 6px 3.2% 0; }
+.xAxis span { color: #8b94a5; font-size: 9px; font-variant-numeric: tabular-nums; }
+
+/* 위험 유형 분포 — C-2 v2 시안 스타일 (라벨/값 위 · 그라데이션 막대 아래) */
+.hbars { display: flex; flex: 1; flex-direction: column; justify-content: space-around; gap: 6px; }
+.hbar { display: flex; flex-direction: column; gap: 5px; }
+.hbarMeta { display: flex; justify-content: space-between; font-size: 11.5px; }
+.hbarMeta span { font-weight: 600; }
+.hbarMeta b { font-variant-numeric: tabular-nums; }
+.hbarTrack { height: 6px; overflow: hidden; border-radius: 999px; background: #f0f3f8; }
+.hbarFill { display: block; height: 100%; border-radius: 999px; min-width: 6px; background: linear-gradient(90deg, rgba(47, 107, 255, 0.55), #2f6bff); }
+.hbarFillMl { background: linear-gradient(90deg, rgba(122, 63, 242, 0.55), #7a3ff2); }
+
+/* 대응 현황 */
+.opsWrap { display: flex; align-items: center; gap: 14px; }
+.opsGrid { display: grid; flex: 1; grid-template-columns: repeat(2, 1fr); gap: 14px 16px; }
+.op b { display: block; font-size: 20px; font-weight: 750; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; margin-top: 4px; }
+.op small { display: block; margin-top: 2px; color: #626d80; font-size: 11px; }
+
+.cover { display: flex; align-items: center; gap: 12px; padding-left: 16px; border-left: 1px solid #e5e8ef; }
+.donut { display: grid; width: 80px; height: 80px; flex: 0 0 auto; place-items: center; border-radius: 50%; }
+.donutHole { display: grid; width: 56px; height: 56px; place-items: center; border-radius: 50%; background: #fff; font-size: 13px; font-weight: 750; font-variant-numeric: tabular-nums; }
+.coverMeta small { display: block; margin-top: 4px; color: #626d80; font-size: 11px; }
+
+.opsFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid #e5e8ef;
+  color: #626d80;
+  font-size: 11.5px;
+}
+
+/* 룰 vs ML */
+.mlBand { display: flex; height: 22px; overflow: hidden; border: 1px solid #e5e8ef; border-radius: 8px; }
+.mlBand span { display: block; }
+.segRule { background: #2f6bff; }
+.segBoth { background: #12a150; }
+.segMl { background: #7a3ff2; }
+
+.mlLegend { display: flex; flex-direction: column; gap: 6px; margin: 10px 0 0; padding: 0; list-style: none; }
+.mlLegend li { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+.mlLegend i { width: 10px; height: 10px; flex: 0 0 auto; border-radius: 3px; }
+.mlLegend b { margin-left: auto; font-variant-numeric: tabular-nums; }
+.mlPurple { color: #7a3ff2; }
+
+.mlInfo { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #e5e8ef; }
+.mlInfo b { display: block; font-size: 15px; font-variant-numeric: tabular-nums; margin-top: 3px; }
+.mlInfo small { display: block; margin-top: 2px; color: #626d80; font-size: 10.5px; }
+.mlNote { margin: 8px 0 0; color: #8b94a5; font-size: 11px; }
+
+/* Top 3 */
+.topRow {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 8px 0;
+  border-top: 1px solid #e5e8ef;
+  color: inherit;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.topRow:first-of-type { border-top: 0; }
+.topRow:hover { background: #fbfcfe; }
+
+.av {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  place-items: center;
+  border: 1px solid #e5e8ef;
+  border-radius: 50%;
+  background: #fbfcfe;
+  color: #626d80;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.topName { min-width: 0; flex: 1; }
+.topName b { display: block; font-size: 13px; }
+.topName small { display: block; color: #626d80; font-size: 11.5px; }
+
+.pb { padding: 2px 8px; border-radius: 7px; font-size: 12px; font-weight: 750; font-variant-numeric: tabular-nums; }
+.pbHi { background: #fce8e6; color: #e4453a; }
+.pbMi { background: #fbf0d9; color: #d98a06; }
+.pbLo { background: #e3f6ec; color: #12a150; }
+
+@media (max-width: 1080px) {
+  .page { margin: -20px; padding: 20px; }
+  .fKpis { grid-template-columns: repeat(2, 1fr); }
+  .fKpis .fCell:nth-child(3) { border-left: 0; }
+  .fMid, .fBot { grid-template-columns: 1fr; }
+  .fMid .fCell + .fCell, .fBot .fCell + .fCell { border-left: 0; border-top: 1px solid #e5e8ef; }
+}
+
+/* 세로가 짧은 화면(≤820px): 고정 높이를 풀고 페이지 스크롤로 전환 — 잘림 방지 */
+@media (max-height: 820px) {
+  .page { height: auto; min-height: calc(100vh - 62px); }
+}

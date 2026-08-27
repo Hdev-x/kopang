@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kopang.app.domain.churn.ChurnMetricMapper">
+
+    <!--
+      오늘자 지표 1행 upsert. 배치가 매일 호출한다.
+
+      집계 기준 (대시보드 화면·백필 스크립트와 동일하게 맞춘다):
+        at_risk_high/mid   user별 최신 판정 1건 기준 (ChurnDashboardMapper.selectLevelCounts 와 같은 정의)
+        churn_rate         고위험 / 전체 회원 * 100
+        intervention_*     오늘 발송된 대응과 그 결과
+
+      **오늘 1행이 아니라 최근 N일을 매번 재집계한다.** 전환은 대응 후 며칠 뒤에 발생하는데
+      오늘 행만 쓰면 그 전환이 어느 날짜 지표에도 반영되지 않아 conversion_count 가 0으로 굳는다.
+      N은 전환 창(7일)보다 넉넉해야 한다.
+
+      같은 날 재실행 시 DO UPDATE 로 덮어쓴다 — 배치를 하루 두 번 돌려도 행이 늘지 않는다.
+    -->
+    <insert id="upsertRecentMetrics">
+        INSERT INTO churn_daily_metric (
+            metric_date, total_users, at_risk_high, at_risk_mid, churn_rate,
+            intervention_count, conversion_count, attributed_revenue, retained_count
+        )
+        SELECT
+            d.md,
+            usr.total,
+            lvl.high,
+            lvl.mid,
+            ROUND(lvl.high * 100.0 / NULLIF(usr.total, 0), 2),
+            itv.cnt,
+            itv.conv,
+            itv.revenue,
+            itv.retained
+        <!--
+          **어제까지만** 집계한다. 일별 지표는 하루가 끝나야 확정되는 마감 값이다.
+          오늘(진행 중)을 넣으면 매출·대응이 하루 치의 일부만 잡혀 지표가 낮게 나온다.
+          07-29 03:00 배치가 07-28 을 마감하는 구조 — 일 집계 배치의 표준이다.
+          "지금 몇 명이 위험한가"는 마감값이 아니라 실시간 조회로 본다(ChurnDashboardMapper).
+        -->
+        FROM generate_series(CURRENT_DATE - #{days}::int, CURRENT_DATE - 1, '1 day') AS d(md)
+        CROSS JOIN LATERAL
+            (SELECT COUNT(*) AS total FROM users
+              WHERE role = 'ROLE_USER' AND created_at::date &lt;= d.md) usr
+        CROSS JOIN LATERAL
+            (SELECT COUNT(*) FILTER (WHERE risk_level = 'HIGH') AS high,
+                    COUNT(*) FILTER (WHERE risk_level = 'MID')  AS mid
+               FROM (SELECT DISTINCT ON (user_id) user_id, risk_level
+                       FROM churn_score
+                      WHERE source = 'RULE'
+                        AND scored_at &lt; d.md + INTERVAL '1 day'    <!-- 그 날짜 끝까지 (실시간 조회의 &lt;= NOW() 와 대응) -->
+                        AND scored_at &gt; d.md - INTERVAL '7 days'   <!-- 7일 미재감지 = 위험 해제 -->
+                      ORDER BY user_id, scored_at DESC, churn_score_id DESC) latest) lvl
+        CROSS JOIN LATERAL
+            <!-- 전부 **처치군 · 판정 완료분** 기준 — 리포트(ChurnReportMapper.selectEffect)의
+                 treatPct 와 같은 정의여야 KPI 카드와 리포트 숫자가 맞는다.
+                 대조군을 분자·분모에 섞으면 "대응의 전환율"이 아니게 되고,
+                 판정 미완료분을 분모에 넣으면 최근 대응이 미전환처럼 계산돼 전환율이 눌린다. -->
+            (SELECT COUNT(*) FILTER (WHERE NOT r.is_control)                      AS cnt,
+                    COUNT(*) FILTER (WHERE o.converted AND NOT r.is_control)      AS conv,
+                    COALESCE(SUM(o.revenue_amount)
+                             FILTER (WHERE o.converted AND NOT r.is_control), 0)  AS revenue,
+                    COUNT(*) FILTER (WHERE o.retained AND NOT r.is_control)       AS retained
+               FROM retention_intervention r
+               JOIN intervention_outcome o ON o.intervention_id = r.intervention_id
+              WHERE r.created_at::date = d.md
+                <!-- 측정 창이 닫힌 대응만 집계한다. 전환은 주문 확인 즉시 확정되고
+                     미전환은 창이 끝나야 확정되므로, 창 안의 날짜를 집계하면
+                     "전환한 건만" 판정 완료라 전환율이 100%로 부풀려진다.
+                     창이 안 닫힌 최근 날짜는 0으로 남는 편이 정직하다. -->
+                AND r.created_at + INTERVAL '7 days' &lt;= NOW()) itv
+        ON CONFLICT (metric_date) DO UPDATE SET
+            total_users        = EXCLUDED.total_users,
+            at_risk_high       = EXCLUDED.at_risk_high,
+            at_risk_mid        = EXCLUDED.at_risk_mid,
+            churn_rate         = EXCLUDED.churn_rate,
+            intervention_count = EXCLUDED.intervention_count,
+            conversion_count   = EXCLUDED.conversion_count,
+            attributed_revenue = EXCLUDED.attributed_revenue,
+            retained_count     = EXCLUDED.retained_count
+    </insert>
+
+</mapper>

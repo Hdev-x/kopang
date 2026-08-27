@@ -1,0 +1,94 @@
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Layout } from "../../components/Layout";
+import { PageHeader } from "../../components/PageHeader";
+import { Card } from "../../components/Card";
+import { Button } from "../../components/Button";
+import { getFaqList } from "../../api/faq";
+import { getNoticeList } from "../../api/notice";
+import type { Faq } from "../../types/faq";
+import type { Notice } from "../../types/notice";
+import s from "../../styles/AccountPages.module.css";
+
+export function SupportPage() {
+  const navigate = useNavigate();
+  const [notices, setNotices] = useState<Notice[]>([]);
+  const [faqs, setFaqs] = useState<Faq[]>([]);
+
+  useEffect(() => {
+    getNoticeList()
+      .then(setNotices)
+      .catch(console.error);
+
+    getFaqList()
+      .then(setFaqs)
+      .catch(console.error);
+  }, []);
+  return (
+    <Layout>
+      <PageHeader title="고객센터" backTo="/my" />
+      <p className={s.muted} style={{ marginBottom: "var(--space-4)" }}>
+        공지사항·FAQ를 확인하거나, 1:1 문의 또는 우하단 AI 상담봇을 이용하세요.
+      </p>
+
+      <Button
+        style={{ width: "100%", marginBottom: "var(--space-2)" }}
+        onClick={() => navigate("/my/support/inquiry")}
+      >
+        1:1 문의하기
+      </Button>
+      <Button
+        variant="ghost"
+        style={{ width: "100%", marginBottom: "var(--space-2)" }}
+        onClick={() => navigate("/my/inquiries?tab=general")}
+      >
+        문의 내역 보기
+      </Button>
+      <p className={s.muted} style={{ fontSize: "var(--font-xs)" }}>
+        문의 내역은 1:1 문의 목록에서 확인할 수 있어요.
+      </p>
+
+      <div className={s.sectionHead}>
+        <h2 className={s.section}>공지사항</h2>
+        <Link to="/my/support/notices" className={s.more}>
+          더보기
+        </Link>
+      </div>
+      <div className={s.list}>
+        {notices.slice(0, 3).map((notice) => (
+          <Link
+            key={notice.id}
+            to={`/my/support/notices/${notice.id}`}
+            className={s.cardLink}
+          >
+            <Card>
+              <div className={s.row}>
+                <span className={s.strong}>{notice.title}</span>
+                <span className={s.muted}>
+                  {notice.createdAt.slice(0, 10)}
+                </span>
+              </div>
+            </Card>
+          </Link>
+        ))}
+      </div>
+
+      <div className={s.sectionHead}>
+        <h2 className={s.section}>자주 묻는 질문</h2>
+        <Link to="/my/support/faq" className={s.more}>
+          더보기
+        </Link>
+      </div>
+      <div className={s.list}>
+        {faqs.slice(0, 3).map((faq) => (
+          <Link key={faq.id} to="/my/support/faq" className={s.cardLink}>
+            <Card>
+              <p className={s.faqQ}>Q. {faq.question}</p>
+              <p className={s.faqA}>{faq.answer}</p>
+            </Card>
+          </Link>
+        ))}
+      </div>
+    </Layout>
+  );
+}

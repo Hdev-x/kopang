@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kopang.app.domain.churn.ChurnReportMapper">
+
+    <!-- 기간 필터 (from/to 있을 때만 붙음). to는 당일 포함(< to+1일) -->
+    <sql id="dateFilter">
+        <!-- 측정 창(7일)이 닫힌 대응만 본다. 창 안의 대응은 "전환한 건만" 판정이 끝나 있어
+             함께 세면 전환율이 부풀려진다(지표 적재 ChurnMetricMapper와 같은 기준). -->
+        AND ri.created_at + INTERVAL '7 days' &lt;= NOW()
+        <if test="from != null">
+            AND ri.created_at &gt;= #{from}
+        </if>
+        <if test="to != null">
+            AND ri.created_at &lt; (CAST(#{to} AS date) + INTERVAL '1 day')
+        </if>
+    </sql>
+
+    <!-- KPI : 처치군(is_control=false) 기준 -->
+    <select id="selectKpi"
+            resultType="com.kopang.app.domain.churn.ChurnReportResponse$Kpi">
+        SELECT
+            COUNT(*) FILTER (WHERE NOT ri.is_control) AS treated,
+            COUNT(*) FILTER (WHERE NOT ri.is_control AND io.converted) AS conversions,
+            COALESCE(SUM(io.revenue_amount) FILTER (WHERE NOT ri.is_control AND io.converted), 0) AS revenue,
+            COUNT(*) FILTER (WHERE NOT ri.is_control AND io.retained) AS defended
+        FROM retention_intervention ri
+        <!-- INNER JOIN : 아직 판정이 끝나지 않은 대응은 분모에서 뺀다.
+             LEFT JOIN 이면 "결과를 모르는" 최근 대응이 미전환처럼 계산돼 전환율이 낮아진다. -->
+        JOIN intervention_outcome io ON io.intervention_id = ri.intervention_id
+        <where>
+            <include refid="dateFilter"/>
+        </where>
+    </select>
+
+    <!-- 액션별 순효과 : 처치 vs 대조 전환율 + 처치군 전환 명수 + 매출 -->
+    <select id="selectEffect"
+            resultType="com.kopang.app.domain.churn.ChurnReportResponse$EffectRow">
+        SELECT
+            ri.action_type AS actionType,
+            ROUND(100.0 * COUNT(*) FILTER (WHERE NOT ri.is_control AND io.converted)
+                  / NULLIF(COUNT(*) FILTER (WHERE NOT ri.is_control), 0), 1) AS treatPct,
+            ROUND(100.0 * COUNT(*) FILTER (WHERE ri.is_control AND io.converted)
+                  / NULLIF(COUNT(*) FILTER (WHERE ri.is_control), 0), 1) AS controlPct,
+            COUNT(*) FILTER (WHERE NOT ri.is_control AND io.converted) AS conv,
+            COALESCE(SUM(io.revenue_amount) FILTER (WHERE NOT ri.is_control AND io.converted), 0) AS revenue,
+            COUNT(*) FILTER (WHERE NOT ri.is_control) AS treatN,
+            COUNT(*) FILTER (WHERE ri.is_control) AS controlN,
+            COUNT(*) FILTER (WHERE ri.is_control AND io.converted) AS controlConv
+        FROM retention_intervention ri
+        <!-- INNER JOIN : 아직 판정이 끝나지 않은 대응은 분모에서 뺀다.
+             LEFT JOIN 이면 "결과를 모르는" 최근 대응이 미전환처럼 계산돼 전환율이 낮아진다. -->
+        JOIN intervention_outcome io ON io.intervention_id = ri.intervention_id
+        <where>
+            <include refid="dateFilter"/>
+        </where>
+        GROUP BY ri.action_type
+        ORDER BY revenue DESC
+    </select>
+
+    <!-- 위험 유형별 순효과 : 처치 vs 대조 전환율 (처치군 대응 수 순) -->
+    <select id="selectTypeEffect"
+            resultType="com.kopang.app.domain.churn.ChurnReportResponse$TypeEffectRow">
+        SELECT
+            ri.risk_type AS riskType,
+            ROUND(100.0 * COUNT(*) FILTER (WHERE NOT ri.is_control AND io.converted)
+                  / NULLIF(COUNT(*) FILTER (WHERE NOT ri.is_control), 0), 1) AS treatPct,
+            ROUND(100.0 * COUNT(*) FILTER (WHERE ri.is_control AND io.converted)
+                  / NULLIF(COUNT(*) FILTER (WHERE ri.is_control), 0), 1) AS controlPct,
+            COUNT(*) FILTER (WHERE NOT ri.is_control) AS treated,
+            COUNT(*) FILTER (WHERE NOT ri.is_control AND io.converted) AS treatConv,
+            COUNT(*) FILTER (WHERE ri.is_control) AS controlN,
+            COUNT(*) FILTER (WHERE ri.is_control AND io.converted) AS controlConv
+        FROM retention_intervention ri
+        <!-- INNER JOIN : 아직 판정이 끝나지 않은 대응은 분모에서 뺀다.
+             LEFT JOIN 이면 "결과를 모르는" 최근 대응이 미전환처럼 계산돼 전환율이 낮아진다. -->
+        JOIN intervention_outcome io ON io.intervention_id = ri.intervention_id
+        <where>
+            <include refid="dateFilter"/>
+        </where>
+        GROUP BY ri.risk_type
+        ORDER BY treated DESC
+    </select>
+
+    <!-- 일별 대응(처치)·전환 추이. 기간 미지정 시 최근 30일 -->
+    <select id="selectDailyTrend"
+            resultType="com.kopang.app.domain.churn.ChurnReportResponse$DailyPoint">
+        SELECT
+            ri.created_at::date AS day,
+            COUNT(*) FILTER (WHERE NOT ri.is_control) AS sent,
+            COUNT(*) FILTER (WHERE NOT ri.is_control AND io.converted) AS converted
+        FROM retention_intervention ri
+        <!-- INNER JOIN : 아직 판정이 끝나지 않은 대응은 분모에서 뺀다.
+             LEFT JOIN 이면 "결과를 모르는" 최근 대응이 미전환처럼 계산돼 전환율이 낮아진다. -->
+        JOIN intervention_outcome io ON io.intervention_id = ri.intervention_id
+        WHERE ri.created_at &gt;= COALESCE(CAST(#{from} AS timestamp), NOW() - INTERVAL '30 days')
+        <if test="to != null">
+            AND ri.created_at &lt; (CAST(#{to} AS date) + INTERVAL '1 day')
+        </if>
+        GROUP BY ri.created_at::date
+        ORDER BY day
+    </select>
+
+    <!-- 이탈 대응 자동발급 쿠폰 ROI.
+         쿠폰 ID(3,4,5,6,8)는 발송 로직(ChurnScoreServiceImpl)의 자동발급 목록과 동일.
+         비용 추정: AMOUNT = 사용수×할인액 / RATE = 사용수×할인율×평균주문액(근사) -->
+    <select id="selectCouponRoi"
+            resultType="com.kopang.app.domain.churn.ChurnReportResponse$CouponRoiRow">
+        SELECT
+            c.name,
+            c.discount_type  AS discountType,
+            c.discount_value AS discountValue,
+            COUNT(uc.user_coupon_id) AS issued,
+            COUNT(uc.user_coupon_id) FILTER (WHERE uc.used) AS used,
+            CASE
+                WHEN c.discount_type = 'AMOUNT'
+                    THEN COUNT(uc.user_coupon_id) FILTER (WHERE uc.used) * c.discount_value
+                ELSE ROUND(COUNT(uc.user_coupon_id) FILTER (WHERE uc.used) * c.discount_value / 100.0
+                     * (SELECT COALESCE(AVG(total_price), 0) FROM orders WHERE payment_status = 'PAID'))
+            END AS estimatedCost
+        FROM coupons c
+        LEFT JOIN user_coupons uc ON uc.coupon_id = c.coupon_id
+        WHERE c.coupon_id IN (3, 4, 5, 6, 8)
+        GROUP BY c.coupon_id, c.name, c.discount_type, c.discount_value
+        ORDER BY issued DESC
+    </select>
+
+</mapper>

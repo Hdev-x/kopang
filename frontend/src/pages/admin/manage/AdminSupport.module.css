@@ -1,0 +1,173 @@
+/* 고객지원(문의·FAQ) 공용 — 쿠폰 관리와 같은 구분선 플랫 문법.
+   세 화면이 한 파일을 쓰는 이유: 목록·상세·등록이 서로 오가는 흐름이라
+   여백과 표 규격이 어긋나면 이동할 때마다 화면이 덜컹거린다. */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  padding: 24px 40px 32px;
+  background: #fff;
+  height: calc(100vh - 62px);
+}
+
+/* 상단 도구줄 */
+.toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.caption { margin: 0; color: #8b94a5; font-size: 12.5px; }
+.spacer { flex: 1; }
+
+.filters { display: flex; gap: 6px; }
+.chip {
+  padding: 6px 13px;
+  border: 1px solid #e5e8ef;
+  border-radius: 999px;
+  background: #fff;
+  color: #626d80;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.chip:hover { background: #fbfcfe; }
+/* 선택 표현은 관리자 전체에서 솔리드 파랑으로 통일한다(adminTable .chipOn 과 같은 문법) */
+.chipActive { border-color: #2f6bff; background: #2f6bff; color: #fff; }
+
+.search {
+  min-width: 200px;
+  padding: 8px 12px;
+  border: 1px solid #e5e8ef;
+  border-radius: 9px;
+  font-size: 13px;
+}
+.search:focus { outline: 0; border-color: #2f6bff; }
+
+.primaryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 9px;
+  background: #2f6bff;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.primaryBtn:hover { background: #2559d6; }
+.primaryBtn:disabled { background: #c3cede; cursor: not-allowed; }
+
+.ghostBtn {
+  padding: 8px 14px;
+  border: 1px solid #e5e8ef;
+  border-radius: 9px;
+  background: #fff;
+  color: #626d80;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ghostBtn:hover { background: #fbfcfe; }
+
+.smallBtn { height: 28px; padding: 0 10px; font-size: 12px; border-radius: 7px; white-space: nowrap; }
+
+/* 행 끝 버튼 묶음 — 줄바꿈 없이 나란히 */
+.rowActions { display: flex; justify-content: flex-end; gap: 6px; }
+
+/* 표 */
+.tableWrap { flex: 1; min-height: 0; overflow-y: auto; border: 1px solid #e5e8ef; border-radius: 12px; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tbl th {
+  position: sticky;
+  white-space: nowrap;
+  top: 0;
+  z-index: 1;
+  padding: 11px 16px;
+  border-bottom: 1px solid #e5e8ef;
+  background: #fbfcfe;
+  color: #8b94a5;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+}
+.tbl td { padding: 11px 16px; border-bottom: 1px solid #f0f2f5; color: #3a4553; vertical-align: middle; }
+.tbl tr:last-child td { border-bottom: 0; }
+.tbl tbody tr:hover td { background: #fbfcfe; }
+.tbl .num { color: #8b94a5; font-variant-numeric: tabular-nums; }
+
+.rowLink { color: #171d2b; font-weight: 600; text-decoration: none; }
+.rowLink:hover { color: #2f6bff; }
+
+/* 제목이 길어도 표가 밀리지 않게 한 줄로 자른다 */
+.ellip { display: block; max-width: 520px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.bInfo { background: #e9f0ff; color: #1b4fd6; }
+.bMuted { background: #eef1f5; color: #5a6474; }
+.bWait { background: #fbf0d9; color: #9a6206; }
+.bDone { background: #e3f6ec; color: #0e7a3c; }
+
+.empty { padding: 44px; color: #8b94a5; font-size: 13px; text-align: center; }
+
+/* 2분할(폼 | 목록) — FAQ 관리 */
+.split { display: grid; flex: 1; min-height: 0; grid-template-columns: 360px minmax(0, 1fr); gap: 24px; }
+.panel { display: flex; min-height: 0; flex-direction: column; }
+.panelHead { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.panelHead h2 { margin: 0; font-size: 14px; font-weight: 800; letter-spacing: -0.01em; }
+.panelHead p { margin: 0; color: #8b94a5; font-size: 11.5px; }
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #e5e8ef;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { color: #626d80; font-size: 12.5px; font-weight: 600; }
+.field input, .field select, .field textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #e5e8ef;
+  border-radius: 8px;
+  background: #fff;
+  color: #171d2b;
+  font-family: inherit;
+  font-size: 13px;
+}
+.field input:focus, .field select:focus, .field textarea:focus { outline: 0; border-color: #2f6bff; }
+.field textarea { min-height: 120px; resize: vertical; }
+.formActions { display: flex; gap: 8px; }
+.formActions > * { flex: 1; }
+
+/* 문의 상세 */
+.detail { display: grid; flex: 1; min-height: 0; grid-template-columns: minmax(0, 1fr) 380px; gap: 24px; }
+.docWrap { min-height: 0; overflow-y: auto; }
+.doc { padding: 22px 24px; border: 1px solid #e5e8ef; border-radius: 12px; }
+.docHead { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.doc h2 { margin: 0 0 14px; font-size: 18px; font-weight: 800; letter-spacing: -0.02em; }
+.docMeta { display: flex; gap: 18px; padding-bottom: 16px; border-bottom: 1px solid #f0f2f5; color: #8b94a5; font-size: 12.5px; }
+.docMeta b { color: #3a4553; font-weight: 600; }
+.docBody { margin: 16px 0 0; color: #3a4553; font-size: 13.5px; line-height: 1.75; white-space: pre-wrap; }
+
+.answered { margin-top: 16px; padding: 16px 18px; border-radius: 10px; background: #f7f9fc; }
+.answeredHead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; color: #626d80; font-size: 12px; font-weight: 700; }
+.answered p { margin: 0; color: #3a4553; font-size: 13px; line-height: 1.7; white-space: pre-wrap; }
+
+.backLink { display: inline-flex; align-items: center; gap: 4px; color: #626d80; font-size: 12.5px; font-weight: 600; text-decoration: none; }
+.backLink:hover { color: #2f6bff; }
+
+@media (max-width: 1080px) {
+  .page { height: auto; min-height: calc(100vh - 62px); padding: 20px; }
+  .split, .detail { grid-template-columns: 1fr; gap: 18px; }
+  .tableWrap { overflow-x: auto; }
+  .ellip { max-width: 240px; }
+}
+
+/* 세로가 짧은 화면(≤820px): 고정 높이를 풀고 페이지 스크롤로 전환 — 잘림 방지 */
+@media (max-height: 820px) {
+  .page { height: auto; min-height: calc(100vh - 62px); }
+}

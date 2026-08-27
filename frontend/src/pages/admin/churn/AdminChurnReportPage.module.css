@@ -1,0 +1,242 @@
+/* E-1 효과 리포트 — 넓은/좁은 영역 풀높이 그리드 (세로 구분선 상하 풀, 각 컬럼 내부 스크롤) */
+
+.page {
+  display: grid;
+  grid-template-columns: minmax(0, 1.75fr) minmax(280px, 0.72fr);
+  height: calc(100vh - 62px);
+  background: #fff;
+}
+
+.wide {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  padding: 24px 0 0 40px;
+}
+
+/* 상단(기간 필터·KPI) 고정 영역은 오른쪽 여백 유지 */
+.wide > .pageHead, .wide > .kpis { margin-right: 34px; }
+
+/* 핵심 인사이트부터 내부 스크롤 */
+.wideBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 34px 32px 0;
+}
+
+.narrow {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-y: auto;
+  border-left: 1px solid #e5e8ef;
+  padding-bottom: 32px;
+}
+
+.pageHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.caption { margin: 0; color: #8b94a5; font-size: 12.5px; }
+
+/* 시연 데이터 고지 — 눈에 띄되 지표를 가리지 않는 정도 */
+.demoNote {
+  margin: 6px 0 0;
+  padding: 6px 10px;
+  border-left: 3px solid #f0b429;
+  background: #fffaf0;
+  color: #8a6d2f;
+  font-size: 12px;
+  line-height: 1.5;
+  border-radius: 3px;
+}
+
+/* 기간 필터 */
+.period { display: inline-flex; gap: 4px; padding: 3px; border: 1px solid #e5e8ef; border-radius: 10px; background: #fbfcfe; }
+.period button { padding: 6px 12px; border: 0; border-radius: 7px; background: transparent; color: #626d80; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.period button.on { background: #2f6bff; color: #fff; }
+
+/* 섹션 (넓은 영역 안) */
+.sec { padding: 22px 0; }
+.wide > .sec + .sec, .wide > .kpis + .sec { border-top: 1px solid #f0f2f5; }
+.narrow > .sec { padding: 0; }
+
+.secHead { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+.secHead h2 { margin: 0; font-size: 14px; font-weight: 800; letter-spacing: -0.01em; }
+.secHead p { margin: 0; color: #8b94a5; font-size: 11.5px; }
+
+/* KPI 밴드 */
+.kpis { display: flex; border-top: 1px solid #e5e8ef; border-bottom: 1px solid #e5e8ef; }
+.kCell { flex: 1; padding: 20px 24px; }
+.kCell:first-child { padding-left: 0; }
+.kCell + .kCell { border-left: 1px solid #e5e8ef; }
+.kLabel { color: #8b94a5; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.kValue { font-size: 20px; font-weight: 750; letter-spacing: -0.02em; margin-top: 6px; font-variant-numeric: tabular-nums; }
+
+/* 인사이트 */
+.insight {
+  display: flex;
+  gap: 13px;
+  padding: 16px 18px;
+  border: 1px solid color-mix(in srgb, #e4453a 40%, #e5e8ef);
+  border-radius: 12px;
+  background: #fce8e6;
+}
+.insight.good { border-color: color-mix(in srgb, #12a150 40%, #e5e8ef); background: #e3f6ec; }
+.insightIcon { flex: 0 0 auto; font-size: 20px; line-height: 1.2; }
+.insight b { display: block; font-size: 13.5px; }
+.insight p { margin: 4px 0 0; font-size: 12.5px; color: #626d80; line-height: 1.5; }
+
+/* 순효과 추이 (자리표시) */
+.trendPlaceholder {
+  display: grid;
+  place-items: center;
+  height: 150px;
+  border: 1px dashed #dde3ea;
+  border-radius: 12px;
+  color: #8b94a5;
+  font-size: 12.5px;
+  background: #fbfcfe;
+}
+
+/* 접기/펼치기 헤더 (강조 바 + 화살표) — 스크롤 시 상단 sticky */
+/* B-2 목록 로우와 같은 문법의 고정 로우 헤더 */
+.accHead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 34px;
+  border: 0;
+  border-bottom: 1px solid #e5e8ef;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+}
+
+.accHead:hover { background: #fbfcfe; }
+.accBar { width: 3px; height: 15px; flex: 0 0 auto; border-radius: 2px; background: #2f6bff; }
+.accTitle { flex: 1; min-width: 0; color: #171d2b; font-size: 14px; font-weight: 800; letter-spacing: -0.01em; }
+.accTitle small { color: #8b94a5; font-size: 11.5px; font-weight: 500; margin-left: 6px; }
+/* 화살표: 글리프 대신 보더 셰브런 — 회전 축이 정중앙 */
+.accArrow {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  margin-top: -4px;
+  border-right: 2px solid #8b94a5;
+  border-bottom: 2px solid #8b94a5;
+  transform: rotate(45deg);
+  transition: transform 160ms ease;
+}
+.accArrowOpen { margin-top: 4px; transform: rotate(225deg); }
+
+/* 접기/펼치기 애니메이션 (grid-rows 0fr↔1fr) */
+.accBody {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 240ms ease;
+}
+.accBody.accOpen { grid-template-rows: 1fr; }
+.accInner { overflow: hidden; }
+@media (prefers-reduced-motion: reduce) { .accBody { transition: none; } }
+
+/* 액션·유형별 순효과 lift */
+.lift { display: flex; flex-direction: column; padding: 10px 34px 18px; }
+.liftRow {
+  display: grid;
+  grid-template-columns: 1fr 58px;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 0;
+  border-top: 1px solid #f0f2f5;
+}
+.liftRow:first-child { border-top: 0; }
+.liftName { font-size: 13px; font-weight: 700; }
+.liftName small { display: block; margin-top: 3px; color: #8b94a5; font-size: 10.5px; font-weight: 500; }
+
+.dual { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.dualRow { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+.dualRow .tag { flex: 0 0 26px; color: #8b94a5; }
+.dualTrack { flex: 1; height: 7px; border-radius: 999px; background: #f0f3f8; overflow: hidden; }
+.dualFill { display: block; height: 100%; border-radius: 999px; }
+.treatFill { background: #2f6bff; }
+.controlFill { background: #b9c3d4; }
+.dualPct { flex: 0 0 40px; text-align: right; font-variant-numeric: tabular-nums; color: #626d80; }
+
+.liftValue { text-align: right; align-self: start; }
+.liftValue b { font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.liftValue small { display: block; margin-top: 2px; color: #8b94a5; font-size: 10.5px; }
+.pos { color: #12a150; }
+.neg { color: #e4453a; }
+/* 대조군이 없어 비교 자체가 불가한 행 */
+.na  { color: #8b94a5; }
+
+.note { margin-top: 20px; color: #8b94a5; font-size: 12px; line-height: 1.6; }
+
+@media (max-width: 980px) {
+  .page { grid-template-columns: 1fr; height: auto; min-height: calc(100vh - 62px); }
+  .wide { overflow: visible; padding: 20px; }
+  .narrow { overflow: visible; border-left: 0; border-top: 1px solid #e5e8ef; padding: 20px; }
+  .kpis { flex-wrap: wrap; }
+  .kCell { flex: 1 1 50%; }
+  .kCell:first-child { padding-left: 24px; }
+}
+
+/* 일별 대응·전환 추이 바 차트 */
+.trendChart {
+  display: flex;
+  height: 170px;
+  align-items: flex-end;
+  gap: 6px;
+  padding-top: 20px;
+}
+
+.tBar { display: flex; height: 100%; flex: 1; min-width: 0; flex-direction: column; align-items: center; gap: 5px; }
+.tAmount { color: #626d80; font-size: 9.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.tTrack { position: relative; width: min(26px, 70%); flex: 1; border-radius: 5px 5px 3px 3px; background: #fbfcfe; overflow: hidden; }
+.tSent { position: absolute; right: 0; bottom: 0; left: 0; min-height: 3px; border-radius: 5px 5px 3px 3px; background: #b9cdf3; }
+.tConv { position: absolute; right: 0; bottom: 0; left: 0; border-radius: 3px 3px 0 0; background: #12a150; }
+.tLabel { color: #8b94a5; font-size: 9.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tLegend { display: flex; gap: 16px; margin-top: 10px; color: #626d80; font-size: 11.5px; }
+.tLegend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+.tLegSent { background: #b9cdf3; }
+.tLegConv { background: #12a150; }
+
+/* 쿠폰 ROI 표 */
+.roi { width: 100%; border-collapse: collapse; font-size: 13px; }
+.roi th { text-align: left; font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase; color: #8b94a5; font-weight: 700; padding: 9px 12px; border-bottom: 1px solid #e5e8ef; }
+.roi td { padding: 10px 12px; border-bottom: 1px solid #f0f2f5; }
+.roi tbody tr:last-child td { border-bottom: 0; }
+.roi tfoot td { font-weight: 800; border-top: 1px solid #e5e8ef; border-bottom: 0; font-variant-numeric: tabular-nums; }
+.roi .r, .roi th.r, .roi td.r { text-align: right; font-variant-numeric: tabular-nums; }
+.roiRatio { color: #12a150; font-weight: 700; font-size: 12px; }
+
+/* 신뢰도 배지 */
+.relBadge {
+  margin-left: 7px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  vertical-align: middle;
+}
+.rel_high { background: #e3f6ec; color: #12a150; }
+.rel_mid { background: #fff5e6; color: #d98a06; }
+.rel_low { background: #eef1f5; color: #8b94a5; }
+
+/* 세로가 짧은 화면(≤820px): 고정 높이를 풀고 페이지 스크롤로 전환 — 잘림 방지 */
+@media (max-height: 820px) {
+  .page { height: auto; min-height: calc(100vh - 62px); }
+}

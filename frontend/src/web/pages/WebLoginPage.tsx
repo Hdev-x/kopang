@@ -1,0 +1,102 @@
+import { useState, type FormEvent } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
+import { login as apiLogin } from "../../api/auth";
+import { login as saveAuth } from "../../lib/auth";
+import { WebAuthLayout } from "../components/WebAuthLayout";
+import styles from "./WebAuthPages.module.css";
+
+export function WebLoginPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [email, setEmail] = useState((location.state as { email?: string })?.email || "");
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [loginError, setLoginError] = useState("");
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    setLoginError("");
+    if (email !== "admin" && !email.includes("@")) {
+      window.alert("올바른 이메일 형식(@ 포함)을 입력해 주세요.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const data = await apiLogin(email, password);
+      saveAuth({ name: data.user.name, email: data.user.email || email, role: data.user.role }, data.accessToken, data.refreshToken, rememberMe);
+      navigate("/web");
+    } catch {
+      setLoginError("로그인에 실패했습니다. 이메일 또는 비밀번호를 확인해 주세요.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const rememberWebOAuth = () => {
+    localStorage.setItem("kopang_login_view", "web");
+    sessionStorage.setItem("kopang_login_view", "web");
+  };
+
+  return (
+    <WebAuthLayout eyebrow="WELCOME BACK" title="다시 만나서 반가워요" description="로그인하고 장바구니, 주문 내역, 찜한 상품을 Web 화면에서 이어서 확인하세요.">
+      <div className={styles.heading}><h2>로그인</h2><p>Kopang 계정 정보를 입력해 주세요.</p></div>
+      <form className={styles.form} onSubmit={handleSubmit} noValidate>
+        <div className={styles.field}><label htmlFor="web-login-email">이메일</label><input id="web-login-email" type="text" value={email} onChange={(event) => { setEmail(event.target.value); setLoginError(""); }} placeholder="이메일 입력" autoComplete="username" aria-describedby={loginError ? "web-login-error" : undefined} /></div>
+        <div className={styles.field}>
+          <label htmlFor="web-login-password">비밀번호</label>
+          <div style={{ position: "relative", display: "flex", alignItems: "center", width: "100%" }}>
+            <input
+              id="web-login-password"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(event) => { setPassword(event.target.value); setLoginError(""); }}
+              placeholder="비밀번호 입력"
+              autoComplete="current-password"
+              aria-describedby={loginError ? "web-login-error" : undefined}
+              style={{ paddingRight: "40px", width: "100%" }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: "absolute",
+                right: "12px",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 0,
+                color: "#888",
+                zIndex: 2,
+              }}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+        </div>
+        {loginError && <p id="web-login-error" className={styles.error} role="alert">{loginError}</p>}
+        <div className={styles.formOptions}>
+          <label className={styles.remember}><input type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} />자동 로그인</label>
+          <div style={{ display: "flex", gap: "12px" }}>
+            <Link to="/web/find-email">아이디 찾기</Link>
+            <span style={{ color: "#ddd" }}>|</span>
+            <Link to="/web/find-password">비밀번호 찾기</Link>
+          </div>
+        </div>
+        <button className={styles.submit} type="submit" disabled={submitting}>{submitting ? "로그인 중..." : "로그인"}</button>
+      </form>
+      <div className={styles.divider}>또는 소셜 계정으로 로그인</div>
+      <div className={styles.socials}>
+        <a className={styles.google} href="/oauth2/authorization/google" onClick={rememberWebOAuth}>Google 계정으로 로그인</a>
+        <a className={styles.naver} href="/oauth2/authorization/naver" onClick={rememberWebOAuth}>Naver 계정으로 로그인</a>
+      </div>
+      <p className={styles.switch}><span>아직 회원이 아니신가요?</span><Link to="/web/signup">회원가입</Link></p>
+    </WebAuthLayout>
+  );
+}

@@ -1,0 +1,136 @@
+.gate {
+  text-align: center;
+  padding: var(--space-8) 0;
+}
+
+.gateText {
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-4);
+}
+
+.hello {
+  font-size: var(--font-xl);
+  font-weight: var(--weight-bold);
+  margin: var(--space-2) 0 var(--space-5);
+}
+
+.hello strong {
+  color: var(--color-primary);
+}
+
+/* 요약 카드 (포인트/쿠폰) */
+.summary {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.summaryItem {
+  flex: 1;
+  text-align: center;
+  padding: var(--space-4) 0;
+  background: var(--gray-50);
+  border-radius: var(--radius-md);
+}
+
+.summaryNum {
+  font-size: var(--font-lg);
+  font-weight: var(--weight-bold);
+  color: var(--color-primary);
+}
+
+.summaryLabel {
+  font-size: var(--font-xs);
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+/* 메뉴 리스트 */
+.menu {
+  display: flex;
+  flex-direction: column;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-1);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--font-md);
+  color: var(--color-text);
+  text-decoration: none;
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+}
+
+.chevron {
+  color: var(--color-text-muted);
+}
+
+.logout {
+  margin-top: var(--space-6);
+  width: 100%;
+}
+
+/* 최근 본 상품 섹션 (RECO-01) */
+.recentSection {
+  margin-top: var(--space-6);
+}
+
+.recentTitle {
+  font-size: var(--font-lg);
+  font-weight: var(--weight-bold);
+  margin-bottom: var(--space-3);
+}
+
+.recentRow {
+  display: flex;
+  gap: var(--space-3);
+  overflow-x: auto;
+  padding-bottom: var(--space-3);
+}
+
+.recentRow > * {
+  flex: 0 0 88px;
+}
+
+.recentCard {
+  width: 88px;
+  min-width: 0;
+  text-decoration: none;
+  color: var(--color-text);
+}
+
+.recentImage {
+  width: 88px;
+  height: 88px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  display: block;
+}
+
+.recentImageEmpty {
+  width: 88px;
+  height: 88px;
+  border-radius: var(--radius-md);
+  background: var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.recentName {
+  margin-top: var(--space-2);
+  font-size: var(--font-sm);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

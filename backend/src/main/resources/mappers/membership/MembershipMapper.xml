@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kopang.app.domain.membership.MembershipMapper">
+
+    <select id="findActiveMembershipByUserId"
+        resultType="com.kopang.app.domain.membership.UserMembershipDTO"> SELECT
+        um.user_membership_id AS userMembershipId, um.user_id AS userId, um.membership_id AS
+        membershipId, um.start_date AS startDate, um.end_date AS endDate, um.status AS status,
+        um.cancelled_at AS cancelledAt, m.name AS name, m.price AS price, m.discount_rate AS
+        discountRate, m.description AS description FROM user_membership um INNER JOIN membership m
+        ON um.membership_id = m.membership_id WHERE um.user_id = #{userId} AND um.status IN
+        ('ACTIVE', 'CANCELLED') AND um.end_date >= CURRENT_DATE ORDER BY um.user_membership_id DESC LIMIT 1 </select>
+
+    <insert id="insertUserMembership" useGeneratedKeys="true" keyProperty="userMembershipId"> INSERT
+        INTO user_membership (user_id, membership_id, start_date, end_date, status, cancelled_at)
+        VALUES ( #{userId}, #{membershipId}, CAST(#{startDate} AS DATE), CAST(#{endDate} AS DATE),
+        #{status}, CAST(#{cancelledAt} AS TIMESTAMP) ) </insert>
+
+    <update id="cancelUserMembership"> UPDATE user_membership SET status = 'CANCELLED', cancelled_at
+        = CAST(#{cancelledAt} AS TIMESTAMP) WHERE user_membership_id = #{userMembershipId} </update>
+
+    <update id="reactivateUserMembership"> UPDATE user_membership SET status = 'ACTIVE',
+        cancelled_at = NULL WHERE user_membership_id = #{userMembershipId} </update>
+
+    <select id="countPaidOrdersLast30Days" resultType="int"> SELECT COUNT(*) FROM orders WHERE
+        user_id = #{userId} AND payment_status = 'PAID' AND ordered_at >= CURRENT_DATE - INTERVAL
+        '30 days' </select>
+
+    <select id="countTotalMembers" resultType="int"> SELECT COUNT(*) FROM user_membership WHERE
+        status IN ('ACTIVE', 'CANCELLED') </select>
+
+    <select id="countNewMembersThisMonth" resultType="int"> SELECT COUNT(*) FROM user_membership
+        WHERE start_date >= date_trunc('month', CURRENT_DATE) </select>
+
+    <select id="countCancelledMembers" resultType="int"> SELECT COUNT(*) FROM user_membership WHERE
+        status = 'CANCELLED' </select>
+
+    <select id="findCancelledMemberships"
+        resultType="com.kopang.app.domain.membership.UserMembershipDTO"> SELECT
+        um.user_membership_id AS userMembershipId, um.user_id AS userId, um.membership_id AS
+        membershipId, um.start_date AS startDate, um.end_date AS endDate, um.status AS status,
+        um.cancelled_at AS cancelledAt, u.name AS name FROM user_membership um INNER JOIN users u ON
+        um.user_id = u.user_id WHERE um.status = 'CANCELLED' ORDER BY um.user_membership_id DESC
+        LIMIT 10 </select>
+
+</mapper>

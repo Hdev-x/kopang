@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kopang.app.domain.admin.SalesStatsMapper">
+
+    <!-- 오늘 결제완료 매출 합계 -->
+    <select id="selectTodaySales" resultType="long">
+        SELECT COALESCE(SUM(total_price), 0)
+        FROM orders
+        WHERE ordered_at::date = CURRENT_DATE
+            AND payment_status = 'PAID'
+    </select>
+
+    <!-- 오늘 주문 건수 -->
+    <select id="selectTodayOrders" resultType="int">
+        SELECT COUNT(*)
+        FROM orders
+        WHERE ordered_at::date = CURRENT_DATE
+            AND payment_status = 'PAID'
+    </select>
+
+    <!-- 오늘 신규 가입 수 -->
+    <select id="selectNewMembers" resultType="int">
+        SELECT COUNT(*)
+        FROM users
+        WHERE created_at::date = CURRENT_DATE
+    </select>
+
+    <!-- 전체 누적 매출 -->
+    <select id="selectTotalSales" resultType="long">
+        SELECT COALESCE(SUM(total_price), 0)
+        FROM orders
+        WHERE payment_status = 'PAID'
+    </select>
+
+    <!-- 이번 달 매출 -->
+    <select id="selectMonthSales" resultType="long">
+        SELECT COALESCE(SUM(total_price), 0)
+        FROM orders
+        WHERE payment_status = 'PAID'
+            AND date_trunc('month', ordered_at) = date_trunc('month', NOW())
+    </select>
+
+    <!-- 최근 7일 일별 매출 : generate_series로 7일을 만들고 매출을 LEFT JOIN
+         → 주문 없는 날도 0으로 채워 막대 7개가 다 나옴 (과거→오늘) -->
+    <select id="selectWeeklySales"
+            resultType="com.kopang.app.domain.admin.SalesStatsResponse$DailySales">
+        SELECT
+            d::date AS date,
+            COALESCE(SUM(o.total_price), 0) AS amount
+        FROM generate_series(CURRENT_DATE - 6, CURRENT_DATE, INTERVAL '1 day') d
+        LEFT JOIN orders o
+            ON o.ordered_at::date = d::date
+            AND o.payment_status = 'PAID'
+        GROUP BY d
+        ORDER BY d
+    </select>
+
+</mapper>

@@ -1,0 +1,456 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper 
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kopang.app.domain.churn.ChurnMapper">
+
+    <!-- ============================================= -->
+    <!-- 조회 : 룰별 이탈 위험 대상 회원                      -->
+    <!-- ============================================= -->
+
+    <!-- 룰1) 장바구니 방치 회원의 user_id 목록 -->
+    <select id="findCartAbandonUsers" resultType="long">
+        SELECT DISTINCT c.user_id
+        FROM cart c
+        INNER JOIN cart_item ci
+            ON c.cart_id = ci.cart_id
+        WHERE ci.added_at &lt; NOW() - INTERVAL '3 days'
+            AND NOT EXISTS
+            (
+                SELECT 1
+                FROM orders o
+                WHERE o.user_id = c.user_id
+                    AND o.ordered_at &gt; ci.added_at
+            )
+    </select>
+
+    <!-- 룰2) 멤버십 해지한 회원의 user_id 목록 -->
+    <select id="findMembershipCancelUsers" resultType="long">
+        SELECT user_id
+        FROM user_membership
+        WHERE status = 'CANCELLED'
+        GROUP BY user_id
+    </select>
+
+    <!-- 룰3) 첫 주문 이후 30일 넘게 주문이 없는 회원의 user_id 목록 -->
+    <select id="findFirstOrderOnlyUsers" resultType="long">
+        SELECT user_id
+        FROM orders
+        GROUP BY user_id
+        HAVING COUNT(*) = 1
+            AND MAX(ordered_at) &lt; NOW() - INTERVAL '30 days'
+    </select>
+
+    <!-- 룰4) 찜 7일 경화 + 해당 상품 미주문 회원의 user_id 목록 -->
+    <select id="findWishlistIdleUsers" resultType="long">
+        SELECT DISTINCT w.user_id
+        FROM wishlist w
+        WHERE w.created_at &lt; NOW() - INTERVAL '7 days'
+            AND NOT EXISTS
+            (
+                SELECT 1
+                FROM orders o
+                INNER JOIN orders_item oi
+                    ON o.order_id = oi.order_id
+                WHERE o.ordered_at &gt; w.created_at
+                    AND w.product_id = oi.product_id
+                    AND o.user_id = w.user_id
+            )
+        
+    </select>
+
+    <!-- 룰5) 미사용 쿠폰이 3일 내 만료되는 회원의 user_id 목록 -->
+    <select id="findCouponExpiringUsers" resultType="long">
+        SELECT user_id
+        FROM user_coupons
+        WHERE used = false
+            AND expires_at &gt;= CURRENT_DATE
+            AND expires_at &lt;= CURRENT_DATE + INTERVAL '3 days'
+        GROUP BY user_id
+    </select>
+
+    <!-- 룰6) 평점 2점 미만 리뷰 또는 취소/반품 경험이 있는 회원의 user_id 목록 -->
+    <select id="findBadExperienceUsers" resultType="long">
+        SELECT user_id
+        FROM reviews
+        WHERE rating &lt; 2
+        UNION
+        SELECT user_id
+        FROM orders
+        WHERE order_status IN ('CANCELLED', 'RETURNED')
+    </select>
+
+    <!-- 룰7) 30일 넘게 미로그인 회원의 user_id 목록 -->
+    <select id="findLoginInactiveUsers" resultType="long">
+        SELECT user_id
+        FROM users
+        WHERE last_login_at &lt; NOW() - INTERVAL '30 days'
+            AND status = 'ACTIVE'
+            AND role = 'ROLE_USER'
+    </select>
+
+    <!-- 룰8) 최근 30일 지출 < 직전 30일의 50% 회원의 user_id 목록 -->
+    <select id="findSpendingDropUsers" resultType="long">
+        SELECT user_id
+        FROM orders
+        WHERE order_status NOT IN ('CANCELLED', 'RETURNED')
+        GROUP BY user_id
+        HAVING
+            SUM(
+                CASE
+                    WHEN ordered_at &gt; NOW() - INTERVAL '30 days'
+                    THEN total_price
+                    ELSE 0
+                END
+            )  -- 창A (최근 30일)
+            &lt;
+            SUM(
+                CASE
+                    WHEN ordered_at &lt; NOW() - INTERVAL '30 days'
+                        AND ordered_at &gt; NOW() - INTERVAL '60 days'
+                    THEN total_price
+                    ELSE 0 
+                END
+            ) * 0.5  -- 창B (직전 30일) × 0.5
+            AND
+            SUM(
+                CASE
+                    WHEN ordered_at &lt; NOW() - INTERVAL '30 days'
+                        AND ordered_at &gt; NOW() - INTERVAL '60 days'
+                    THEN total_price
+                    ELSE 0
+                END
+            ) &gt;= 30000  -- 직전 30일 최소 지출 — "쓰던 고객의 반토막"만. 0원 휴면은 LOGIN_INACTIVE 담당 (2026-07-25 정밀화)
+
+    </select>
+
+
+    <!-- ============================================= -->
+    <!-- 저장 : 판정 결과 (모든 룰 공통)                     -->
+    <!-- ============================================= -->
+
+    <!-- 이탈 판정 결과 1건을 churn_score에 저장 -->
+    <insert id="insertChurnScore">
+        INSERT INTO churn_score 
+        (
+            user_id, 
+            score, 
+            risk_level, 
+            risk_type, 
+            source
+        )
+        VALUES 
+        (
+            #{userId}, 
+            #{score}, 
+            #{riskLevel}, 
+            #{riskType}, 
+            #{source}
+        )
+    </insert>
+
+
+    <!-- 재실행 대비 멱등성 확보.
+         두 가지를 남긴다:
+           ① 대응이 참조 중인 판정 — retention_intervention.churn_score_id 가 FK로 물고 있어
+              지우면 발송 후 재실행에서 FK violation 이 난다
+           ② 시연 데이터(demo_tag='SIM') — 실제 배치가 시연 데이터를 지우면 안 된다
+         ①·②로 남은 행 위에 새 감지가 쌓이면 같은 날 중복이 생기지만, 인원 지표는
+         모두 DISTINCT ON (최신 1건) 이라 영향이 없다. -->
+    <delete id="deleteTodayRuleScores">
+        DELETE FROM churn_score cs
+        WHERE cs.source = 'RULE'
+            AND cs.scored_at::date = CURRENT_DATE
+            AND cs.demo_tag IS NULL
+            AND NOT EXISTS (
+                SELECT 1 FROM retention_intervention ri
+                WHERE ri.churn_score_id = cs.churn_score_id
+            )
+    </delete>
+
+
+    <!-- ============================================= -->
+    <!-- 대응(intervention) : 발송 대상 조회 · 알림 · 로그   -->
+    <!-- ============================================= -->
+
+    <!-- 조회 -->
+    <!-- 통합 발송 대상 조회 (최근 7일 내 같은 대응 미수신자만)
+         2026-07-24 회의 반영으로 발송 유형 축소:
+         - WISHLIST_IDLE: 일반 독촉 제거, 찜 할인 알림(CHURN-13) 경로만 유지
+         - SPENDING_DROP: 재구매 유도는 CHURN-04(구매주기)가 담당 — 분석·ML 피처용으로 전환
+         - BAD_EXPERIENCE: 발송 제외, 만족도 사유 수집·분석용으로 전환
+         - CART_ABANDON: 홈 배너 실시간 노출로 대응 (의도적 미포함) -->
+    <select id="findInterventionTargets">
+        SELECT churn_score_id, user_id, risk_type
+        FROM churn_score cs
+        WHERE scored_at::date = CURRENT_DATE
+            AND risk_type IN ('FIRST_ORDER_ONLY')
+            AND source = 'RULE'
+            AND NOT EXISTS
+            (
+                SELECT 1
+                FROM retention_intervention ri
+                WHERE ri.user_id = cs.user_id
+                    AND ri.risk_type = cs.risk_type
+                    AND ri.created_at &gt; NOW() - INTERVAL '7 days'
+            )
+        <!-- 위험이 큰 사람부터. 전원 발송일 때는 순서가 무의미하지만, limit 을 걸어
+             일부만 보낼 때 누가 뽑힐지 정해져 있어야 한다. ORDER BY 가 없으면
+             DB 가 임의 순서로 주어 같은 조건에서도 대상이 매번 달라진다.
+             score 동점은 user_id 로 갈라 실행 간 재현성을 확보한다. -->
+        ORDER BY cs.score DESC, cs.user_id
+    </select>
+
+    <!-- 팀원 대응용: 지정한 risk_type들의 오늘자 발송 대상 (7일 내 중복 제외) -->
+    <select id="findTargetsByRiskTypes" resultType="com.kopang.app.domain.churn.ChurnScoreDTO">
+        SELECT churn_score_id, user_id, risk_type
+        FROM churn_score cs
+        WHERE scored_at::date = CURRENT_DATE
+            AND risk_type IN
+            <foreach item="type" collection="riskTypes" open="(" separator="," close=")">
+                #{type}
+            </foreach>
+            AND source = 'RULE'
+            AND NOT EXISTS
+            (
+                SELECT 1
+                FROM retention_intervention ri
+                WHERE ri.user_id = cs.user_id
+                    AND ri.risk_type = cs.risk_type
+                    AND ri.created_at &gt; NOW() - INTERVAL '7 days'
+            )
+        <!-- 위험이 큰 사람부터. 전원 발송일 때는 순서가 무의미하지만, limit 을 걸어
+             일부만 보낼 때 누가 뽑힐지 정해져 있어야 한다. ORDER BY 가 없으면
+             DB 가 임의 순서로 주어 같은 조건에서도 대상이 매번 달라진다.
+             score 동점은 user_id 로 갈라 실행 간 재현성을 확보한다. -->
+        ORDER BY cs.score DESC, cs.user_id
+    </select>
+
+    <!-- 알림 INSERT는 notification/NotificationMapper.xml로 분리 (NOTI-01) -->
+
+    <!-- 로그 (bulk) : 대상 리스트를 한 번의 INSERT로 기록 (대조군 포함 전원) -->
+    <insert id="insertInterventions">
+        INSERT INTO retention_intervention
+        (
+            user_id,
+            churn_score_id,
+            risk_type,
+            action_type,
+            is_control,
+            channel
+        )
+        VALUES
+        <foreach collection="list" item="i" separator=",">
+        (
+            #{i.userId},
+            #{i.churnScoreId},
+            #{i.riskType},
+            #{i.actionType},
+            #{i.isControl},
+            #{i.channel}
+        )
+        </foreach>
+    </insert>
+    <!-- 특정 회원의 특정 위험 유형에 대한 최신 이탈 점수 조회 -->
+    <select id="findLatestScoreByUserIdAndRiskType" resultType="com.kopang.app.domain.churn.ChurnScoreDTO">
+        SELECT 
+            churn_score_id AS churnScoreId,
+            user_id AS userId,
+            score,
+            risk_level AS riskLevel,
+            risk_type AS riskType,
+            source,
+            scored_at AS scoredAt
+        FROM churn_score
+        WHERE user_id = #{userId} AND risk_type = #{riskType}
+        ORDER BY churn_score_id DESC
+        LIMIT 1
+    </select>
+    <!-- 특정 회원의 특정 위험/대응/일수 내 기록이 존재하는지 카운트 -->
+    <select id="countRecentIntervention" resultType="int">
+        SELECT COUNT(*)
+        FROM retention_intervention
+        WHERE user_id = #{userId}
+          AND risk_type = #{riskType}
+          AND action_type = #{actionType}
+          AND created_at &gt; NOW() - CAST(#{days} || ' days' AS INTERVAL)
+    </select>
+
+    <!-- ============================================= -->
+    <!-- 오늘 배치 실행분 원복 (시연·테스트 재실행용)      -->
+    <!-- 발송 상한 때문에 한 번 실행하면 대상이 사라지므로 -->
+    <!-- 여러 번 시연하려면 되돌릴 수 있어야 한다.        -->
+    <!-- ============================================= -->
+
+    <!-- 이번 실행이 감지한 수. 시연 데이터(SIM)를 빼야 배치 결과가 실제 값이 된다.
+         고유 회원 수로 세는 이유: 한 회원이 여러 룰에 걸리면 행이 여러 개라
+         "7,128명 감지"가 실제 인원보다 부풀어 보인다. -->
+    <select id="countTodayRuleScores" resultType="int">
+        SELECT COUNT(DISTINCT user_id) FROM churn_score
+         WHERE source = 'RULE' AND scored_at::date = CURRENT_DATE AND demo_tag IS NULL
+    </select>
+
+    <!--
+      원복 범위는 **실제 배치가 만든 것**(demo_tag IS NULL)으로 한정한다.
+      created_at 만으로 자르면 같은 날 만든 시연 데이터(demo_tag='SIM')까지 쓸어간다.
+      실측: 배치가 18건 만들었는데 원복이 2,527건을 지웠다.
+    -->
+
+    <!-- 발송량 집계 — 통합·쿠폰만료·미로그인 세 경로의 합을 실행 전후 차이로 센다 -->
+    <select id="countTodayInterventions" resultType="int">
+        SELECT COUNT(*) FROM retention_intervention
+         WHERE created_at::date = CURRENT_DATE AND demo_tag IS NULL
+    </select>
+
+    <select id="countTodayControls" resultType="int">
+        SELECT COUNT(*) FROM retention_intervention
+         WHERE created_at::date = CURRENT_DATE AND demo_tag IS NULL AND is_control
+    </select>
+
+    <!-- 오늘 대응받은 회원에게 오늘 발급된 쿠폰 (원복 전 집계·재고 복구용) -->
+    <!-- 판정 결과 일괄 저장. 한 건씩 넣으면 회원 수만큼 DB 를 왕복해
+         원격 DB 에서 7,000건에 수 분이 걸린다. -->
+    <insert id="insertChurnScores">
+        INSERT INTO churn_score (user_id, score, risk_level, risk_type, source, scored_at)
+        VALUES
+        <foreach collection="list" item="s" separator=",">
+        (
+            #{s.userId}, #{s.score}, #{s.riskLevel}, #{s.riskType}, #{s.source}, NOW()
+        )
+        </foreach>
+    </insert>
+
+    <!-- 오늘 이미 판정이 남아 있는 회원. deleteTodayRuleScores 는 대응이 참조하는 행을
+         FK 때문에 남기는데, 그 상태에서 전량을 다시 넣으면 같은 회원의 판정이 중복 누적된다
+         (실측: 재실행 한 번에 7,270 → 9,763). -->
+    <select id="findTodayScoredUserIds" resultType="long">
+        SELECT DISTINCT user_id FROM churn_score
+         WHERE source = 'RULE'
+           AND scored_at::date = CURRENT_DATE
+           AND risk_type = #{riskType}
+           AND demo_tag IS NULL
+    </select>
+
+    <!-- 대응 알림 일괄 저장 — 공용 NotificationMapper 를 건드리지 않으려고 여기에 둔다 -->
+    <insert id="insertChurnNotifications">
+        INSERT INTO notifications (user_id, type, message, ref_id, is_read, clicked)
+        VALUES
+        <foreach collection="list" item="n" separator=",">
+        (
+            #{n.userId}, #{n.type}, #{n.message}, #{n.refId}, FALSE, FALSE
+        )
+        </foreach>
+    </insert>
+
+    <!-- 이미 해당 쿠폰을 가진 회원 (한 명씩 조회하면 N 번 왕복) -->
+    <select id="findUsersHavingCoupon" resultType="long">
+        SELECT DISTINCT user_id FROM user_coupons
+         WHERE coupon_id = #{couponId}
+           AND user_id IN
+        <foreach collection="userIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <insert id="insertChurnUserCoupons">
+        INSERT INTO user_coupons (user_id, coupon_id, used, issued_at, expires_at, issued_by)
+        VALUES
+        <foreach collection="userIds" item="id" separator=",">
+        (
+            #{id}, #{couponId}, FALSE, NOW(), CAST(#{expiresAt} AS DATE), 'CHURN'
+        )
+        </foreach>
+    </insert>
+
+    <update id="decreaseCouponQuantityBy">
+        UPDATE coupons SET quantity = GREATEST(quantity - #{count}, 0) WHERE coupon_id = #{couponId}
+    </update>
+
+    <!-- 이탈 대응 쿠폰 발급 — issued_by='CHURN' 을 남겨 원복 때 이것만 회수한다.
+         공용 CouponMapper.insertUserCoupon 을 쓰면 출처를 구분할 수 없다. -->
+    <insert id="insertChurnUserCoupon">
+        INSERT INTO user_coupons (user_id, coupon_id, used, issued_at, expires_at, issued_by)
+        VALUES (#{userId}, #{couponId}, FALSE, NOW(), CAST(#{expiresAt} AS DATE), 'CHURN')
+    </insert>
+
+    <select id="countTodayIssuedCouponsByCoupon" resultType="map">
+        SELECT uc.coupon_id AS "couponId", COUNT(*) AS "cnt"
+        FROM user_coupons uc
+        WHERE uc.issued_at::date = CURRENT_DATE
+          AND uc.issued_by = 'CHURN'          <!-- 이탈 대응이 발급한 것만. 이벤트·가입 쿠폰은 건드리지 않는다 -->
+          AND EXISTS (SELECT 1 FROM retention_intervention r
+                       WHERE r.user_id = uc.user_id
+                         AND r.created_at::date = CURRENT_DATE
+                         AND r.demo_tag IS NULL)
+        GROUP BY uc.coupon_id
+    </select>
+
+    <delete id="deleteTodayIssuedCoupons">
+        DELETE FROM user_coupons uc
+        WHERE uc.issued_at::date = CURRENT_DATE
+          AND uc.issued_by = 'CHURN'          <!-- 이탈 대응이 발급한 것만. 이벤트·가입 쿠폰은 건드리지 않는다 -->
+          AND EXISTS (SELECT 1 FROM retention_intervention r
+                       WHERE r.user_id = uc.user_id
+                         AND r.created_at::date = CURRENT_DATE
+                         AND r.demo_tag IS NULL)
+    </delete>
+
+    <update id="restoreCouponQuantity">
+        UPDATE coupons SET quantity = quantity + #{cnt} WHERE coupon_id = #{couponId}
+    </update>
+
+    <!-- 오늘 대응으로 발송된 알림. 대응 이력이 있는 회원의 당일 알림만 지운다
+         (공지·주문 알림 등 다른 경로 알림은 건드리지 않도록 type 을 한정) -->
+    <delete id="deleteTodayInterventionNotifications">
+        DELETE FROM notifications n
+        WHERE n.created_at::date = CURRENT_DATE
+          AND n.demo_tag IS NULL              <!-- 시연 데이터(SIM) 보존 -->
+          AND n.type IN ('COMEBACK', 'COUPON_EXPIRE', 'ABANDON', 'APOLOGY', 'REBUY',
+                         'WELCOME_BACK', 'RECOMMEND', 'WISHLIST')
+          AND EXISTS (SELECT 1 FROM retention_intervention r
+                       WHERE r.user_id = n.user_id
+                         AND r.created_at::date = CURRENT_DATE
+                         AND r.demo_tag IS NULL)
+    </delete>
+
+    <delete id="deleteTodayOutcomes">
+        DELETE FROM intervention_outcome io
+        WHERE io.intervention_id IN (
+            SELECT intervention_id FROM retention_intervention
+             WHERE created_at::date = CURRENT_DATE AND demo_tag IS NULL)
+    </delete>
+
+    <delete id="deleteTodayInterventions">
+        DELETE FROM retention_intervention
+         WHERE created_at::date = CURRENT_DATE AND demo_tag IS NULL
+    </delete>
+
+    <!-- 이미 기록된 대응의 대조군 여부. 응답용 판정을 따로 계산하면 실제 기록과 어긋난다. -->
+    <select id="isControlRecorded" resultType="boolean">
+        SELECT COALESCE(
+            (SELECT is_control FROM retention_intervention
+              WHERE user_id = #{userId}
+                AND risk_type = #{riskType}
+                AND action_type = #{actionType}
+              ORDER BY created_at DESC
+              LIMIT 1), FALSE)
+    </select>
+
+    <!-- 상한①: 오늘 이미 실제 대응(처치군)을 받은 회원 (1일 1건 상한) -->
+    <!-- 상한①: 오늘 이미 대응 대상이 된 회원. 대조군도 포함한다 —
+         처치군만 세면 대조군은 같은 사람이 매일 무제한 기록되어 두 군의 구성이 달라진다. -->
+    <select id="findTodayTreatedUserIds" resultType="long">
+        SELECT DISTINCT user_id
+        FROM retention_intervention
+        WHERE created_at::date = CURRENT_DATE
+    </select>
+
+    <!-- 상한②: 웰컴백·복귀 쿠폰을 받은 적 있는 회원 (두 쿠폰 상호 배타 - 하나 받으면 다른 것 불가) -->
+    <select id="findWelcomeComebackTreatedUserIds" resultType="long">
+        SELECT DISTINCT user_id
+        FROM retention_intervention
+        WHERE risk_type IN ('FIRST_ORDER_ONLY', 'LOGIN_INACTIVE')
+    </select>
+
+</mapper>

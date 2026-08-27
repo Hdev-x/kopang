@@ -1,0 +1,464 @@
+/* 통합 대시보드 — 구분선 플랫 레이아웃 (이탈 대시보드 C-2와 동일 문법) */
+
+/* 패딩 0 — 세로 구분선이 흰 면 상하좌우 끝까지. 좌우 여백은 각 컬럼 안쪽으로 */
+.page {
+  background: #fff;
+}
+
+.pageHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+  padding: 26px 0 0 0;
+  /* 배지 문구가 데이터에 따라 길어진다("미실행" → "07/29 03:12").
+     줄바꿈되면 머리 높이가 변해 아래 구분선이 전부 밀린다. */
+  min-height: 69px;
+}
+
+.caption { margin: 0; color: #8b94a5; font-size: 12.5px; }
+
+.basis {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border: 1px solid #e5e8ef;
+  border-radius: 999px;
+  background: #fff;
+  color: #626d80;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.basis i { width: 7px; height: 7px; border-radius: 50%; background: #2f6bff; }
+
+/* 구분선 그리드 — A-1 레일 구조 (메인 넓게 + 우측 레일) */
+.fRow { display: grid; }
+.fRow + .fRow { border-top: 1px solid #e5e8ef; }
+.fKpis { grid-template-columns: repeat(4, 1fr); }
+
+.fCell { min-width: 0; padding: 19px 29px; }
+.fCell + .fCell { border-left: 1px solid #e5e8ef; }
+.fRow .fCell:first-child { padding-left: 0; }
+.fRow > .fCell:last-child { padding-right: 0; }
+
+/* 통합 대시보드는 페이지 자체가 스크롤되지 않는다 — 높이를 뷰포트(상단바 62px 제외)에
+   고정하고, 넘치는 내용은 각 영역이 자기 안에서 스크롤한다.
+   min-height 였을 때는 내용만큼 늘어나서 페이지가 길어질 뿐 내부 스크롤이 생기지 않았다. */
+.railGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-rows: 1fr;
+  height: calc(100vh - 62px);
+  overflow: hidden;
+}
+
+/* 넓은 영역: 전체가 화면 안에 들어간다. 남는 높이는 하단 2분할이 흡수한다 */
+.mainCol { display: flex; flex-direction: column; min-width: 0; min-height: 0; padding-left: 40px; padding-right: 35px; }
+
+/* 좁은 영역: 배치 도트 라인처럼 내용이 늘어날 수 있어 이쪽만 따로 스크롤한다 */
+.railCol {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding-left: 30px;
+  padding-right: 40px;
+  padding-bottom: 30px;
+  border-left: 1px solid #e5e8ef;
+}
+
+.sec { padding: 19px 29px; }
+.mainCol > .sec { padding-left: 0; }
+.railCol > .sec { padding-left: 0; padding-right: 0; }
+.mainCol > .sec + .sec, .railCol > .sec + .sec, .mainCol > .subRow + .sec, .mainCol > .fRow + .subRow { border-top: 1px solid #e5e8ef; }
+.mainCol .fKpis > .fCell:last-child { padding-right: 0; }
+.subRow > .sec:last-child, .subRow2 > .sec:last-child { padding-right: 0; }
+.railCol > .sec:first-child { padding-top: 26px; }
+
+/* 메인 상단: 주간 매출 | 이탈 분포 2분할 (원본 A-1 비율)
+   높이를 고정한다(여백 19*2 + 섹션 머리 30 + 차트 200). 안에 무엇이 들어오든
+   이 행의 높이가 변하지 않아야 아래 구분선이 제자리에 있다. */
+.subRow { display: grid; grid-template-columns: 1.5fr 1fr; height: 268px; flex: 0 0 auto; }
+.subRow > .sec { min-height: 0; overflow: hidden; }
+
+/* 메인 하단: 최근 주문 | 인기 상품 2분할.
+   남은 높이를 전부 차지하고(flex: 1), 넘치는 행은 각 영역 안에서 스크롤한다.
+   min-height: 0 이 없으면 flex 아이템이 내용 높이만큼 부풀어 스크롤이 안 생긴다. */
+.subRow2 {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  flex: 1;
+  min-height: 200px;   /* 화면이 낮아도 표가 사라지지 않을 최소치 */
+  border-top: 1px solid #e5e8ef;
+}
+
+/* 마지막 행이 화면 밑단에 붙지 않도록 아래 여백을 둔다 */
+.subRow2 > .sec { display: flex; flex-direction: column; min-height: 0; padding-bottom: 30px; }
+.subRow2 > .sec:first-child { padding-left: 0; }
+.subRow2 > .sec + .sec { border-left: 1px solid #e5e8ef; }
+.topGrid { grid-template-columns: 1.6fr 0.7fr 0.7fr; }
+.topName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.subRow > .sec:first-child { padding-left: 0; }
+.subRow > .sec + .sec { border-left: 1px solid #e5e8ef; }
+
+.label {
+  color: #8b94a5;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+/* KPI */
+/* KPI 칸은 높이를 못박는다 — 보조 문구(전일 대비 등)는 데이터가 와야 생기는데,
+   그때 칸이 커지면 아래 구분선이 통째로 밀린다. */
+.fKpis > .fCell { min-height: 104px; }
+
+.kTop { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.kIcon { display: inline-flex; align-items: center; flex: 0 0 auto; }
+.kValue { display: block; font-size: 22px; font-weight: 750; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.kSub { display: block; margin-top: 3px; color: #626d80; font-size: 11.5px; font-weight: 600; }
+.up { color: #12a150; }
+.down { color: #e4453a; }
+
+/* 섹션 헤더 */
+.secHead { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 9px; }
+.secHead h2 { margin: 0; font-size: 14px; font-weight: 800; letter-spacing: -0.01em; }
+.secHead p { margin: 0; color: #8b94a5; font-size: 11.5px; }
+
+.total { color: #171d2b; font-size: 15px; font-weight: 750; font-variant-numeric: tabular-nums; }
+
+.textLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: #2f6bff;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* 주간 매출 바 차트 */
+.chart {
+  display: flex;
+  height: 200px;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 9px;
+  padding-top: 22px;
+}
+
+.bar {
+  display: flex;
+  height: 100%;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.barAmount { color: #626d80; font-size: 10px; font-weight: 600; }
+
+.barTrack {
+  position: relative;
+  width: min(30px, 65%);
+  flex: 1;
+  overflow: hidden;
+  border-radius: 5px 5px 3px 3px;
+  background: #fbfcfe;
+}
+
+.barFill {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  min-height: 4px;
+  border-radius: 5px 5px 3px 3px;
+  background: linear-gradient(180deg, #2f6bff, rgba(47, 107, 255, 0.55));
+}
+
+.barLabel { color: #8b94a5; font-size: 10px; font-variant-numeric: tabular-nums; }
+
+/* 이탈 위험 분포 도넛 */
+.donutWrap {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 18px;
+}
+
+.donut {
+  position: relative;
+  display: grid;
+  width: 118px;
+  height: 118px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.donutHole {
+  display: grid;
+  width: 80px;
+  height: 80px;
+  place-items: center;
+  align-content: center;
+  border-radius: 50%;
+  background: #fff;
+  text-align: center;
+}
+
+.donutHole b { font-size: 19px; font-weight: 750; font-variant-numeric: tabular-nums; }
+.donutHole span { font-size: 10px; color: #8b94a5; }
+
+.legend {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.legend li { display: flex; align-items: center; gap: 9px; font-size: 13px; }
+.legend i { width: 10px; height: 10px; border-radius: 3px; }
+.legend b { margin-left: auto; font-variant-numeric: tabular-nums; }
+
+/* 최근 주문 */
+.orderTable { margin-top: 4px; }
+
+/* 하단 2분할 안에서는 표가 남은 높이를 채운다.
+   헤더는 고정하고 본문(.orderBody)만 스크롤한다. */
+.subRow2 .orderTable { display: flex; flex: 1; min-height: 0; flex-direction: column; }
+
+/* 스크롤바는 관리자 공통(AdminLayout: 2px · 스크롤 중에만 표시)을 그대로 쓴다.
+   workspace 가 capture 로 하위 스크롤을 잡아 .scrolling 을 붙여주므로 별도 지정이 필요 없다. */
+.orderBody { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.subRow2 .orderBody { flex: 1; }
+
+.orderHeader,
+.orderRow {
+  display: grid;
+  grid-template-columns: 1.1fr 0.8fr 1fr 0.8fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.orderHeader {
+  padding: 0 0 8px;
+  border-bottom: 1px solid #e5e8ef;
+  color: #8b94a5;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.orderRow {
+  min-height: 46px;
+  border-bottom: 1px solid #e5e8ef;
+  color: #626d80;
+  font-size: 13px;
+}
+
+.orderRow:last-child { border-bottom: 0; }
+.orderRow strong { color: #171d2b; font-size: 13px; font-variant-numeric: tabular-nums; }
+
+.status { width: fit-content; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+.ready { background: #fbf0d9; color: #d98a06; }
+.shipping { background: #e9f0ff; color: #2f6bff; }
+.done { background: #e3f6ec; color: #12a150; }
+
+/* 오늘 처리할 일 (액션센터) */
+.critChip {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fce8e6;
+  color: #e4453a;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* 일 배치 — 개별 발송 위에 놓아 "전체 실행"임을 드러낸다 */
+.batchBox {
+  padding: 12px; margin-bottom: 11px;
+  border: 1px solid #dbe2f0; border-radius: 9px;
+  background: linear-gradient(180deg, #f8faff 0%, #f4f7fd 100%);
+}
+.batchRow { display: flex; flex-direction: column; gap: 9px; }
+.batchRowSub { margin-top: 13px; padding-top: 12px; border-top: 1px solid #e4e9f4; }
+.batchHead { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.batchHead strong { font-size: 13px; color: #1b2434; letter-spacing: -0.2px; }
+.batchRun, .batchReset {
+  padding: 7px 13px; border-radius: 6px; font-size: 12px; font-weight: 600;
+  cursor: pointer; white-space: nowrap; border: 1px solid transparent;
+  transition: background 0.15s, color 0.15s;
+}
+.batchRun { background: #2f6bea; color: #fff; box-shadow: 0 1px 2px rgba(47,107,234,0.25); }
+.batchRun:hover:not(:disabled) { background: #2559d6; }
+.batchReset { background: #fff; color: #6b7280; border-color: #d9dfec; }
+.batchReset:hover:not(:disabled) { background: #eef1f8; color: #374151; }
+.batchRun:disabled, .batchReset:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+
+/* 단계 도트 라인 — 뼈대를 미리 깔고 진행에 따라 왼쪽부터 채워진다 */
+.dots { list-style: none; margin: 0; padding: 0; display: flex; }
+.dot {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  position: relative; min-width: 0;
+}
+/* 도트 사이 연결선 — 완료되면 함께 채워진다 */
+.dot:not(:last-child)::after {
+  content: ""; position: absolute; top: 7px; left: calc(50% + 10px); right: calc(-50% + 10px);
+  height: 2px; background: #e2e7f2; border-radius: 1px; transition: background 0.3s;
+}
+.dotMark {
+  width: 16px; height: 16px; border-radius: 50%; z-index: 1;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 700; color: #fff;
+  background: #fff; border: 2px solid #dde3ef;
+  transition: background 0.25s, border-color 0.25s;
+}
+.dotLabel {
+  font-size: 10px; color: #a8b0c2; text-align: center; letter-spacing: -0.3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+}
+.dotResult {
+  font-size: 9.5px; color: #12a150; font-weight: 700; text-align: center;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+  min-height: 12px;   /* 결과가 없어도 자리를 잡아 실행 중 높이가 튀지 않는다 */
+}
+
+.st_done .dotMark { background: #12a150; border-color: #12a150; }
+.st_done .dotLabel { color: #4a5568; font-weight: 600; }
+.st_done:not(:last-child)::after { background: #12a150; }
+
+.st_running .dotMark {
+  border-color: #2f6bea; border-right-color: transparent;
+  animation: stepSpin 0.7s linear infinite;
+}
+.st_running .dotLabel { color: #2f6bea; font-weight: 700; }
+
+.st_failed .dotMark { background: #e4453a; border-color: #e4453a; }
+.st_failed .dotLabel { color: #e4453a; font-weight: 700; }
+.st_failed .dotResult { color: #e4453a; }
+
+@keyframes stepSpin { to { transform: rotate(360deg); } }
+
+.actionList { display: flex; flex-direction: column; gap: 9px; }
+
+/* 높이를 못박는다 — 대상 수가 자리표시자에서 숫자로 바뀌거나 실행 결과 문구가 붙어도
+   항목 높이가 변하면 아래 항목들이 통째로 밀린다. */
+.actionItem {
+  display: flex;
+  min-height: 68px;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 0;
+  border-bottom: 1px solid #e5e8ef;
+}
+
+.actionItem:last-child { border-bottom: 0; }
+
+.actionIcon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  place-items: center;
+  border-radius: 9px;
+}
+
+.crit { background: #fce8e6; color: #e4453a; }
+.warn { background: #fbf0d9; color: #d98a06; }
+.info { background: #e9f0ff; color: #2f6bff; }
+
+.actionInfo { min-width: 0; flex: 1; }
+.actionInfo strong { display: block; font-size: 13px; }
+.actionInfo small { display: block; margin-top: 2px; color: #626d80; font-size: 11.5px; }
+
+.actionResult {
+  display: block;
+  margin-top: 5px;
+  color: #12a150;
+  font-size: 10.5px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.actionSide {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+/* 자리표시자(빈 칸)와 실제 숫자의 폭이 달라 버튼이 좌우로 흔들리는 것을 막는다 */
+.actionCount { min-width: 34px; font-size: 18px; font-weight: 750; font-variant-numeric: tabular-nums; text-align: right; }
+.countCrit { color: #e4453a; }
+
+.runBtn {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 8px;
+  background: #2f6bff;
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.runBtn:hover { background: #2559d6; }
+
+.runBtn:disabled {
+  background: #fbfcfe;
+  border: 1px solid #e5e8ef;
+  color: #8b94a5;
+  cursor: not-allowed;
+}
+
+/* 빠른 업무 */
+.quickLinks { display: flex; flex-direction: column; gap: 9px; }
+
+.quickLink {
+  display: flex;
+  min-height: 54px;
+  align-items: center;
+  gap: 11px;
+  padding: 8px 0;
+  border-bottom: 1px solid #e5e8ef;
+  color: #171d2b;
+  text-decoration: none;
+}
+
+.quickLink:last-child { border-bottom: 0; }
+.quickLink:hover { background: #fbfcfe; }
+.quickLink > span { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 9px; background: #e9f0ff; color: #2f6bff; }
+.quickLink div { min-width: 0; flex: 1; }
+.quickLink strong, .quickLink small { display: block; }
+.quickLink strong { font-size: 12.5px; }
+.quickLink small { margin-top: 3px; overflow: hidden; color: #8b94a5; font-size: 10.5px; text-overflow: ellipsis; white-space: nowrap; }
+.quickLink > svg { color: #8b94a5; }
+
+@media (max-width: 1080px) {
+  .railGrid { grid-template-columns: 1fr; min-height: 0; }
+  .subRow, .subRow2 { grid-template-columns: 1fr; }
+  .mainCol { padding-left: 20px; padding-right: 20px; }
+  .railCol { padding: 0 20px; border-left: 0; border-top: 1px solid #e5e8ef; }
+  .fKpis { grid-template-columns: repeat(2, 1fr); }
+  .fKpis .fCell:nth-child(3) { border-left: 0; }
+  .subRow > .sec + .sec, .subRow2 > .sec + .sec { border-left: 0; border-top: 1px solid #e5e8ef; }
+}
+
+/* 세로가 짧은 화면(≤820px): 고정 높이를 풀고 페이지 스크롤로 전환 — 잘림 방지 */
+@media (max-height: 820px) {
+  .railGrid { height: auto; min-height: calc(100vh - 62px); }
+}

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kopang.app.domain.notification.NotificationMapper">
+
+    <select id="findByUserId" resultType="com.kopang.app.domain.notification.NotificationDTO">
+        SELECT 
+            notification_id AS notificationId,
+            user_id AS userId,
+            type AS type,
+            message AS message,
+            ref_id AS refId,
+            is_read AS isRead,
+            clicked AS clicked,
+            created_at AS createdAt
+        FROM notifications
+        WHERE user_id = #{userId}
+        ORDER BY notification_id DESC
+    </select>
+
+    <select id="countUnreadByUserId" resultType="int">
+        SELECT COUNT(*)
+        FROM notifications
+        WHERE user_id = #{userId} AND is_read = false
+    </select>
+
+    <select id="findById" resultType="com.kopang.app.domain.notification.NotificationDTO">
+        SELECT 
+            notification_id AS notificationId,
+            user_id AS userId,
+            type AS type,
+            message AS message,
+            ref_id AS refId,
+            is_read AS isRead,
+            clicked AS clicked,
+            created_at AS createdAt
+        FROM notifications
+        WHERE notification_id = #{notificationId}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="notificationId">
+        INSERT INTO notifications (user_id, type, message, ref_id, is_read, clicked)
+        VALUES (#{userId}, #{type}, #{message}, #{refId}, COALESCE(#{isRead}, false), COALESCE(#{clicked}, false))
+    </insert>
+
+    <insert id="insertNotification" useGeneratedKeys="true" keyProperty="notificationId">
+        INSERT INTO notifications (user_id, type, message, ref_id, is_read, clicked)
+        VALUES (#{userId}, #{type}, #{message}, #{refId}, COALESCE(#{isRead}, false), COALESCE(#{clicked}, false))
+    </insert>
+
+    <update id="markAsRead">
+        UPDATE notifications
+        SET is_read = true
+        WHERE notification_id = #{notificationId}
+    </update>
+
+    <update id="markAsClicked">
+        UPDATE notifications
+        SET clicked = true, is_read = true
+        WHERE notification_id = #{notificationId}
+    </update>
+
+</mapper>

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kopang.app.domain.admin.PurchaseStatsMapper">
+
+    <select id="findSummary"
+            resultType="com.kopang.app.domain.admin.PurchaseStatsResponse">
+        WITH valid_orders AS (
+            SELECT order_id, user_id, total_price, ordered_at
+            FROM orders
+            WHERE payment_status = 'PAID'
+              AND order_status NOT IN ('CANCELLED', 'RETURNED')
+        ),
+        month_orders AS (
+            SELECT *
+            FROM valid_orders
+            WHERE ordered_at &gt;= DATE_TRUNC('month', CURRENT_DATE)
+        ),
+        customer_orders AS (
+            SELECT user_id, COUNT(*) AS order_count
+            FROM valid_orders
+            GROUP BY user_id
+        )
+        SELECT
+            COALESCE(SUM(month_orders.total_price), 0) AS monthSales,
+            COUNT(month_orders.order_id) AS orderCount,
+            COALESCE(AVG(month_orders.total_price), 0)::bigint AS averageOrderValue,
+            COALESCE(
+                ROUND(
+                    COUNT(DISTINCT month_orders.user_id)
+                        FILTER (WHERE customer_orders.order_count &gt;= 2)
+                    * 100.0
+                    / NULLIF(COUNT(DISTINCT month_orders.user_id), 0),
+                    1
+                ),
+                0
+            ) AS repeatPurchaseRate
+        FROM month_orders
+        LEFT JOIN customer_orders ON customer_orders.user_id = month_orders.user_id
+    </select>
+
+    <select id="findMonthlySales"
+            resultType="com.kopang.app.domain.admin.PurchaseStatsResponse$MonthlySales">
+        WITH months AS (
+            SELECT GENERATE_SERIES(
+                DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '5 months',
+                DATE_TRUNC('month', CURRENT_DATE),
+                INTERVAL '1 month'
+            ) AS month_start
+        ),
+        sales AS (
+            SELECT
+                DATE_TRUNC('month', ordered_at) AS month_start,
+                SUM(total_price) AS amount
+            FROM orders
+            WHERE payment_status = 'PAID'
+              AND order_status NOT IN ('CANCELLED', 'RETURNED')
+              AND ordered_at &gt;= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '5 months'
+            GROUP BY DATE_TRUNC('month', ordered_at)
+        )
+        SELECT
+            TO_CHAR(months.month_start, 'YYYY-MM') AS month,
+            COALESCE(sales.amount, 0) AS amount
+        FROM months
+        LEFT JOIN sales ON sales.month_start = months.month_start
+        ORDER BY months.month_start
+    </select>
+
+    <select id="findTopProducts"
+            resultType="com.kopang.app.domain.admin.PurchaseStatsResponse$TopProduct">
+        WITH valid_purchase AS (
+            SELECT o.user_id, o.order_id, oi.product_id, oi.quantity
+            FROM orders o
+            JOIN orders_item oi ON oi.order_id = o.order_id
+            WHERE o.payment_status = 'PAID'
+              AND o.order_status NOT IN ('CANCELLED', 'RETURNED')
+        ),
+        buyer_product AS (
+            SELECT
+                user_id,
+                product_id,
+                COUNT(DISTINCT order_id) AS order_count
+            FROM valid_purchase
+            GROUP BY user_id, product_id
+        )
+        SELECT
+            p.product_id AS productId,
+            p.name,
+            SUM(vp.quantity) AS quantity,
+            COALESCE(
+                ROUND(
+                    COUNT(DISTINCT bp.user_id)
+                        FILTER (WHERE bp.order_count &gt;= 2)
+                    * 100.0
+                    / NULLIF(COUNT(DISTINCT bp.user_id), 0),
+                    1
+                ),
+                0
+            ) AS repeatPurchaseRate
+        FROM valid_purchase vp
+        JOIN products p ON p.product_id = vp.product_id
+        JOIN buyer_product bp
+          ON bp.user_id = vp.user_id
+         AND bp.product_id = vp.product_id
+        GROUP BY p.product_id, p.name
+        ORDER BY quantity DESC, p.product_id
+        LIMIT 10
+    </select>
+
+</mapper>

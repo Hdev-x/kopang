@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kopang.app.domain.product.ProductMapper">
+
+    <sql id="productSearchCondition">
+        <where>
+            <if test="categoryId != null">
+                AND products.category_id IN (
+                    WITH RECURSIVE subcategories AS (
+                        SELECT category_id FROM categories WHERE category_id = #{categoryId}
+                        UNION ALL
+                        SELECT c.category_id FROM categories c
+                        INNER JOIN subcategories s ON c.parent_id = s.category_id
+                    )
+                    SELECT category_id FROM subcategories
+                )
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND products.name LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+    </sql>
+
+    <select id="findProducts" resultType="com.kopang.app.domain.product.ProductDTO">
+        SELECT 
+            products.product_id,
+            products.category_id,
+            products.name,
+            products.description,
+            products.price,
+            products.discount_price,
+            products.stock,
+            products.image_url,
+            products.status,
+            products.created_at
+        FROM products
+        LEFT JOIN (
+            SELECT oi.product_id, SUM(oi.quantity) as popular_score
+            FROM orders_item oi
+            INNER JOIN orders o ON oi.order_id = o.order_id
+            WHERE o.payment_status = 'PAID'
+              AND (o.order_status IS NULL OR o.order_status != 'CANCELLED')
+            GROUP BY oi.product_id
+        ) pop ON products.product_id = pop.product_id
+        <include refid="productSearchCondition" />
+        ORDER BY
+        <choose>
+            <when test="sort == 'priceAsc'">
+                products.price ASC, products.product_id DESC
+            </when>
+            <when test="sort == 'priceDesc'">
+                products.price DESC, products.product_id DESC
+            </when>
+            <when test="sort == 'latest'">
+                products.product_id DESC
+            </when>
+            <when test="sort == 'discount'">
+                (CASE WHEN products.discount_price > 0 AND products.discount_price &lt; products.price
+                      THEN (products.price - products.discount_price) * 100.0 / products.price
+                      ELSE 0 END) DESC, products.product_id DESC
+            </when>
+            <otherwise>
+                COALESCE(pop.popular_score, 0) DESC, products.product_id DESC
+            </otherwise>
+        </choose>
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countProducts" resultType="long">
+        SELECT COUNT(*)
+        FROM products
+        <include refid="productSearchCondition" />
+    </select>
+
+    <select id="findById" resultType="com.kopang.app.domain.product.ProductDTO">
+        SELECT 
+            product_id,
+            category_id,
+            name,
+            description,
+            price,
+            discount_price,
+            stock,
+            image_url,
+            status,
+            created_at
+        FROM products
+        WHERE product_id = #{productId}
+    </select>
+
+    <update id="updateStock">
+        UPDATE products
+        SET stock = #{stock}
+        WHERE product_id = #{productId}
+    </update>
+
+    <insert id="insertProduct" useGeneratedKeys="true" keyProperty="productId">
+        INSERT INTO products (
+            category_id,
+            name,
+            description,
+            price,
+            discount_price,
+            stock,
+            image_url,
+            status,
+            created_at
+        ) VALUES (
+            #{categoryId},
+            #{name},
+            #{description},
+            #{price},
+            #{discountPrice},
+            #{stock},
+            #{imageUrl},
+            COALESCE(#{status}, 'ACTIVE'),
+            COALESCE(#{createdAt}, CURRENT_TIMESTAMP)
+        )
+    </insert>
+
+    <update id="updateProduct">
+        UPDATE products
+        SET
+            category_id = #{categoryId},
+            name = #{name},
+            description = #{description},
+            price = #{price},
+            discount_price = #{discountPrice},
+            stock = #{stock},
+            image_url = #{imageUrl},
+            status = COALESCE(#{status}, 'ACTIVE')
+        WHERE product_id = #{productId}
+    </update>
+
+    <delete id="deleteProduct">
+        DELETE FROM products
+        WHERE product_id = #{productId}
+    </delete>
+
+    <insert id="insertProductImage">
+        INSERT INTO product_images (product_id, url)
+        VALUES (#{productId}, #{url})
+    </insert>
+
+    <select id="findImageUrlsByProductId" resultType="string">
+        SELECT url
+        FROM product_images
+        WHERE product_id = #{productId}
+        ORDER BY image_id ASC
+    </select>
+
+    <delete id="deleteProductImagesByProductId">
+        DELETE FROM product_images
+        WHERE product_id = #{productId}
+    </delete>
+
+    <select id="findSimilarProducts" resultType="com.kopang.app.domain.product.ProductDTO">
+        SELECT 
+            product_id,
+            category_id,
+            name,
+            description,
+            price,
+            discount_price,
+            stock,
+            image_url,
+            status,
+            created_at
+        FROM products
+        WHERE category_id = #{categoryId}
+          AND product_id != #{productId}
+        ORDER BY ABS(price - #{price}) ASC, product_id DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="findFrequentlyBoughtTogether" resultType="com.kopang.app.domain.product.ProductDTO">
+        SELECT p.product_id, p.category_id, p.name, p.description, p.price, p.discount_price, p.stock, p.image_url, p.status, p.created_at
+        FROM orders_item oi1
+        INNER JOIN orders_item oi2 ON oi1.order_id = oi2.order_id
+        INNER JOIN products p ON oi2.product_id = p.product_id
+        WHERE oi1.product_id = #{productId}
+          AND oi2.product_id != #{productId}
+        GROUP BY p.product_id, p.category_id, p.name, p.description, p.price, p.discount_price, p.stock, p.image_url, p.status, p.created_at
+        ORDER BY COUNT(oi2.order_item_id) DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="findRelatedCategoryProducts" resultType="com.kopang.app.domain.product.ProductDTO">
+        SELECT p.product_id, p.category_id, p.name, p.description, p.price, p.discount_price, p.stock, p.image_url, p.status, p.created_at
+        FROM products p
+        INNER JOIN categories c ON p.category_id = c.category_id
+        WHERE p.product_id != #{productId}
+          AND (
+            c.parent_id = (SELECT parent_id FROM categories WHERE category_id = #{categoryId} AND parent_id IS NOT NULL)
+            OR (SELECT parent_id FROM categories WHERE category_id = #{categoryId}) IS NULL
+          )
+        ORDER BY p.product_id DESC
+        LIMIT #{limit}
+    </select>
+
+</mapper>

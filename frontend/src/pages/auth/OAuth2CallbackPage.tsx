@@ -1,0 +1,54 @@
+import { useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { login as authLogin, type AuthUser } from "../../lib/auth";
+
+export function OAuth2CallbackPage() {
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+
+    useEffect(() => {
+        const accessToken = searchParams.get("accessToken");
+        const refreshToken = searchParams.get("refreshToken");
+        const nameRaw = searchParams.get("name");
+        const emailParam = searchParams.get("email");
+        const roleParam = searchParams.get("role");
+        const hasPhone = searchParams.get("hasPhone") === "true";
+        const role: AuthUser["role"] = roleParam === "ADMIN" ? "ADMIN" : "USER";
+
+        if (accessToken && refreshToken && nameRaw) {
+            const name = decodeURIComponent(nameRaw);
+            const email = emailParam ? decodeURIComponent(emailParam) : undefined;
+            // 자체 세션 스토리지에 로그인 정보 저장
+            authLogin({ name, email, role }, accessToken, refreshToken);
+            alert(`${name}님, 소셜 로그인으로 반갑습니다!`);
+            const preferredView = localStorage.getItem("kopang_login_view") || sessionStorage.getItem("kopang_login_view");
+            localStorage.removeItem("kopang_login_view");
+            sessionStorage.removeItem("kopang_login_view");
+            const isWeb = preferredView === "web" || document.referrer.includes("/web") || window.innerWidth > 768;
+
+            if (hasPhone) {
+                navigate(isWeb ? "/web" : "/");
+            } else {
+                navigate(isWeb ? "/web/add-phone" : "/add-phone");
+            }
+        } else {
+            alert("소셜 로그인 인증에 실패했습니다.");
+            const isWeb = window.location.pathname.startsWith("/web") || window.innerWidth > 768;
+            navigate(isWeb ? "/web/login" : "/login");
+        }
+    }, [searchParams, navigate]);
+
+    return (
+        <div style={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh",
+            color: "var(--color-text-muted)"
+        }}>
+            <h2>소셜 로그인 완료 처리 중...</h2>
+            <p>잠시만 기다려 주세요.</p>
+        </div>
+    );
+}

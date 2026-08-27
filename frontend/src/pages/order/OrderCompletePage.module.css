@@ -1,0 +1,96 @@
+.wrap {
+  text-align: center;
+  padding: var(--space-8) 0;
+}
+
+.icon {
+  color: var(--color-success);
+  margin-bottom: var(--space-4);
+}
+
+.title {
+  font-size: var(--font-xl);
+  font-weight: var(--weight-bold);
+}
+
+.orderNo {
+  color: var(--color-text-muted);
+  font-size: var(--font-sm);
+  margin: var(--space-2) 0 var(--space-6);
+}
+
+.survey {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-5) var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.surveyLabel {
+  font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
+  margin-bottom: var(--space-3);
+}
+
+.stars {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+}
+
+.starBtn {
+  background: none;
+  border: none;
+  padding: var(--space-1);
+  cursor: pointer;
+  line-height: 0;
+}
+
+.surveyBtn {
+  width: 100%;
+}
+
+.surveyThanks {
+  font-size: var(--font-sm);
+  color: var(--color-text-muted);
+  padding: var(--space-2) 0;
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.btn {
+  flex: 1;
+}
+
+.btn.btn {
+  border: 1px solid var(--color-border);
+}
+
+/* 만족도 사유 칩 (선택) */
+.reasonRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: center;
+  margin-bottom: var(--space-3);
+}
+
+.reasonChip {
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--color-border);
+  background: none;
+  font-size: var(--font-sm);
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.reasonChipOn {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  font-weight: var(--weight-bold);
+}

@@ -1,0 +1,9 @@
+# 모델 바이너리 (train_churn.py 로 재생성 가능 → git 제외)
+churn_model.pkl
+
+# 파이썬 캐시
+__pycache__/
+*.pyc
+
+# 시드 생성물 (README 참고 — 대용량)
+seed_events.sql

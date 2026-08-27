@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kopang.app.domain.churn.RepurchaseMapper">
+
+    <!-- 재구매 적기 대상 : 평균 주문간격의 1.5~2배가 지난 회원 (2건+ / 최근 7일 REBUY 미발송) -->
+    <select id="findRepurchaseTargets" resultType="long">
+        WITH stat AS (
+            SELECT
+                user_id,
+                MAX(ordered_at) AS last_at,
+                (MAX(ordered_at) - MIN(ordered_at)) / NULLIF(COUNT(*) - 1, 0) AS avg_gap
+            FROM orders
+            WHERE order_status NOT IN ('CANCELLED', 'RETURNED')
+            GROUP BY user_id
+            HAVING COUNT(*) &gt;= 2
+        )
+        SELECT s.user_id
+        FROM stat s
+        WHERE NOW() - s.last_at &gt;= s.avg_gap * 1.5
+            AND NOW() - s.last_at &lt; s.avg_gap * 2
+            AND NOT EXISTS (
+                SELECT 1 FROM notifications nt
+                WHERE nt.user_id = s.user_id
+                    AND nt.type = 'REBUY'
+                    AND nt.created_at &gt; NOW() - INTERVAL '7 days'
+            )
+        ORDER BY s.user_id
+        LIMIT #{limit}
+    </select>
+
+    <!-- REBUY 알림 bulk insert (is_read/clicked 기본 false) -->
+    <insert id="insertRebuyNotifications">
+        INSERT INTO notifications (user_id, type, message, ref_id, is_read, clicked)
+        VALUES
+        <foreach collection="list" item="i" separator=",">
+            (#{i.userId}, #{i.type}, #{i.message}, #{i.refId}, false, false)
+        </foreach>
+    </insert>
+
+</mapper>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kopang.app.domain.churn.ChurnBlindSpotMapper">
+
+    <select id="findTargets"
+            resultType="com.kopang.app.domain.churn.ChurnBlindSpotTarget">
+        WITH latest_ml AS (
+            SELECT DISTINCT ON (user_id)
+                churn_score_id,
+                user_id,
+                score,
+                risk_level,
+                scored_at
+            FROM churn_score
+            WHERE source = 'ML'
+              <!-- 다른 위험군 조회와 같은 유효기간. 없으면 오래된 ML 판정만 남은 회원이
+                   계속 사각지대 대상으로 뽑혀 추천 알림을 반복 수신한다. -->
+              AND scored_at &gt; NOW() - INTERVAL '7 days'
+              AND scored_at &lt;= NOW()
+            ORDER BY user_id, scored_at DESC, churn_score_id DESC
+        )
+        SELECT
+            ml.user_id AS userId,
+            ml.churn_score_id AS churnScoreId,
+            ml.score
+        FROM latest_ml ml
+        JOIN users u ON u.user_id = ml.user_id
+        WHERE ml.risk_level = 'HIGH'
+          AND u.status = 'ACTIVE'
+          AND u.role = 'ROLE_USER'
+          AND NOT EXISTS (
+              SELECT 1
+              FROM churn_score rule_score
+              WHERE rule_score.user_id = ml.user_id
+                AND rule_score.source = 'RULE'
+                <!-- "룰이 못 잡은 사각지대"의 기준도 7일 창으로 통일한다.
+                     당일만 보면 어제 룰에 걸린 회원이 오늘 사각지대로 잘못 분류된다. -->
+                AND rule_score.scored_at &gt; NOW() - INTERVAL '7 days'
+                AND rule_score.scored_at &lt;= NOW()
+                AND rule_score.risk_type IS NOT NULL
+          )
+          AND NOT EXISTS (
+              SELECT 1
+              FROM retention_intervention intervention
+              WHERE intervention.user_id = ml.user_id
+                AND intervention.created_at &gt; NOW() - INTERVAL '7 days'
+          )
+        ORDER BY ml.score DESC, ml.user_id
+        LIMIT #{limit}
+    </select>
+
+</mapper>

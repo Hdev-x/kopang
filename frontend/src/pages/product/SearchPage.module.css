@@ -1,0 +1,164 @@
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--gray-100);
+  border-radius: var(--radius-full);
+  margin-bottom: var(--space-4);
+}
+
+.icon {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.input {
+  flex: 1;
+  border: none;
+  background: none;
+  outline: none;
+  font-size: var(--font-md);
+  color: var(--color-text);
+}
+
+.clear {
+  display: flex;
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+/* 자동완성 */
+.suggest {
+  list-style: none;
+}
+
+.suggestItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-3) var(--space-1);
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--font-md);
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.suggestIcon {
+  color: var(--color-text-muted);
+}
+
+/* 최근 검색어 */
+.recentHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-3);
+  font-weight: var(--weight-bold);
+}
+
+.clearAll {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: var(--font-sm);
+  cursor: pointer;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0 var(--space-3);
+  background: var(--gray-100);
+  border: none;
+  border-radius: var(--radius-full);
+  font-size: var(--font-sm);
+  color: var(--color-text);
+  height: 32px;
+}
+
+.chipText {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: var(--font-sm);
+  color: var(--color-text);
+  cursor: pointer;
+  height: 100%;
+}
+
+.chipDelete {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0;
+  margin-left: var(--space-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  line-height: 1;
+}
+
+.chipDelete:hover {
+  color: var(--color-error, #f44336);
+}
+
+.empty {
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: var(--space-6) 0;
+}
+
+/* 자동완성 추천 칩 */
+.suggestRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.suggestChip {
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  font-size: var(--font-sm);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+/* 결과 */
+.resultHead {
+  margin-bottom: var(--space-3);
+  font-size: var(--font-sm);
+  color: var(--color-text-muted);
+}
+
+.resultHead b {
+  color: var(--color-text);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4) var(--space-3);
+}

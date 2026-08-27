@@ -16,6 +16,10 @@ Thumbs.db
 .env.*
 application-local.yml
 application-local.yaml
+application-local.properties
+application-dev.yml
+application-dev.yaml
+application-dev.properties
 application-secret*.yml
 application-secret*.yaml
 *.key
@@ -51,3 +55,24 @@ venv/
 env/
 *.egg-info/
 .ipynb_checkpoints/
+
+# ===== 자격증명 / 비공개 자료 (커밋 금지) =====
+*credentials*.csv
+docs/kopang-app_credentials.csv
+
+# ===== 회의 자료 (커밋 안 함) =====
+회의/
+
+# 시드 자동생성물 (재생성: ml/seed_db.py)
+seed_events.sql
+
+# 아카이브 폴더 (로컬 보관용, 커밋 제외)
+_/
+
+# 개인 자료 폴더 (학습노트·문서 복사본 등, 로컬 보관용, 커밋 제외)
+JH/
+
+# 클로드
+CLAUDE.md
+Joe/
+docs/presentation_script.md

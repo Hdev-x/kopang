@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kopang.app.domain.churn.WishlistAlertMapper">
+
+    <!-- 찜한 상품이 현재 할인 중인 대상 (최근 7일 동일 상품 WISHLIST 미발송) -->
+    <select id="findDiscountedWishlistTargets"
+            resultType="com.kopang.app.domain.churn.WishlistAlertTarget">
+        SELECT
+            w.user_id    AS userId,
+            p.product_id AS productId,
+            p.name       AS productName
+        FROM wishlist w
+        JOIN products p ON p.product_id = w.product_id
+        WHERE p.discount_price IS NOT NULL
+            AND p.discount_price &lt; p.price
+            AND NOT EXISTS (
+                SELECT 1 FROM notifications nt
+                WHERE nt.user_id = w.user_id
+                    AND nt.type = 'WISHLIST'
+                    AND nt.ref_id = p.product_id
+                    AND nt.created_at &gt; NOW() - INTERVAL '7 days'
+            )
+        ORDER BY w.user_id
+        LIMIT #{limit}
+    </select>
+
+    <!-- WISHLIST 알림 bulk insert (is_read/clicked 기본 false) -->
+    <insert id="insertWishlistNotifications">
+        INSERT INTO notifications (user_id, type, message, ref_id, is_read, clicked)
+        VALUES
+        <foreach collection="list" item="i" separator=",">
+            (#{i.userId}, #{i.type}, #{i.message}, #{i.refId}, false, false)
+        </foreach>
+    </insert>
+
+</mapper>

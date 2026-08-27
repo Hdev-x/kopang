@@ -1,0 +1,154 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
+import { getCategories } from "../../api/categories";
+import { getProducts } from "../../api/products";
+import type { Category } from "../../types/category";
+import type { Product } from "../../types/product";
+import { WebLayout } from "../components/WebLayout";
+import { WebProductCard } from "../components/WebProductCard";
+import styles from "./WebProductListPage.module.css";
+
+const SORT_OPTIONS = [{ value: "popular", label: "인기순" }, { value: "latest", label: "최신순" }, { value: "priceAsc", label: "낮은 가격순" }, { value: "priceDesc", label: "높은 가격순" }];
+
+export function WebProductListPage() {
+  const [params, setParams] = useSearchParams();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalElements, setTotalElements] = useState(0);
+  const [editorialIndex, setEditorialIndex] = useState(0);
+  const [expandedCategoryId, setExpandedCategoryId] = useState<number | null | "auto">("auto");
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState(false);
+  const [discountOnly, setDiscountOnly] = useState(false);
+  const [inStockOnly, setInStockOnly] = useState(false);
+  const categoryId = Number(params.get("cat")) || undefined;
+  const sort = params.get("sort") ?? "popular";
+
+  const observerTarget = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => { getCategories().then(setCategories).catch(() => setCategories([])); }, []);
+
+  // 카테고리나 정렬 변경 시 0페이지부터 다시 불러오기
+  useEffect(() => {
+    setLoading(true);
+    setPage(0);
+    setProducts([]);
+    setHasMore(true);
+    getProducts(categoryId, 0, 20, undefined, sort)
+      .then((res) => {
+        const items = res.content || [];
+        setProducts(items);
+        setTotalElements(res.totalElements || 0);
+        const isLast = res.last ?? ((res.number + 1) >= res.totalPages || items.length === 0);
+        setHasMore(!isLast);
+        setError(false);
+      })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, [categoryId, sort]);
+
+  // 무한 스크롤: 다음 페이지 로드
+  useEffect(() => {
+    if (!hasMore || loading) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore) {
+          setLoadingMore(true);
+          const nextPage = page + 1;
+          getProducts(categoryId, nextPage, 20, undefined, sort)
+            .then((res) => {
+              const newProducts = res.content || [];
+              setProducts((prev) => {
+                const existingIds = new Set(prev.map((p) => p.id));
+                const uniqueNew = newProducts.filter((p) => !existingIds.has(p.id));
+                return [...prev, ...uniqueNew];
+              });
+              setPage(nextPage);
+              const isLast = res.last ?? ((res.number + 1) >= res.totalPages || newProducts.length === 0);
+              setHasMore(!isLast);
+            })
+            .catch((err) => console.error("추가 상품 로딩 실패:", err))
+            .finally(() => setLoadingMore(false));
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [hasMore, loading, loadingMore, page, categoryId, sort]);
+
+  const flatCategories = useMemo(() => flattenCategories(categories), [categories]);
+  const activeCategory = flatCategories.find((category) => category.id === categoryId);
+  const categoryPath = useMemo(() => buildCategoryPath(flatCategories, categoryId), [flatCategories, categoryId]);
+  const pageTitle = activeCategory?.name ?? "전체 카테고리";
+  const deals = products.filter((product) => Boolean(product.discountRate)).slice(0, 6);
+  const editorialProducts = products.length > 0 ? Array.from({ length: Math.min(3, products.length) }, (_, offset) => products[(editorialIndex + offset) % products.length]) : [];
+
+  const updateParam = (key: "cat" | "sort", value?: string) => { const next = new URLSearchParams(params); if (value) next.set(key, value); else next.delete(key); setParams(next); };
+  const moveEditorial = (direction: number) => { if (products.length > 0) setEditorialIndex((current) => (current + direction + products.length) % products.length); };
+  const visibleProducts = products.filter((product) => (!discountOnly || Boolean(product.discountRate)) && (!inStockOnly || (product.stock ?? 0) > 0));
+
+  return <WebLayout><div className={styles.pageLayout}>
+    <aside className={styles.sidebar}><h1>{pageTitle}</h1><Link to="/web/products" className={!categoryId ? styles.active : ""}>전체 상품</Link>{categories.map((category) => <CategoryBranch key={category.id} category={category} activeId={categoryId} expanded={expandedCategoryId === category.id || (expandedCategoryId === "auto" && containsCategory(category.children ?? [], categoryId))} onToggle={() => setExpandedCategoryId((current) => current === category.id ? null : category.id)} />)}</aside>
+    <main className={styles.content}>
+      <nav className={styles.breadcrumb} aria-label="카테고리 경로"><Link to="/web/products">전체</Link>{categoryPath.map((category) => <span key={category.id}><ChevronRight size={14} /><Link to={`/web/products?cat=${category.id}`} aria-current={category.id === categoryId ? "page" : undefined}>{category.name}</Link></span>)}</nav>
+      <section className={styles.editorial}><header><h2>{pageTitle}</h2><span>상품과 브랜드를 새로운 테마로 만나보세요.</span></header><div className={styles.editorialGrid}>{editorialProducts.map((product, index) => <Link key={`${product.id}-${index}`} to={`/web/products/${product.id}`}><img src={product.imageUrl} alt="" /><div><span>CURATION {index + 1}</span><h3>{["디테일로 완성하는 일상", "나에게 꼭 맞는 상품", "쉽게 시작하는 새로운 선택"][index]}</h3><p>{product.name}</p></div></Link>)}</div><div className={styles.carouselButtons}><button type="button" onClick={() => moveEditorial(-1)} aria-label="이전 기획전"><ChevronLeft /></button><button type="button" onClick={() => moveEditorial(1)} aria-label="다음 기획전"><ChevronRight /></button></div></section>
+
+      <section className={styles.dealSection}><header><div><h2>#지금은 할인 중</h2><p>현재 할인율이 적용된 상품이에요.</p></div><Link to="/web/products?sort=discount">더보기 <ChevronRight size={17} /></Link></header>{deals.length > 0 ? <div className={styles.dealGrid}>{deals.map((product) => <WebProductCard key={product.id} product={product} />)}</div> : <div className={styles.status}>현재 표시할 할인 상품이 없어요.</div>}</section>
+
+      <section className={styles.allProducts}><header><div><h2>{pageTitle} 상품</h2><p>총 {(totalElements || visibleProducts.length).toLocaleString()}개 상품</p></div><select value={sort} onChange={(event) => updateParam("sort", event.target.value)} aria-label="상품 정렬">{SORT_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></header><div className={styles.filters}><button type="button" aria-pressed={discountOnly} onClick={() => setDiscountOnly((current) => !current)}>할인상품</button><button type="button" aria-pressed={inStockOnly} onClick={() => setInStockOnly((current) => !current)}>재고 있음</button></div>
+        {loading ? <div className={styles.status}>상품을 불러오는 중이에요.</div> : error ? <div className={styles.status}>상품을 불러오지 못했어요.</div> : visibleProducts.length === 0 ? <div className={styles.status}>조건에 맞는 상품이 없어요.</div> : (
+          <>
+            <div className={styles.productGrid}>{visibleProducts.map((product) => <WebProductCard key={product.id} product={product} />)}</div>
+            <div ref={observerTarget} style={{ height: "50px", marginTop: "24px", display: "flex", justifyContent: "center", alignItems: "center" }}>
+              {loadingMore && (
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--color-primary, #007bff)", fontSize: "14px", fontWeight: 600 }}>
+                  <Loader2 className="animate-spin" size={20} />
+                  <span>상품을 더 불러오는 중...</span>
+                </div>
+              )}
+              {!hasMore && visibleProducts.length > 0 && (
+                <p style={{ color: "#999", fontSize: "13px" }}>모든 상품을 불러왔어요.</p>
+              )}
+            </div>
+          </>
+        )}
+      </section>
+    </main>
+  </div></WebLayout>;
+}
+
+function CategoryBranch({ category, activeId, expanded, onToggle }: { category: Category; activeId?: number; expanded: boolean; onToggle: () => void }) {
+  const hasChildren = Boolean(category.children?.length);
+
+  return <div className={styles.categoryBranch}>{hasChildren ? <Link to={`/web/products?cat=${category.id}`} className={`${styles.categoryRow} ${category.id === activeId ? styles.active : ""}`} onClick={onToggle} aria-expanded={expanded}><span>{category.name}</span><ChevronDown className={expanded ? styles.expandedIcon : ""} size={15} /></Link> : <Link to={`/web/products?cat=${category.id}`} className={`${styles.categoryRow} ${category.id === activeId ? styles.active : ""}`}>{category.name}</Link>}{hasChildren && <div className={`${styles.categoryChildren} ${expanded ? styles.categoryChildrenOpen : ""}`} aria-hidden={!expanded}>{category.children?.slice(0, 8).map((child) => <Link key={child.id} to={`/web/products?cat=${child.id}`} tabIndex={expanded ? 0 : -1} className={child.id === activeId ? styles.active : ""}>{child.name}</Link>)}</div>}</div>;
+}
+
+function flattenCategories(categories: Category[]): Category[] { return categories.flatMap((category) => [category, ...flattenCategories(category.children ?? [])]); }
+
+function containsCategory(categories: Category[], activeId?: number): boolean { return Boolean(activeId && categories.some((category) => category.id === activeId || containsCategory(category.children ?? [], activeId))); }
+
+function buildCategoryPath(categories: Category[], activeId?: number): Category[] {
+  if (!activeId) return [];
+  const path: Category[] = [];
+  let current = categories.find((category) => category.id === activeId);
+  while (current) {
+    path.unshift(current);
+    current = current.parentId == null ? undefined : categories.find((category) => category.id === current?.parentId);
+  }
+  return path;
+}

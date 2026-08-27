@@ -1,0 +1,12 @@
+# 이탈 예측 ML — 파이썬 라이브러리 목록
+# 설치: python3 -m venv ml/.venv && ml/.venv/bin/pip install -r ml/requirements.txt
+
+# 학습
+scikit-learn==1.9.0
+pandas==3.0.5
+numpy==2.5.1
+joblib==1.5.3
+
+# 서빙
+fastapi==0.139.2
+uvicorn==0.51.0
