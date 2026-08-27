@@ -170,6 +170,13 @@
   font-size: var(--font-xs);
 }
 
+.error {
+  margin-top: calc(var(--space-2) * -1);
+  color: var(--color-danger);
+  font-size: var(--font-xs);
+  line-height: 1.5;
+}
+
 .terms {
   display: grid;
   gap: var(--space-3);
