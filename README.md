@@ -1,20 +1,41 @@
 # Kopang (코팡)
 
-고객 행동과 구매 패턴을 분석해 **이탈 위험을 감지하고, 맞춤 대응의 효과까지 측정**하는 풀스택 커머스 프로젝트입니다.
-(Kosmo163 Team Project · 4인)
+고객 행동과 구매 패턴을 분석해 **이탈 위험을 감지하고, 맞춤 대응의 효과까지 측정**하는 풀스택 커머스 프로젝트
 
-## 기술 스택
+- KOSMO 163기 팀 프로젝트 · 4인
+- 개발 기간: 2026.07.01 ~ 2026.07.31
+- 사용자 쇼핑몰(모바일·데스크톱) + 관리자 콘솔 + ML 이탈 예측 서빙
 
-- **Frontend**: React 19 · TypeScript 6 · Vite 8 · React Router · Axios
-  - 모바일 화면과 데스크톱 웹 화면
-- **Backend**: Java 21 · Spring Boot 3.5 · MyBatis · Spring Security
-  - JWT · OAuth2 · Mail · AWS S3
-- **Database**: PostgreSQL
-- **ML**: Python · FastAPI · pandas · numpy · scikit-learn
-  - Logistic Regression 기반 이탈 확률 예측
-- **추천**: MyBatis · PostgreSQL
-  - item 기반 협업 필터링과 인기 상품 fallback
-- **협업**: GitHub · Notion
+![이탈 방지 대시보드](docs/images/readme/01-churn-dashboard.png)
+
+## 화면
+
+### 사용자 쇼핑몰
+
+모바일 퍼스트로 만든 사용자 화면. 홈 · 카테고리별 상품 목록 · 상품 상세
+
+![모바일 홈·상품 목록·상품 상세](docs/images/readme/06-user-mobile.png)
+
+| PC 홈 | PC 상품 상세 |
+| --- | --- |
+| ![PC 홈](docs/images/readme/07-user-web-home.png) | ![PC 상품 상세](docs/images/readme/08-user-web-product-detail.png) |
+| 배너·퀵메뉴·카테고리, 멤버십 유도 상단 띠 | 가격·배송·판매자 정보, 장바구니·바로구매, 비슷한 상품 추천 |
+
+### 관리자 콘솔 · 이탈 방지
+
+예측 → 대응 → 효과 측정 순서
+
+| 통합 대시보드 | 위험 고객 상세 |
+| --- | --- |
+| ![통합 대시보드](docs/images/readme/02-integrated-dashboard.png) | ![위험 고객 상세](docs/images/readme/03-risk-customer-detail.png) |
+| 매출·주문 현황, 이탈 위험 분포, 일 배치 실행 | 룰·ML 위험 신호, 만족도, 추천 처치, 대응 이력 |
+
+| 대응 이력 | 대응 효과 리포트 |
+| --- | --- |
+| ![대응 이력](docs/images/readme/04-intervention-history.png) | ![효과 리포트](docs/images/readme/05-effect-report.png) |
+| 처치군·대조군 구분, 채널별 발송 결과 | 대조군 대비 순효과, 액션별·위험 유형별 효과, 쿠폰 ROI |
+
+> 화면의 수치는 시연용 생성 데이터 기준
 
 ## 핵심 — 감지부터 효과 측정까지
 
@@ -46,7 +67,7 @@
 | ⑦ | 접속 뜸 | 마지막 로그인 후 30일 초과 | 복귀 쿠폰과 알림 |
 | ⑧ | 구매액 감소 | 최근 30일 지출이 직전 30일의 50% 미만 | 대시보드·ML 피처 활용 |
 
-> 모든 감지 유형이 자동 발송으로 이어지는 것은 아닙니다. 중복 대응과 과잉 발송을 막기 위해 유형별 전용 대응 경로를 사용합니다.
+> 모든 감지 유형이 자동 발송으로 이어지는 것은 아님. 중복 대응과 과잉 발송을 막기 위해 유형별 전용 대응 경로 사용
 
 ## 대응 효과 측정
 
@@ -56,6 +77,26 @@
 - 하나의 주문은 가장 가까운 대응 하나에만 귀속
 - 처치군과 대조군의 전환율 차이로 순효과 확인
 
+## 기술 스택
+
+| 구분 | 내용 |
+| --- | --- |
+| Frontend | React 19, TypeScript 6, Vite 8, React Router, Axios |
+| Backend | Java 21, Spring Boot 3.5, MyBatis, Spring Security (JWT, OAuth2 Google·Naver), Spring Mail |
+| ML | Python, FastAPI, scikit-learn (Logistic Regression), pandas, numpy |
+| Database | PostgreSQL |
+| Infra·외부 | AWS S3 (이미지), 토스페이먼츠 (테스트 결제), Gemini API (챗봇), AWS EC2 (배포) |
+| 협업 | GitHub, Notion |
+
+## 팀 구성 및 담당
+
+| 구분 | 담당 | 범위 |
+| --- | --- | --- |
+| A 회원·멤버십 | [hat8532](https://github.com/hat8532) | 회원가입·로그인·OAuth, 마이페이지, 멤버십 가입·혜택·해지 |
+| B 커머스·검색 | [semingithub](https://github.com/semingithub) | 상품·카테고리·검색, 장바구니, 주문·결제, 쿠폰·포인트 |
+| C 이탈방지 | [Hdev-x](https://github.com/Hdev-x) | 위험 유형 8종 룰 감지, ML 점수화 연동, 대응 자동 발송, 처치·대조군 효과 측정, 관리자 이탈 대시보드·효과 리포트 |
+| 고객지원 | [kjs844-art](https://github.com/kjs844-art) | 상품 문의, 1:1 문의, 공지, FAQ, AI 챗봇 |
+
 ## 폴더 구조
 
 ```
@@ -63,28 +104,28 @@ kopang/
 ├── frontend/   # React 사용자·관리자·데스크톱 웹
 ├── backend/    # Spring Boot API·인증·배치·대응·측정
 ├── ml/         # 이탈 예측 모델·FastAPI 서빙·데모 데이터
-├── docs/       # 요구사항·API·DB 명세
+├── docs/       # 요구사항·API·DB 명세, README 이미지
 └── outputs/    # 최종 발표자료 등 공유 산출물
 ```
 
-## 브랜치 전략
+## 실행 방법
 
-```
-main          # 발표/배포용 안정 버전 (직접 커밋 금지)
- └ develop     # 통합 브랜치
-    └ feature/*  # 개인 작업 (예: feature/be-auth, feature/fe-cart)
-```
+PostgreSQL 준비 후 세 파트를 각각 실행
 
-- 모든 작업은 `feature/*`에서 → `develop`으로 **Pull Request**
-- PR은 **리뷰어 1명 이상 승인** 후 머지
-- `main`/`develop` 직접 커밋 금지
+| 파트 | 명령 | 비고 |
+| --- | --- | --- |
+| Backend (:8080) | `cd backend && ./gradlew bootRun` | `src/main/resources/application-dev.properties`에 DB·JWT·OAuth·S3·결제·메일 키 설정 (Git 미포함) |
+| ML (:8000) | `pip install -r ml/requirements.txt` → `uvicorn ml.model.serve:app --port 8000` | 학습·시드는 [ml/README.md](ml/README.md) |
+| Frontend | `cd frontend && npm install && npm run dev` | `/api` 요청은 Vite proxy가 backend로 전달 |
 
-## 커밋 컨벤션
+## 문서·발표자료
 
-```
-feat:     기능 추가
-fix:      버그 수정
-refactor: 리팩터링
-docs:     문서
-chore:    설정·기타
-```
+- [요구사항 정의서](docs/요구사항_정의서.xlsx) · [API 명세서](docs/API_명세서.md) · [DB 스키마](docs/DB_스키마.xlsx)
+- [최종 발표자료](outputs/kopang-발표-최종.pptx)
+- [ML 이탈방지 구조 정리](docs/_/ML_이탈방지_구조_정리.md)
+
+## 협업 규칙
+
+- 브랜치: `main`(발표·배포) ← `develop`(통합) ← `feature/*`(개인 작업)
+- 모든 변경은 `feature/*` → `develop` PR, 리뷰어 1명 이상 승인 후 머지
+- 커밋: `feat` `fix` `refactor` `docs` `chore`
