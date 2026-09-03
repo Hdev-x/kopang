@@ -10,32 +10,24 @@
 
 ## 화면
 
-### 사용자 쇼핑몰
+**사용자 쇼핑몰** — 모바일 홈·상품 목록·상품 상세 · PC 홈 · PC 상품 상세
 
-모바일 퍼스트로 만든 사용자 화면. 홈 · 카테고리별 상품 목록 · 상품 상세
+<p align="center">
+  <a href="docs/images/readme/06-user-mobile.jpg"><img src="docs/images/readme/06-user-mobile.jpg" width="32%" alt="모바일 홈·상품 목록·상품 상세"></a>
+  <a href="docs/images/readme/07-user-web-home.jpg"><img src="docs/images/readme/07-user-web-home.jpg" width="32%" alt="PC 홈"></a>
+  <a href="docs/images/readme/08-user-web-product-detail.jpg"><img src="docs/images/readme/08-user-web-product-detail.jpg" width="32%" alt="PC 상품 상세"></a>
+</p>
 
-![모바일 홈·상품 목록·상품 상세](docs/images/readme/06-user-mobile.png)
+**관리자 콘솔 · 이탈 방지** — 통합 대시보드 · 위험 고객 상세 · 대응 이력 · 대응 효과 리포트
 
-| PC 홈 | PC 상품 상세 |
-| --- | --- |
-| ![PC 홈](docs/images/readme/07-user-web-home.png) | ![PC 상품 상세](docs/images/readme/08-user-web-product-detail.png) |
-| 배너·퀵메뉴·카테고리, 멤버십 유도 상단 띠 | 가격·배송·판매자 정보, 장바구니·바로구매, 비슷한 상품 추천 |
+<p align="center">
+  <a href="docs/images/readme/02-integrated-dashboard.jpg"><img src="docs/images/readme/02-integrated-dashboard.jpg" width="24%" alt="통합 대시보드"></a>
+  <a href="docs/images/readme/03-risk-customer-detail.jpg"><img src="docs/images/readme/03-risk-customer-detail.jpg" width="24%" alt="위험 고객 상세"></a>
+  <a href="docs/images/readme/04-intervention-history.jpg"><img src="docs/images/readme/04-intervention-history.jpg" width="24%" alt="대응 이력"></a>
+  <a href="docs/images/readme/05-effect-report.jpg"><img src="docs/images/readme/05-effect-report.jpg" width="24%" alt="대응 효과 리포트"></a>
+</p>
 
-### 관리자 콘솔 · 이탈 방지
-
-예측 → 대응 → 효과 측정 순서
-
-| 통합 대시보드 | 위험 고객 상세 |
-| --- | --- |
-| ![통합 대시보드](docs/images/readme/02-integrated-dashboard.png) | ![위험 고객 상세](docs/images/readme/03-risk-customer-detail.png) |
-| 매출·주문 현황, 이탈 위험 분포, 일 배치 실행 | 룰·ML 위험 신호, 만족도, 추천 처치, 대응 이력 |
-
-| 대응 이력 | 대응 효과 리포트 |
-| --- | --- |
-| ![대응 이력](docs/images/readme/04-intervention-history.png) | ![효과 리포트](docs/images/readme/05-effect-report.png) |
-| 처치군·대조군 구분, 채널별 발송 결과 | 대조군 대비 순효과, 액션별·위험 유형별 효과, 쿠폰 ROI |
-
-> 화면의 수치는 시연용 생성 데이터 기준
+> 클릭 시 원본. 화면의 수치는 시연용 생성 데이터 기준
 
 ## 핵심 — 감지부터 효과 측정까지
 
